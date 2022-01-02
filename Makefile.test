@@ -1,0 +1,19 @@
+CXX = clang++
+CC = clang
+
+CFLAGS = -std=gnu99
+
+CSOURCES = src/whatever.c
+
+LIBDIRS = -Llib
+INCDIRS = -Iinclude  -Iinclude/flecs 
+
+LIBS = -lSDL2 -lSDL2main -lSDL2_image -Wl,-rpath,lib
+
+BUILD_PATH = build
+
+test: build/whatever.o
+	$(CC) $^  $(INCDIRS) -o $(BUILD_PATH)/$@
+
+%.o: src/whatever.c
+	$(CC) $(CFLAGS) $(INCDIRS) -c $< -o $(BUILD_PATH)/$(notdir $@)
