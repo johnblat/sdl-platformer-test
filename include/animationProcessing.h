@@ -8,6 +8,7 @@
 #include "position.h"
 #include "flecs.h"
 
+extern Position gCameraPosition;
 /**
  * @brief runs all the animations provided. Will advance frames as per the fps specified
  * 

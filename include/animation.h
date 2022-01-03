@@ -3,6 +3,7 @@
 
 #include "jbInts.h"
 #include <stdlib.h>
+#include <SDL2/SDL.h>
 
 struct Animation {
     char name[32]; // animation name
@@ -22,6 +23,7 @@ struct AnimatedSprite {
     u32 numAnimations;
     Animation animations[8];// collection of animations for this animated sprite
     u32 currentAnimation;
+    SDL_RendererFlip flip;
 };
 
 #endif

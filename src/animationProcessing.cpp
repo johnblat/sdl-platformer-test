@@ -94,6 +94,8 @@ void iToRC(u32 i, u32 numRows, u32 *row, u32 *col){
 //     }
 // }
 
+Position gCameraPosition;
+Position gCenterScreen = {320, 240};
 
 void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions){
     for(auto i : it){
@@ -101,10 +103,12 @@ void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSpr
         float cell_w = spriteSheet.w / spriteSheet.numCellRows;
         float cell_h = spriteSheet.h / spriteSheet.numCellCols;
         SDL_Rect renderRect;
-        renderRect.x = positions[i].x - (cell_w*0.5f);
+        renderRect.x = ( positions[i].x - gCameraPosition.x + gCenterScreen.x) - (cell_w*0.5f);
         renderRect.y = positions[i].y - (cell_h*0.5f);
+        
         renderRect.w = cell_w;
         renderRect.h = cell_h;
+
 
         Animation currentAnimation = animatedSprites[i].animations[animatedSprites[i].currentAnimation];
         SDL_Rect srcRect;
@@ -116,7 +120,8 @@ void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSpr
         srcRect.y = cell_r * cell_h;
         srcRect.w = cell_w;
         srcRect.h = cell_h;
-        SDL_RenderCopy(gRenderer, spriteSheet.texture, &srcRect, &renderRect);
+        SDL_RendererFlip flip = animatedSprites[i].flip == SDL_FLIP_HORIZONTAL ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE; 
+        SDL_RenderCopyEx(gRenderer, spriteSheet.texture, &srcRect, &renderRect, 0.0, NULL, flip);
     }
     
 }

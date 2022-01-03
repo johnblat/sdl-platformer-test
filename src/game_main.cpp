@@ -20,6 +20,7 @@ SpriteSheet gSpriteSheets[MAX_SPRITE_SHEETS];
 size_t gNumSpriteSheets = 0;
 
 
+
 struct KeyMap {
     char name[16];
     SDL_Scancode sdlScancode;
@@ -68,12 +69,28 @@ void keyStateVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Keyboar
 }
 
 
+void keyStateFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections){
+    for(auto i : it){
+        u8 *keyStates = keyStatesCollections[i].keyStates;
+
+        if(keyStates[SDL_SCANCODE_A]){
+            animatedSprites[i].flip = SDL_FLIP_HORIZONTAL;
+        }
+        else if(keyStates[SDL_SCANCODE_D]){
+            animatedSprites[i].flip = SDL_FLIP_NONE;
+        }
+    }
+}
+
 void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
     for(auto i : it){
         positions[i].x += velocities[i].x * it.delta_time();
         positions[i].y += velocities[i].y * it.delta_time();
     }
 }
+
+
+
 
 int main(){
     bool quit = false;
@@ -84,6 +101,7 @@ int main(){
 
     flecs::world world;
     flecs::entity pinkGuyEntity = world.entity("PinkGuy");
+    flecs::entity owlGuyEntity = world.entity("OwlGuy");
 
     /**
      * SDL SETUP
@@ -100,10 +118,17 @@ int main(){
      */
     SDL_Surface *bgSurface = IMG_Load("bg.png");
     SDL_Texture *bgTexture = SDL_CreateTextureFromSurface(gRenderer, bgSurface);
+    float parralaxBgScale = 0.25;
     int bg_w = bgSurface->w;
     int bg_h = bgSurface->h;
-    SDL_Rect bgDestRect = {0, 0, bg_w, bg_h}; 
+    Position bgPosition = {0,0};
+    SDL_Rect bgDestRect = {(int)bgPosition.x,(int) bgPosition.y, bg_w, bg_h}; 
     SDL_FreeSurface(bgSurface);
+
+    /**
+     * CAMERA SETUP
+     * 
+     */
 
     /**
      * ANIMATED SPRITE SETUP
@@ -182,6 +207,81 @@ int main(){
     pinkGuyEntity.set<AnimatedSprite>(animatedSprite);
     pinkGuyEntity.set<Position>((Position){640/2,480/2});
     pinkGuyEntity.set<Velocity>((Velocity){0,0});
+
+    // OTHER CHARACTER SETUP
+
+    owlGuyEntity.add<AnimatedSprite>();
+
+    const char *filename2 = "owlet-monster-animation-transparent.png";
+    const char *animatedSpriteName2 =  "owl-monster-animation";
+    u32 spriteSheetId2 = createSpriteSheet(filename2, 15, 8, animatedSpriteName2);
+    AnimatedSprite animatedSprite2 = createAnimatedSprite(spriteSheetId2);
+
+    // add animations to animatedSprite
+    Animation walkAnimation2;
+    walkAnimation2.accumulator = 0.0f;
+    walkAnimation2.arrFrames[0] = 15;
+    walkAnimation2.arrFrames[1] = 16;
+    walkAnimation2.arrFrames[2] = 17;
+    walkAnimation2.arrFrames[3] = 18;
+    walkAnimation2.arrFrames[4] = 19;
+    walkAnimation2.arrFrames[5] = 20;
+    walkAnimation2.numFrames = 6;
+    walkAnimation2.currentFrame = 0;
+    walkAnimation2.fps = 12;
+    walkAnimation2.msPerFrame = 0.0833;
+    walkAnimation2.isLoop = true;
+
+    const char *walkAnimation2Name = "walk";
+    strncpy(walkAnimation2.name, walkAnimation2Name, 5);
+
+    
+
+    Animation runAnimation2;
+    runAnimation2.accumulator = 0.0f;
+    runAnimation2.arrFrames[0] = 30;
+    runAnimation2.arrFrames[1] = 31;
+    runAnimation2.arrFrames[2] = 32;
+    runAnimation2.arrFrames[3] = 33;
+    runAnimation2.arrFrames[4] = 34;
+    runAnimation2.arrFrames[5] = 35;
+    runAnimation2.numFrames = 6;
+    runAnimation2.currentFrame = 0;
+    runAnimation2.fps = 12;
+    runAnimation2.msPerFrame = 0.0833;
+    runAnimation2.isLoop = true;
+
+    const char *runAnimation2Name = "run";
+    strncpy(runAnimation2.name, runAnimation2Name, 3);
+
+    Animation standingAttackAnimation2;
+    standingAttackAnimation2.accumulator = 0.0f;
+    standingAttackAnimation2.arrFrames[0] = 45;
+    standingAttackAnimation2.arrFrames[1] = 46;
+    standingAttackAnimation2.arrFrames[2] = 47;
+    standingAttackAnimation2.arrFrames[3] = 48;
+    standingAttackAnimation2.numFrames = 4;
+    standingAttackAnimation2.currentFrame = 0;
+    standingAttackAnimation2.fps = 12;
+    standingAttackAnimation2.msPerFrame = 0.0833;
+    standingAttackAnimation2.isLoop = false;
+    const char *standingAttackAnimation2Name = "stand-attack";
+    strncpy(standingAttackAnimation2.name, standingAttackAnimation2Name, 16);
+    
+    addNewAnimationToAnimatedSprite(&animatedSprite2);
+    overwriteAnimationOnAnimatedSprite(&animatedSprite2, 0, walkAnimation);
+
+    addNewAnimationToAnimatedSprite(&animatedSprite2);
+    overwriteAnimationOnAnimatedSprite(&animatedSprite2, 1, runAnimation);
+
+    addNewAnimationToAnimatedSprite(&animatedSprite2);
+    overwriteAnimationOnAnimatedSprite(&animatedSprite2, 2, standingAttackAnimation);
+
+    animatedSprite2.currentAnimation = 0;
+
+    owlGuyEntity.set<AnimatedSprite>(animatedSprite2);
+    owlGuyEntity.set<Position>((Position){640/2 + 50,480/2});
+
     
     
     // Set up the animation playing and rendering systems
@@ -194,6 +294,9 @@ int main(){
     world.system<Velocity, KeyboardState>("keyStateVelocitySetter").kind(flecs::OnUpdate).iter(keyStateVelocitySetterSystem);
 
     world.system<Velocity, Position>("move").kind(flecs::OnUpdate).iter(moveSystem);
+
+    world.system<AnimatedSprite, KeyboardState>().kind(flecs::OnUpdate).iter(keyStateFlipSystem);
+
     // timing
     // float deltaTime = 0.0f;
     
@@ -216,6 +319,14 @@ int main(){
 
         SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
         SDL_RenderClear(gRenderer);
+
+        gCameraPosition.x = pinkGuyEntity.get<Position>()->x;
+        gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
+
+        // background moving with camera
+        bgDestRect.x = (bgPosition.x - gCameraPosition.x) *parralaxBgScale;
+        bgDestRect.y = (bgPosition.y - gCameraPosition.y) * parralaxBgScale;
+
 
         // draw background
         SDL_RenderCopy(gRenderer, bgTexture, NULL, &bgDestRect);
