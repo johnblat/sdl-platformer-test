@@ -10,7 +10,8 @@
 #include "string.h"
 #include "timestep.h"
 #include "velocity.h"
-
+#include "movement.h"
+#include "input.h"
 #include "flecs.h"
 
 SDL_Renderer *gRenderer;
@@ -18,77 +19,6 @@ SDL_Window *gWindow;
 
 SpriteSheet gSpriteSheets[MAX_SPRITE_SHEETS]; 
 size_t gNumSpriteSheets = 0;
-
-
-
-struct KeyMap {
-    char name[16];
-    SDL_Scancode sdlScancode;
-};
-
-struct KeyboardState{
-    u8 *keyStates;
-};
-
-void keyStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections){
-    for(auto i : it){
-        u8 *keyStates = keyStatesCollections[i].keyStates;
-        if(keyStates[SDL_SCANCODE_0]){
-            animatedSprites[i].currentAnimation = 0;
-        } 
-        if(keyStates[SDL_SCANCODE_1]){
-            animatedSprites[i].currentAnimation = 1;
-            // AnimatedSprites[i] *sprite = pinkGuyEntity.get<AnimatedSprites[i]>();
-
-        } 
-        if(keyStates[SDL_SCANCODE_2]){
-            animatedSprites[i].currentAnimation = 2;
-            restartAnimation(&animatedSprites[i].animations[animatedSprites[i].currentAnimation]);
-        } 
-        if(keyStates[SDL_SCANCODE_3]){
-            animatedSprites[i].currentAnimation = 3;
-        } 
-    }
-}
-
-void keyStateVelocitySetterSystem(flecs::iter &it, Velocity *velocities, KeyboardState *keyStatesCollections){
-    for(auto i : it){
-        u8 *keyStates = keyStatesCollections[i].keyStates;
-        // side
-        if(keyStates[SDL_SCANCODE_A]){
-            velocities[i].x = -100;
-        }
-        else if(keyStates[SDL_SCANCODE_D]){
-            velocities[i].x = 100;
-        }
-        else {
-            velocities[i].x = 0;
-        }
-
-    }
-}
-
-
-void keyStateFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections){
-    for(auto i : it){
-        u8 *keyStates = keyStatesCollections[i].keyStates;
-
-        if(keyStates[SDL_SCANCODE_A]){
-            animatedSprites[i].flip = SDL_FLIP_HORIZONTAL;
-        }
-        else if(keyStates[SDL_SCANCODE_D]){
-            animatedSprites[i].flip = SDL_FLIP_NONE;
-        }
-    }
-}
-
-void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
-    for(auto i : it){
-        positions[i].x += velocities[i].x * it.delta_time();
-        positions[i].y += velocities[i].y * it.delta_time();
-    }
-}
-
 
 
 
@@ -121,14 +51,10 @@ int main(){
     float parralaxBgScale = 0.25;
     int bg_w = bgSurface->w;
     int bg_h = bgSurface->h;
-    Position bgPosition = {0,0};
-    SDL_Rect bgDestRect = {(int)bgPosition.x,(int) bgPosition.y, bg_w, bg_h}; 
+    Position bgPosition = {640/2,480/2};
+    SDL_Rect bgDestRect = {(int)bgPosition.x - bg_w/2,(int) bgPosition.y - bg_h/2, bg_w, bg_h}; 
     SDL_FreeSurface(bgSurface);
 
-    /**
-     * CAMERA SETUP
-     * 
-     */
 
     /**
      * ANIMATED SPRITE SETUP
@@ -300,7 +226,7 @@ int main(){
     // timing
     // float deltaTime = 0.0f;
     
-
+    float zoomAmount = 1.0f;
     // main loop
     while(!quit){
         // deltaTime = getDeltaTime();
@@ -313,7 +239,20 @@ int main(){
         }
         u8 *keyStates = (u8 *)SDL_GetKeyboardState(NULL);
         KeyboardState keyboardState;
-        keyboardState.keyStates = keyStates;        
+        keyboardState.keyStates = keyStates;    
+
+        if(keyStates[SDL_SCANCODE_UP]){
+            zoomAmount += 0.005;
+        }       
+
+        if(keyStates[SDL_SCANCODE_DOWN]){
+            zoomAmount -= 0.005;
+        }       
+
+        if(keyStates[SDL_SCANCODE_R]){
+            zoomAmount = 1.0;
+        }       
+
 
         pinkGuyEntity.set<KeyboardState>(keyboardState);
 
@@ -323,10 +262,14 @@ int main(){
         gCameraPosition.x = pinkGuyEntity.get<Position>()->x;
         gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
 
+        Position centerScreen = {320, 240};
+        Position scaledCenterScreen = {centerScreen.x / zoomAmount, centerScreen.y / zoomAmount};
+        float scaledParallaxScale = parralaxBgScale / zoomAmount; 
         // background moving with camera
-        bgDestRect.x = (bgPosition.x - gCameraPosition.x) *parralaxBgScale;
-        bgDestRect.y = (bgPosition.y - gCameraPosition.y) * parralaxBgScale;
+        bgDestRect.x = (((bgPosition.x - gCameraPosition.x)* parralaxBgScale + scaledCenterScreen.x) - (bg_w/2) ) ;
+        bgDestRect.y = ((bgPosition.y - gCameraPosition.y + scaledCenterScreen.y) - (bg_h / 2) );
 
+        SDL_RenderSetScale(gRenderer, zoomAmount, zoomAmount);
 
         // draw background
         SDL_RenderCopy(gRenderer, bgTexture, NULL, &bgDestRect);

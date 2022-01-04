@@ -6,6 +6,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "position.h"
+#include "input.h"
 #include "flecs.h"
 
 extern Position gCameraPosition;
@@ -19,6 +20,25 @@ extern Position gCameraPosition;
 // void animationsAccumulationSystem(AnimatedSprite *animatedSprites, size_t numAnimations, float deltaTime);
 void animationsAccumulationSystem(flecs::iter &it, AnimatedSprite *animatedSprites);
 
+
+/**
+ * @brief sets the current animation based on the key pressed. Can be used for testing
+ * 
+ * @param it 
+ * @param animatedSprites 
+ * @param keyStatesCollections 
+ */
+void keyStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections);
+
+
+/**
+ * @brief will flip the animated sprite based on the key that is pressed. intended to set the left and right facing directions
+ * 
+ * @param it 
+ * @param animatedSprites 
+ * @param keyStatesCollections 
+ */
+void keyStateFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections);
 
 /**
  * @brief Create a Animated Sprite object with the spriteSheetId
