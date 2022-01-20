@@ -1,0 +1,103 @@
+#include "input.h"
+#include <assert.h>
+
+
+u8 *gKeyStates;
+
+/**
+ * UTILS
+ */
+
+bool isJustPressed(Input input, std::string buttonName){
+    for(int i = 0; i < input.numButtomStates; i++){
+        InputButtonState buttonState = input.buttonStates[i];
+        if(buttonState.name == buttonName){
+            if(buttonState.currentInputState == INPUT_IS_JUST_PRESSED){
+                return true;
+            }
+            return false;
+        }
+    }
+    fprintf(stderr, "%s not found\n", buttonName.c_str());
+    assert(0 && "Exiting...");
+}
+
+
+bool isPressed(Input input, std::string buttonName){
+    for(int i = 0; i < input.numButtomStates; i++){
+        InputButtonState buttonState = input.buttonStates[i];
+        if(buttonState.name == buttonName){
+            if(buttonState.currentInputState == INPUT_IS_JUST_PRESSED){
+                return true;
+            }
+            if(buttonState.currentInputState == INPUT_IS_PRESSED){
+                return true;
+            }
+            return false;
+        }
+    }
+    fprintf(stderr, "%s not found\n", buttonName.c_str());
+    assert(0 && "Exiting...");
+}
+
+
+bool isJustReleased(Input input, std::string buttonName){
+    for(int i = 0; i < input.numButtomStates; i++){
+        InputButtonState buttonState = input.buttonStates[i];
+        if(buttonState.name == buttonName){
+            if(buttonState.currentInputState == INPUT_IS_JUST_RELEASED){
+                return true;
+            }
+            return false;
+        }
+    }
+    fprintf(stderr, "%s not found\n", buttonName.c_str());
+    assert(0 && "Exiting...");
+}
+
+
+/**
+ * SYSTEMS
+ */
+
+void inputUpdateSystem(flecs::iter &it, Input *inputs){
+    for(auto i : it){
+
+        Input input = inputs[i];
+
+        for(int j = 0; j < input.numButtomStates; j++){
+
+            InputButtonState bs = input.buttonStates[j];
+            bs.previousInputState = bs.currentInputState;
+
+            if(gKeyStates[bs.sdlScancode]){
+                if(bs.previousInputState == INPUT_IS_JUST_PRESSED){
+                    bs.currentInputState = INPUT_IS_PRESSED;
+                }
+                else if(bs.previousInputState == INPUT_IS_NOT_PRESSED){
+                    bs.currentInputState = INPUT_IS_JUST_PRESSED;
+                }
+                else if(bs.previousInputState == INPUT_IS_JUST_RELEASED){
+                    bs.currentInputState = INPUT_IS_JUST_PRESSED;
+                }
+                else if(bs.previousInputState == INPUT_IS_PRESSED){
+                    bs.currentInputState = INPUT_IS_PRESSED;
+                }
+            } 
+            else {
+                if(bs.previousInputState == INPUT_IS_JUST_PRESSED){
+                    bs.currentInputState = INPUT_IS_JUST_RELEASED;
+                }
+                else if(bs.previousInputState == INPUT_IS_NOT_PRESSED){
+                    bs.currentInputState = INPUT_IS_NOT_PRESSED;
+                }
+                else if(bs.previousInputState == INPUT_IS_JUST_RELEASED){
+                    bs.currentInputState = INPUT_IS_NOT_PRESSED;
+                }
+                else if(bs.previousInputState == INPUT_IS_PRESSED){
+                    bs.currentInputState = INPUT_IS_JUST_RELEASED;
+                }
+            }
+        }
+    }
+}

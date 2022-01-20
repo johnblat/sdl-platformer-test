@@ -93,20 +93,19 @@ void keyStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animatedSpri
     for(auto i : it){
         u8 *keyStates = keyStatesCollections[i].keyStates;
         if(keyStates[SDL_SCANCODE_0]){
-            animatedSprites[i].currentAnimation = 0;
+            animatedSpritePlay(&animatedSprites[i], "walk");
         } 
         if(keyStates[SDL_SCANCODE_1]){
-            animatedSprites[i].currentAnimation = 1;
-            // AnimatedSprites[i] *sprite = pinkGuyEntity.get<AnimatedSprites[i]>();
+            animatedSpritePlay(&animatedSprites[i], "run");
 
         } 
         if(keyStates[SDL_SCANCODE_2]){
-            animatedSprites[i].currentAnimation = 2;
+            animatedSpritePlay(&animatedSprites[i], "stand-attack");
             restartAnimation(&animatedSprites[i].animations[animatedSprites[i].currentAnimation]);
         } 
-        if(keyStates[SDL_SCANCODE_3]){
-            animatedSprites[i].currentAnimation = 3;
-        } 
+        // if(keyStates[SDL_SCANCODE_3]){
+        //     animatedSprites[i].currentAnimation = 3;
+        // } 
     }
 }
 
@@ -128,6 +127,16 @@ void keyStateFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Keyboa
 // 
 // MANAGING, LOADING, CREATION, ETC
 // 
+
+void animatedSpritePlay(AnimatedSprite *as, const char *animationName){
+    for(int i = 0; i < as->numAnimations; i++){
+        if(strncmp(as->animations[i].name, animationName, 16) == 0){
+            as->currentAnimation = i;
+            return;
+        }
+    }
+    assert(0 && "Animation name was not found in list of animations");
+}
 
 AnimatedSprite createAnimatedSprite(u32 spriteSheetId){
     AnimatedSprite animatedSprite;

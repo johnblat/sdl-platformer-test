@@ -83,6 +83,14 @@ void setFpsForAnimatedSprite(AnimatedSprite *animatedSprite, float fps);
 void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions);
 
 /**
+ * @brief Sets the current animation of animated sprite to the one that matches  the animationName. Crashes if animationName doesn't exist
+ * 
+ * @param as the animatedSprite to set current animation of
+ * @param animationName the name of the new current animation
+ */
+void animatedSpritePlay(AnimatedSprite *as, const char *animationName);
+
+/**
  * @brief just sets the currentFrame to 0. This can be very helpful for non looping animatins
  * 
  * @param animation 
