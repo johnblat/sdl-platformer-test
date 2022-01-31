@@ -19,16 +19,16 @@ struct KeyboardState{
     u8 *keyStates;
 };
 
-
-typedef enum InputState {
+// typedef enum InputState InputState;
+enum InputState {
     INPUT_IS_JUST_PRESSED,
     INPUT_IS_PRESSED,
     INPUT_IS_JUST_RELEASED,
     INPUT_IS_NOT_PRESSED
 };
 
-
-typedef struct InputButtonState {
+typedef struct InputButtonState InputButtonState;
+struct InputButtonState {
     std::string name;
     SDL_Scancode sdlScancode;
     InputState currentInputState;
@@ -46,9 +46,9 @@ struct Input {
 /**
  * UTILS
  */
-bool isJustPressed(Input input, std::string buttonName);
-bool isPressed(Input input, std::string buttonName);
-bool isJustReleased(Input input, std::string buttonName);
+bool inputIsJustPressed(Input input, std::string buttonName);
+bool inputIsPressed(Input input, std::string buttonName);
+bool inputIsJustReleased(Input input, std::string buttonName);
 
 
 /**

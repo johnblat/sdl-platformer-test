@@ -1,6 +1,9 @@
 #include "input.h"
 #include <assert.h>
+#include <iostream>
+#include <string>
 
+using namespace std;
 
 u8 *gKeyStates;
 
@@ -8,7 +11,7 @@ u8 *gKeyStates;
  * UTILS
  */
 
-bool isJustPressed(Input input, std::string buttonName){
+bool inputIsJustPressed(Input input, std::string buttonName){
     for(int i = 0; i < input.numButtomStates; i++){
         InputButtonState buttonState = input.buttonStates[i];
         if(buttonState.name == buttonName){
@@ -23,7 +26,7 @@ bool isJustPressed(Input input, std::string buttonName){
 }
 
 
-bool isPressed(Input input, std::string buttonName){
+bool inputIsPressed(Input input, std::string buttonName){
     for(int i = 0; i < input.numButtomStates; i++){
         InputButtonState buttonState = input.buttonStates[i];
         if(buttonState.name == buttonName){
@@ -41,7 +44,7 @@ bool isPressed(Input input, std::string buttonName){
 }
 
 
-bool isJustReleased(Input input, std::string buttonName){
+bool inputIsJustReleased(Input input, std::string buttonName){
     for(int i = 0; i < input.numButtomStates; i++){
         InputButtonState buttonState = input.buttonStates[i];
         if(buttonState.name == buttonName){
@@ -98,6 +101,8 @@ void inputUpdateSystem(flecs::iter &it, Input *inputs){
                     bs.currentInputState = INPUT_IS_JUST_RELEASED;
                 }
             }
+
+            input.buttonStates[j] = bs;
         }
     }
 }

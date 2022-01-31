@@ -89,7 +89,7 @@ void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSpr
 }
 
 
-void keyStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections){
+void KeyboardStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections){
     for(auto i : it){
         u8 *keyStates = keyStatesCollections[i].keyStates;
         if(keyStates[SDL_SCANCODE_0]){
@@ -110,14 +110,13 @@ void keyStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animatedSpri
 }
 
 
-void keyStateFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections){
+void InputFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Input *inputs){
     for(auto i : it){
-        u8 *keyStates = keyStatesCollections[i].keyStates;
 
-        if(keyStates[SDL_SCANCODE_A]){
+        if(inputIsPressed(inputs[i], "left")){
             animatedSprites[i].flip = SDL_FLIP_HORIZONTAL;
         }
-        else if(keyStates[SDL_SCANCODE_D]){
+        else if(inputIsPressed(inputs[i], "right")){
             animatedSprites[i].flip = SDL_FLIP_NONE;
         }
     }

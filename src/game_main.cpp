@@ -13,7 +13,9 @@
 #include "movement.h"
 #include "input.h"
 #include "flecs.h"
-#include "collisions.h"
+#include <string>
+#include <vector>
+
 
 SDL_Renderer *gRenderer;
 SDL_Window *gWindow;
@@ -33,6 +35,11 @@ typedef struct Ray2d Ray2d;
 struct Ray2d {
     Position startingPosition;
     float distance; 
+};
+
+typedef struct Ray2dCollection;
+struct Ray2dCollection {
+    std::vector<Ray2d> rays;
 };
 
 struct Sensors {
@@ -68,6 +75,38 @@ void renderRectangularObjectsSystem(flecs::iter &it, RectangularObject *rectObje
 }
 
 
+
+
+void renderRay2dCollectionsSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections){
+    // move this somewhere else
+    Position centerScreen = {320, 240};
+
+    for(int i : it){
+        std::vector<Ray2d> ray2ds = ray2dCollections[i];
+        for(int vi = 0; vi < ray2ds.size(); vi++ ){
+            float scale;
+            SDL_RenderGetScale(gRenderer,&scale, NULL );
+            Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+
+            Ray2d ray = ray2ds[vi];
+            Position actualPosition; 
+            actualPosition.x = positions[i].x + ray.startingPosition.x;
+            actualPosition.y = positions[i].y + ray.startingPosition.y;
+            actualPosition.x = actualPosition.x - gCameraPosition.x + scaledCenterScreen.x;
+            actualPosition.y = actualPosition.y - gCameraPosition.y + scaledCenterScreen.y;
+
+            SDL_SetRenderDrawColor(gRenderer, 255,0,0,255);
+            SDL_RenderDrawLine(gRenderer, actualPosition.x, actualPosition.y, actualPosition.x, actualPosition.y + ray.distance);
+
+            SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
+            SDL_RenderDrawLine(gRenderer, actualPosition.x - 1, actualPosition.y, actualPosition.x - 1, actualPosition.y + ray.distance);
+            SDL_RenderDrawLine(gRenderer, actualPosition.x + 1, actualPosition.y, actualPosition.x + 1, actualPosition.y + ray.distance);
+
+
+        }
+    }
+}
+
 int main(){
     bool quit = false;
     /**
@@ -86,7 +125,7 @@ int main(){
      */
     SDL_Init(SDL_INIT_VIDEO);
     gWindow = SDL_CreateWindow("title",0,0, 640,480, SDL_WINDOW_SHOWN);
-    gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
     SDL_Event event;
 
     /**
@@ -187,8 +226,33 @@ int main(){
     pinkGuyEntity.set<AnimatedSprite>(animatedSprite);
     pinkGuyEntity.set<Position>((Position){640/2,480/2});
     pinkGuyEntity.set<Velocity>((Velocity){0,0});
-    pinkGuyEntity.set<CollisionRect>((CollisionRect){32,32});
+    // pinkGuyEntity.set<CollisionRect>((CollisionRect){32,32});
+    
+    InputButtonState bstates[2];
+    bstates[0].currentInputState = INPUT_IS_NOT_PRESSED;
+    bstates[0].previousInputState = INPUT_IS_NOT_PRESSED;
+    bstates[0].name = std::string("left");
+    bstates[0].sdlScancode = SDL_SCANCODE_A;
 
+    bstates[1].currentInputState = INPUT_IS_NOT_PRESSED;
+    bstates[1].previousInputState = INPUT_IS_NOT_PRESSED;
+    bstates[1].name = "right";
+    bstates[1].sdlScancode = SDL_SCANCODE_D;
+
+    Input pinkGuyInput;
+    pinkGuyInput.buttonStates = bstates;
+    pinkGuyInput.numButtomStates = 2;
+
+    pinkGuyEntity.set<Input>(pinkGuyInput);
+
+    std::vector<Ray2d> rays;
+    Ray2d ray0;
+    ray0.startingPosition.x = 0.0f;
+    ray0.startingPosition.y = 0.0f;
+    ray0.distance = 16.0f;
+    rays.push_back(ray0);
+
+    pinkGuyEntity.set<std::vector<Ray2d>>(rays);
     // OTHER CHARACTER SETUP
 
     owlGuyEntity.add<AnimatedSprite>();
@@ -272,6 +336,7 @@ int main(){
     owlGuyEntity.set<AnimatedSprite>(animatedSprite2);
     owlGuyEntity.set<Position>((Position){640/2 + 50,480/2});
 
+
     
     
     // Set up the animation playing and rendering systems
@@ -279,13 +344,17 @@ int main(){
 
     world.system<AnimatedSprite, Position>("renderingAnimatedSprites").kind(flecs::OnStore).iter(renderingAnimatedSpritesSystem);
 
-    world.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState").kind(flecs::OnUpdate).iter(keyStateAnimationSetterSystem);
+    world.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState").kind(flecs::OnUpdate).iter(KeyboardStateAnimationSetterSystem);
 
-    world.system<Velocity, KeyboardState>("keyStateVelocitySetter").kind(flecs::OnUpdate).iter(keyStateVelocitySetterSystem);
+    world.system<Velocity, Input>("keyStateVelocitySetter").kind(flecs::OnUpdate).iter(InputVelocitySetterSystem);
 
     world.system<Velocity, Position>("move").kind(flecs::OnUpdate).iter(moveSystem);
 
-    world.system<AnimatedSprite, KeyboardState>().kind(flecs::OnUpdate).iter(keyStateFlipSystem);
+    world.system<AnimatedSprite, Input>().kind(flecs::OnUpdate).iter(InputFlipSystem);
+
+    world.system<Input>().kind(flecs::PreUpdate).iter(inputUpdateSystem);
+
+    world.system<Position, std::vector<Ray2d>>().kind(flecs::OnStore).iter(renderRay2dCollectionsSystem);
 
     // TEST Rectangular objects
 
@@ -302,10 +371,13 @@ int main(){
 
     // timing
     // float deltaTime = 0.0f;
-    
+    const float FPS = 60;
+    const float secondsPerFrame = 1.0f / FPS;
+
     float zoomAmount = 1.0f;
     // main loop
     while(!quit){
+        u64 startTicks = SDL_GetTicks();
         // deltaTime = getDeltaTime();
 
         while(SDL_PollEvent(&event)){
@@ -317,6 +389,8 @@ int main(){
         u8 *keyStates = (u8 *)SDL_GetKeyboardState(NULL);
         KeyboardState keyboardState;
         keyboardState.keyStates = keyStates;    
+
+        gKeyStates = keyStates;
 
         if(keyStates[SDL_SCANCODE_UP]){
             zoomAmount += 0.005;
@@ -360,6 +434,18 @@ int main(){
         //renderAnimatedSprite(640 / 2, 480 / 2, animatedSprite);
 
         SDL_RenderPresent(gRenderer);
+
+        u64 endTicks = SDL_GetTicks();
+
+        u64 totalTicks = endTicks - startTicks;
+        float totalSeconds = (float)totalTicks / 1000.0f;
+
+        if(totalSeconds < secondsPerFrame){
+            float secondsRemainingToFixTimeStep = secondsPerFrame - totalSeconds;
+            float msRemainingToFixTimeStep = secondsRemainingToFixTimeStep * 1000;
+            SDL_Delay(msRemainingToFixTimeStep);
+            // printf("ms to wait: %f\n", msRemainingToFixTimeStep);
+        }
     }
 
 

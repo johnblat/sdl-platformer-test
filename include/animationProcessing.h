@@ -28,7 +28,7 @@ void animationsAccumulationSystem(flecs::iter &it, AnimatedSprite *animatedSprit
  * @param animatedSprites 
  * @param keyStatesCollections 
  */
-void keyStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections);
+void KeyboardStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections);
 
 
 /**
@@ -38,7 +38,7 @@ void keyStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animatedSpri
  * @param animatedSprites 
  * @param keyStatesCollections 
  */
-void keyStateFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections);
+void InputFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Input *inputs);
 
 /**
  * @brief Create a Animated Sprite object with the spriteSheetId
