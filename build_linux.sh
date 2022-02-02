@@ -8,10 +8,15 @@ clang++ -c -std=c++11 -I$(pwd)/include -I$(pwd)/include/SDL2 -g -o spriteSheetsP
 
 clang++ -c -std=c++11 -I$(pwd)/include -I$(pwd)/include/SDL2 -g -o movement.o src/movement.cpp -Wno-expansion-to-defined
 
+clang++ -c -std=c++11 -I$(pwd)/include -I$(pwd)/include/SDL2 -g -o input.o src/input.cpp -Wno-expansion-to-defined
+
+
+# clang++ -c -std=c++11  -I$(pwd)/include -I$(pwd)/include/SDL2 -g -o collisions.o src/collisions.cpp -Wno-expansion-to-defined
 
 clang++ -c -std=c++11  -I$(pwd)/include -I$(pwd)/include/SDL2 -g -o main.o src/game_main.cpp -Wno-expansion-to-defined
 
-clang++ -L$(pwd)/lib -lSDL2 -lSDL2main -lSDL2_image -Wl,-rpath,$(pwd)/lib flecs.o animationProcessing.o movement.o spriteSheetsProcessing.o main.o -g -o app
+
+clang++ -std=c++11  -L$(pwd)/lib -lSDL2 -lSDL2main -lSDL2_image -Wl,-rpath,$(pwd)/lib flecs.o input.o animationProcessing.o movement.o spriteSheetsProcessing.o main.o -g -o app
 
 rm -f *.o
 
