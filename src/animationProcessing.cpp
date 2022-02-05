@@ -9,6 +9,7 @@
 #include <SDL2/SDL_image.h>
 #include "flecs.h"
 #include "input.h"
+#include "velocity.h"
 
 //
 // HELPER
@@ -102,7 +103,10 @@ void KeyboardStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animate
         if(keyStates[SDL_SCANCODE_2]){
             animatedSpritePlay(&animatedSprites[i], "stand-attack");
             restartAnimation(&animatedSprites[i].animations[animatedSprites[i].currentAnimation]);
-        } 
+        }
+        if(keyStates[SDL_SCANCODE_3]){
+            animatedSpritePlay(&animatedSprites[i], "idle");
+        }
         // if(keyStates[SDL_SCANCODE_3]){
         //     animatedSprites[i].currentAnimation = 3;
         // } 
@@ -118,6 +122,21 @@ void InputFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Input *in
         }
         else if(inputIsPressed(inputs[i], "right")){
             animatedSprites[i].flip = SDL_FLIP_NONE;
+        }
+    }
+}
+
+void setAnimationBasedOnSpeedSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities){
+    for(int i : it){
+        // set animation
+        if(velocities[i].x == 0){
+            animatedSpritePlay(&animatedSprites[i], "idle");
+        }
+        else if(velocities[i].x < 5.0f && velocities[i].x > -5.0f){
+            animatedSpritePlay(&animatedSprites[i], "walk");
+        }
+        else {
+            animatedSpritePlay(&animatedSprites[i], "run");
         }
     }
 }

@@ -10,6 +10,6 @@
 
 void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions);
 
-void keyStateVelocitySetterSystem(flecs::iter &it, Velocity *velocities, KeyboardState *keyStatesCollections);
+void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inputs);
 
 #endif

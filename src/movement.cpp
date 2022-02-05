@@ -64,5 +64,8 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
             }
         }
 
+        // gravity
+        velocities[i].y = 1.0f;
+
     }
 }

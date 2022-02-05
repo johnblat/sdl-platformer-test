@@ -8,6 +8,7 @@
 #include "position.h"
 #include "input.h"
 #include "flecs.h"
+#include "velocity.h"
 
 extern Position gCameraPosition;
 /**
@@ -30,6 +31,14 @@ void animationsAccumulationSystem(flecs::iter &it, AnimatedSprite *animatedSprit
  */
 void KeyboardStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections);
 
+/**
+ * @brief sets animation according to the velocity of the entity
+ * 
+ * @param it 
+ * @param animatedSprites 
+ * @param velocities 
+ */
+void setAnimationBasedOnSpeedSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities);
 
 /**
  * @brief will flip the animated sprite based on the key that is pressed. intended to set the left and right facing directions

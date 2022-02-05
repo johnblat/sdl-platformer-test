@@ -37,7 +37,7 @@ struct Ray2d {
     float distance; 
 };
 
-typedef struct Ray2dCollection;
+typedef struct Ray2dCollection Ray2dCollection;
 struct Ray2dCollection {
     std::vector<Ray2d> rays;
 };
@@ -74,6 +74,33 @@ void renderRectangularObjectsSystem(flecs::iter &it, RectangularObject *rectObje
     }
 }
 
+
+void ray2dRectangularObjectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections ){
+    for(int i : it){
+        // check against rectangular objects
+        Ray2d rayLocal = ray2dCollections[i].at(0);
+        Ray2d rayGlobal;
+        rayGlobal.startingPosition.x = positions[i].x + rayLocal.startingPosition.x;
+        rayGlobal.startingPosition.y = positions[i].y + rayLocal.startingPosition.y;
+
+        auto f = it.world().filter<RectangularObject>();
+        f.each([&](flecs::entity e, RectangularObject &rectObj){
+            if(rayGlobal.startingPosition.x > rectObj.rect.x
+            && rayGlobal.startingPosition.x < rectObj.rect.x + rectObj.rect.w){
+                //ray x is in the rect
+                if(rayGlobal.startingPosition.y > rectObj.rect.y
+                && rayGlobal.startingPosition.y < rectObj.rect.y + rectObj.rect.h){
+                    // ray y is inside rect
+                    positions[i].y = rectObj.rect.y - rayLocal.distance;
+                }
+                else if(rayGlobal.startingPosition.y + rayLocal.distance > rectObj.rect.y
+                && rayGlobal.startingPosition.y + rayLocal.distance < rectObj.rect.y + rectObj.rect.h){
+                    positions[i].y = rectObj.rect.y - rayLocal.distance;
+                }
+            }
+        });
+    }
+}
 
 
 
@@ -209,6 +236,25 @@ int main(){
         const char *standingAttackAnimationName = "stand-attack";
         strncpy(standingAttackAnimation.name, standingAttackAnimationName, 16);
     }
+
+    Animation idleAnimation;
+    {
+        idleAnimation.accumulator = 0.0f;
+        idleAnimation.arrFrames[0] = 75;
+        idleAnimation.arrFrames[1] = 76;
+        idleAnimation.arrFrames[2] = 77;
+        idleAnimation.arrFrames[3] = 78;
+        idleAnimation.arrFrames[4] = 77;
+        idleAnimation.arrFrames[5] = 76;
+
+        idleAnimation.numFrames = 6;
+        idleAnimation.currentFrame = 0;
+        idleAnimation.fps = 12;
+        idleAnimation.msPerFrame = 0.0833;
+        idleAnimation.isLoop = true;
+        const char *idleAnimationName = "idle";
+        strncpy(idleAnimation.name, idleAnimationName, 16);
+    }
     
     
     addNewAnimationToAnimatedSprite(&animatedSprite);
@@ -219,6 +265,9 @@ int main(){
 
     addNewAnimationToAnimatedSprite(&animatedSprite);
     overwriteAnimationOnAnimatedSprite(&animatedSprite, 2, standingAttackAnimation);
+
+    addNewAnimationToAnimatedSprite(&animatedSprite);
+    overwriteAnimationOnAnimatedSprite(&animatedSprite, 3, idleAnimation);
 
     animatedSprite.currentAnimation = 0;
     
@@ -347,6 +396,7 @@ int main(){
     world.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState").kind(flecs::OnUpdate).iter(KeyboardStateAnimationSetterSystem);
 
     world.system<Velocity, Input>("keyStateVelocitySetter").kind(flecs::OnUpdate).iter(InputVelocitySetterSystem);
+    world.system<Position, std::vector<Ray2d>>("collision").kind(flecs::PostUpdate).iter(ray2dRectangularObjectCollisionSystem);
 
     world.system<Velocity, Position>("move").kind(flecs::OnUpdate).iter(moveSystem);
 
@@ -356,9 +406,11 @@ int main(){
 
     world.system<Position, std::vector<Ray2d>>().kind(flecs::OnStore).iter(renderRay2dCollectionsSystem);
 
+    world.system<AnimatedSprite, Velocity>().kind(flecs::OnUpdate).iter(setAnimationBasedOnSpeedSystem);
+
     // TEST Rectangular objects
 
-    SDL_Rect floorRect = {0,300,1000,40};
+    SDL_Rect floorRect = {0,300,2000,40};
     SDL_Color floorRectColor = {0,0,200};
 
     RectangularObject robj;
