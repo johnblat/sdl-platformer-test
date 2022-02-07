@@ -37,6 +37,11 @@ struct Ray2d {
     float distance; 
 };
 
+typedef struct PhysicsData PhysicsData;
+struct PhysicsData {
+    bool onGround;
+};
+
 typedef struct Ray2dCollection Ray2dCollection;
 struct Ray2dCollection {
     std::vector<Ray2d> rays;
@@ -144,7 +149,9 @@ int main(){
     flecs::world world;
     flecs::entity pinkGuyEntity = world.entity("PinkGuy");
     flecs::entity owlGuyEntity = world.entity("OwlGuy");
-    flecs::entity floorEntity = world.entity("Floor");
+    flecs::entity floor1Entity = world.entity("Floor");
+    flecs::entity floor2Entity = world.entity("Floor2");
+
 
     /**
      * SDL SETUP
@@ -277,7 +284,7 @@ int main(){
     pinkGuyEntity.set<Velocity>((Velocity){0,0});
     // pinkGuyEntity.set<CollisionRect>((CollisionRect){32,32});
     
-    InputButtonState bstates[2];
+    InputButtonState bstates[3];
     bstates[0].currentInputState = INPUT_IS_NOT_PRESSED;
     bstates[0].previousInputState = INPUT_IS_NOT_PRESSED;
     bstates[0].name = std::string("left");
@@ -288,9 +295,14 @@ int main(){
     bstates[1].name = "right";
     bstates[1].sdlScancode = SDL_SCANCODE_D;
 
+    bstates[2].currentInputState = INPUT_IS_NOT_PRESSED;
+    bstates[2].previousInputState = INPUT_IS_NOT_PRESSED;
+    bstates[2].name = "jump";
+    bstates[2].sdlScancode = SDL_SCANCODE_SPACE;
+
     Input pinkGuyInput;
     pinkGuyInput.buttonStates = bstates;
-    pinkGuyInput.numButtomStates = 2;
+    pinkGuyInput.numButtomStates = 3;
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
 
@@ -302,6 +314,10 @@ int main(){
     rays.push_back(ray0);
 
     pinkGuyEntity.set<std::vector<Ray2d>>(rays);
+
+
+    
+
     // OTHER CHARACTER SETUP
 
     owlGuyEntity.add<AnimatedSprite>();
@@ -417,9 +433,18 @@ int main(){
     robj.rect = floorRect;
     robj.color = floorRectColor;
 
+    SDL_Rect floorRect2 = {500,290,2000,40};
+    SDL_Color floorRectColor2 = {0,0,200};
+
+    RectangularObject robj2;
+    robj2.rect = floorRect2;
+    robj2.color = floorRectColor2;
+
     world.system<RectangularObject>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
 
-    floorEntity.set<RectangularObject>(robj); 
+    floor1Entity.set<RectangularObject>(robj); 
+    floor2Entity.set<RectangularObject>(robj2); 
+
 
     // timing
     // float deltaTime = 0.0f;

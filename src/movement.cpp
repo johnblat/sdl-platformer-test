@@ -17,11 +17,13 @@ void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
 
 
 void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inputs){
+
     const float acc = 0.046875;// * 600;
     const float frc = 0.046875;// * 600;
     const float dec = 0.5;// * 600;
     const float topSpeed = 6;// * 600;
     const float groundSpeed = 0;
+    const float gravAcc = 0.046875;
 
     for(auto i : it){
         // side
@@ -64,8 +66,11 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
             }
         }
 
-        // gravity
-        velocities[i].y = 1.0f;
-
+        if(inputIsJustPressed(inputs[i], "jump")){
+            velocities[i].y = -4.0f;
+        }
     }
 }
+
+
+void gravitySystem(flecs::iter &it, Velocity *velocities, vector<)
