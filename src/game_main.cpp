@@ -15,6 +15,8 @@
 #include "flecs.h"
 #include <string>
 #include <vector>
+#include "ray2d.h"
+#include "states.h"
 
 
 SDL_Renderer *gRenderer;
@@ -30,12 +32,6 @@ struct RectangularObject {
 };
 
 
-// always points downwards
-typedef struct Ray2d Ray2d;
-struct Ray2d {
-    Position startingPosition;
-    float distance; 
-};
 
 typedef struct PhysicsData PhysicsData;
 struct PhysicsData {
@@ -315,7 +311,8 @@ int main(){
 
     pinkGuyEntity.set<std::vector<Ray2d>>(rays);
 
-
+    State state = STATE_ON_GROUND;
+    pinkGuyEntity.set<State>(state);
     
 
     // OTHER CHARACTER SETUP
@@ -423,6 +420,8 @@ int main(){
     world.system<Position, std::vector<Ray2d>>().kind(flecs::OnStore).iter(renderRay2dCollectionsSystem);
 
     world.system<AnimatedSprite, Velocity>().kind(flecs::OnUpdate).iter(setAnimationBasedOnSpeedSystem);
+
+    world.system<Velocity>().kind(flecs::OnUpdate).iter(gravitySystem);
 
     // TEST Rectangular objects
 

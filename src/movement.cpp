@@ -4,7 +4,8 @@
 #include "jbInts.h"
 #include "input.h"
 #include "util.h"
-
+#include <vector>
+#include "ray2d.h"
 
 void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
     
@@ -24,6 +25,7 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
     const float topSpeed = 6;// * 600;
     const float groundSpeed = 0;
     const float gravAcc = 0.046875;
+    const float jump = 6.5f;
 
     for(auto i : it){
         // side
@@ -67,10 +69,18 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
         }
 
         if(inputIsJustPressed(inputs[i], "jump")){
-            velocities[i].y = -4.0f;
+            velocities[i].y = -jump;
         }
     }
 }
 
 
-void gravitySystem(flecs::iter &it, Velocity *velocities, vector<)
+void gravitySystem(flecs::iter &it, Velocity *velocities){
+    const float grv = 0.21875f;
+    const float max = 6.0f;
+    for(int i : it){
+        if(velocities[i].y < max){
+            velocities[i].y += grv;
+        }
+    }
+}
