@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 clang -c -std=gnu99 -I$(pwd)/include/flecs -I$(pwd)/include -g -o flecs.o src/flecs.c
 

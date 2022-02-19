@@ -33,15 +33,11 @@ struct RectangularObject {
 
 
 
-typedef struct PhysicsData PhysicsData;
-struct PhysicsData {
-    bool onGround;
+typedef struct Dimensions Dimensions;
+struct Dimensions {
+    float w, h;
 };
 
-typedef struct Ray2dCollection Ray2dCollection;
-struct Ray2dCollection {
-    std::vector<Ray2d> rays;
-};
 
 struct Sensors {
     Position bottomLeftAnchorPoint;
@@ -76,30 +72,57 @@ void renderRectangularObjectsSystem(flecs::iter &it, RectangularObject *rectObje
 }
 
 
-void ray2dRectangularObjectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections ){
+void ray2dRectangularObjectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections, Velocity *velocities, State *states ){
     for(int i : it){
         // check against rectangular objects
-        Ray2d rayLocal = ray2dCollections[i].at(0);
-        Ray2d rayGlobal;
-        rayGlobal.startingPosition.x = positions[i].x + rayLocal.startingPosition.x;
-        rayGlobal.startingPosition.y = positions[i].y + rayLocal.startingPosition.y;
-
-        auto f = it.world().filter<RectangularObject>();
-        f.each([&](flecs::entity e, RectangularObject &rectObj){
-            if(rayGlobal.startingPosition.x > rectObj.rect.x
-            && rayGlobal.startingPosition.x < rectObj.rect.x + rectObj.rect.w){
-                //ray x is in the rect
-                if(rayGlobal.startingPosition.y > rectObj.rect.y
-                && rayGlobal.startingPosition.y < rectObj.rect.y + rectObj.rect.h){
-                    // ray y is inside rect
-                    positions[i].y = rectObj.rect.y - rayLocal.distance;
-                }
-                else if(rayGlobal.startingPosition.y + rayLocal.distance > rectObj.rect.y
-                && rayGlobal.startingPosition.y + rayLocal.distance < rectObj.rect.y + rectObj.rect.h){
-                    positions[i].y = rectObj.rect.y - rayLocal.distance;
-                }
+        // if(velocities[i].y <= 0){
+        //     continue;
+        // }
+        
+        State state = STATE_IN_AIR;
+        Ray2d winRay;
+        bool didCollide = false;
+        for(int vi = 0; vi < ray2dCollections[i].size(); vi++){
+            if(velocities[i].y < 0){
+                ray2dCollections[i][vi].distance = 18;
             }
-        });
+            Ray2d rayLocal = ray2dCollections[i].at(vi);
+            Ray2d rayGlobal;
+            rayGlobal.startingPosition.x = positions[i].x + rayLocal.startingPosition.x;
+            rayGlobal.startingPosition.y = positions[i].y + rayLocal.startingPosition.y;
+
+            
+
+            
+            auto f = it.world().filter<RectangularObject>();
+            f.each([&](flecs::entity e, RectangularObject &rectObj){
+                if(rayGlobal.startingPosition.x > rectObj.rect.x
+                && rayGlobal.startingPosition.x < rectObj.rect.x + rectObj.rect.w){
+                    //ray x is in the rect
+                    if(rayGlobal.startingPosition.y > rectObj.rect.y
+                    && rayGlobal.startingPosition.y < rectObj.rect.y + rectObj.rect.h){
+                        ray2dCollections[i][vi].distance = 32;
+                        
+                        // ray y is inside rect
+                        positions[i].y = rectObj.rect.y - rayLocal.distance/2 ;
+                        state = STATE_ON_GROUND;
+                    }
+                    else if(rayGlobal.startingPosition.y + ray2dCollections[i][vi].distance > rectObj.rect.y
+                    && rayGlobal.startingPosition.y + rayLocal.distance < rectObj.rect.y + rectObj.rect.h){
+                        ray2dCollections[i][vi].distance = 32;
+
+                        positions[i].y = rectObj.rect.y - ray2dCollections[i][vi].distance/2 ;
+                        state = STATE_ON_GROUND;
+                    }
+                }
+                
+            });
+        }
+        states[i] = state;
+        if(state == STATE_IN_AIR){
+            continue;
+        }
+        
     }
 }
 
@@ -302,12 +325,21 @@ int main(){
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
 
+    Dimensions pinkDimensions;
+    pinkDimensions.h = 32;
+    pinkGuyEntity.set<Dimensions>(pinkDimensions);
+     
     std::vector<Ray2d> rays;
-    Ray2d ray0;
-    ray0.startingPosition.x = 0.0f;
+    Ray2d ray0, ray1;
+    ray0.startingPosition.x = -8.0f;
     ray0.startingPosition.y = 0.0f;
-    ray0.distance = 16.0f;
+    ray0.distance = 32.0f;
+    ray1.startingPosition.x = 8.0f;
+    ray1.startingPosition.y = 0.0f;
+    ray1.distance = 32.0f;
     rays.push_back(ray0);
+    
+    rays.push_back(ray1);
 
     pinkGuyEntity.set<std::vector<Ray2d>>(rays);
 
@@ -408,8 +440,9 @@ int main(){
 
     world.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState").kind(flecs::OnUpdate).iter(KeyboardStateAnimationSetterSystem);
 
-    world.system<Velocity, Input>("keyStateVelocitySetter").kind(flecs::OnUpdate).iter(InputVelocitySetterSystem);
-    world.system<Position, std::vector<Ray2d>>("collision").kind(flecs::PostUpdate).iter(ray2dRectangularObjectCollisionSystem);
+    world.system<Velocity, Input, State>("keyStateVelocitySetter").kind(flecs::PreUpdate).iter(InputVelocitySetterSystem);
+
+    world.system<Position, std::vector<Ray2d>, Velocity, State>("collision").kind(flecs::PostUpdate).iter(ray2dRectangularObjectCollisionSystem);
 
     world.system<Velocity, Position>("move").kind(flecs::OnUpdate).iter(moveSystem);
 
@@ -421,7 +454,7 @@ int main(){
 
     world.system<AnimatedSprite, Velocity>().kind(flecs::OnUpdate).iter(setAnimationBasedOnSpeedSystem);
 
-    world.system<Velocity>().kind(flecs::OnUpdate).iter(gravitySystem);
+    world.system<Velocity, State>().kind(flecs::OnUpdate).iter(gravitySystem);
 
     // TEST Rectangular objects
 

@@ -6,6 +6,7 @@
 #include "util.h"
 #include <vector>
 #include "ray2d.h"
+#include "states.h"
 
 void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
     
@@ -17,7 +18,7 @@ void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
 }
 
 
-void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inputs){
+void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inputs, State *states){
 
     const float acc = 0.046875;// * 600;
     const float frc = 0.046875;// * 600;
@@ -69,16 +70,21 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
         }
 
         if(inputIsJustPressed(inputs[i], "jump")){
+            states[i] = STATE_IN_AIR;
             velocities[i].y = -jump;
         }
     }
 }
 
 
-void gravitySystem(flecs::iter &it, Velocity *velocities){
+void gravitySystem(flecs::iter &it, Velocity *velocities, State *states){
     const float grv = 0.21875f;
     const float max = 6.0f;
     for(int i : it){
+        if(states[i] == STATE_ON_GROUND){
+            velocities[i].y = 0;
+            continue;
+        }
         if(velocities[i].y < max){
             velocities[i].y += grv;
         }
