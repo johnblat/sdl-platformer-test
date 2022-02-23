@@ -7,7 +7,7 @@ CXXFLAGS = -std=c++11 -Wno-expansion-to-defined
 
 CSOURCES = src/flecs.c
 
-CXXSOURCES = src/animationProcessing.cpp src/spriteSheetsProcessing.cpp src/game_main.cpp 
+CXXSOURCES = src/animationProcessing.cpp src/spriteSheetsProcessing.cpp src/game_main.cpp src/input.cpp src/movement.cpp src/collisions.cpp
 
 
 LFLAGS = -L$(CWD)/lib
@@ -20,23 +20,21 @@ BUILD_PATH = build
 CXXFILENAMES := $(notdir $(CXXSOURCES))
 CFILENAMES := $(notdir $(CSOURCES))
 
-CXXOBJ := $(CXXSOURCES:%.cpp=%.o)
-COBJ := $(CSOURCES:%.c=%.o)
+CXXOBJ := $(CXXFILENAMES:%.cpp=build/%.o)
+COBJ := $(CFILENAMES:%.c=build/%.o)
 
 OBJ := $(COBJ) $(CXXOBJ)
 
-BUILTOBJ := $(addprefix $(BUILD_PATH)/,$(notdir $(OBJ)))
 
+all: $(COBJ) $(CXXOBJ)
+	$(CXX) $(CXXFLAGS) $(LFLAGS) $(LIBS) -g $^ -o app
 
+build/%.o: src/%.c
+	$(CC) $(CFLAGS) $(IFLAGS) -c -g $^ -o $@
 
-app:  $(COBJ) $(CXXOBJ)
-	$(CXX) $(LFLAGS) $(LIBS) $^ -g -o $@
-	
-%.o: %.c
-	$(CC) -c $(CFLAGS) $(IFLAGS) -o $@ $< 
+build/%.o: src/%.cpp
+	$(CXX) $(CXXFLAGS) $(IFLAGS) -c -g $^ -o $@
 
-%.o: %.cpp
-	$(CXX) -c  $(CXXFLAGS) $(IFLAGS) -o  $@ $< 
-
+.PHONY: clean 
 clean:
-	rm -f src/*.o 
+	rm -f *.o 

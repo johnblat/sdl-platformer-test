@@ -69,7 +69,7 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
             }
         }
 
-        if(inputIsJustPressed(inputs[i], "jump")){
+        if(inputIsJustPressed(inputs[i], "jump") && states[i] != STATE_IN_AIR){
             states[i] = STATE_IN_AIR;
             velocities[i].y = -jump;
         }

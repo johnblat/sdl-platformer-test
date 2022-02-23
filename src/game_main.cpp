@@ -17,7 +17,8 @@
 #include <vector>
 #include "ray2d.h"
 #include "states.h"
-
+#include "solid_rect.h"
+#include "collisions.h"
 
 SDL_Renderer *gRenderer;
 SDL_Window *gWindow;
@@ -25,11 +26,6 @@ SDL_Window *gWindow;
 SpriteSheet gSpriteSheets[MAX_SPRITE_SHEETS]; 
 size_t gNumSpriteSheets = 0;
 
-typedef struct RectangularObject RectangularObject;
-struct RectangularObject {
-    SDL_Rect rect;
-    SDL_Color color;
-};
 
 
 
@@ -39,12 +35,8 @@ struct Dimensions {
 };
 
 
-struct Sensors {
-    Position bottomLeftAnchorPoint;
-    Position bottomRightAnchorPoint;
-};
 
-void renderRectangularObjectsSystem(flecs::iter &it, RectangularObject *rectObjects){
+void renderRectangularObjectsSystem(flecs::iter &it, SolidRect *rectObjects){
     // FIX THISS
     Position centerScreen = {320, 240};
 
@@ -72,59 +64,6 @@ void renderRectangularObjectsSystem(flecs::iter &it, RectangularObject *rectObje
 }
 
 
-void ray2dRectangularObjectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections, Velocity *velocities, State *states ){
-    for(int i : it){
-        // check against rectangular objects
-        // if(velocities[i].y <= 0){
-        //     continue;
-        // }
-        
-        State state = STATE_IN_AIR;
-        Ray2d winRay;
-        bool didCollide = false;
-        for(int vi = 0; vi < ray2dCollections[i].size(); vi++){
-            if(velocities[i].y < 0){
-                ray2dCollections[i][vi].distance = 18;
-            }
-            Ray2d rayLocal = ray2dCollections[i].at(vi);
-            Ray2d rayGlobal;
-            rayGlobal.startingPosition.x = positions[i].x + rayLocal.startingPosition.x;
-            rayGlobal.startingPosition.y = positions[i].y + rayLocal.startingPosition.y;
-
-            
-
-            
-            auto f = it.world().filter<RectangularObject>();
-            f.each([&](flecs::entity e, RectangularObject &rectObj){
-                if(rayGlobal.startingPosition.x > rectObj.rect.x
-                && rayGlobal.startingPosition.x < rectObj.rect.x + rectObj.rect.w){
-                    //ray x is in the rect
-                    if(rayGlobal.startingPosition.y > rectObj.rect.y
-                    && rayGlobal.startingPosition.y < rectObj.rect.y + rectObj.rect.h){
-                        ray2dCollections[i][vi].distance = 32;
-                        
-                        // ray y is inside rect
-                        positions[i].y = rectObj.rect.y - rayLocal.distance/2 ;
-                        state = STATE_ON_GROUND;
-                    }
-                    else if(rayGlobal.startingPosition.y + ray2dCollections[i][vi].distance > rectObj.rect.y
-                    && rayGlobal.startingPosition.y + rayLocal.distance < rectObj.rect.y + rectObj.rect.h){
-                        ray2dCollections[i][vi].distance = 32;
-
-                        positions[i].y = rectObj.rect.y - ray2dCollections[i][vi].distance/2 ;
-                        state = STATE_ON_GROUND;
-                    }
-                }
-                
-            });
-        }
-        states[i] = state;
-        if(state == STATE_IN_AIR){
-            continue;
-        }
-        
-    }
-}
 
 
 
@@ -461,21 +400,21 @@ int main(){
     SDL_Rect floorRect = {0,300,2000,40};
     SDL_Color floorRectColor = {0,0,200};
 
-    RectangularObject robj;
+    SolidRect robj;
     robj.rect = floorRect;
     robj.color = floorRectColor;
 
     SDL_Rect floorRect2 = {500,290,2000,40};
     SDL_Color floorRectColor2 = {0,0,200};
 
-    RectangularObject robj2;
+    SolidRect robj2;
     robj2.rect = floorRect2;
     robj2.color = floorRectColor2;
 
-    world.system<RectangularObject>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
+    world.system<SolidRect>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
 
-    floor1Entity.set<RectangularObject>(robj); 
-    floor2Entity.set<RectangularObject>(robj2); 
+    floor1Entity.set<SolidRect>(robj); 
+    floor2Entity.set<SolidRect>(robj2); 
 
 
     // timing
