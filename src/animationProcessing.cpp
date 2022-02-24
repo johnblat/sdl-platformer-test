@@ -61,6 +61,7 @@ void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSpr
 
         float scale;
         SDL_RenderGetScale(gRenderer,&scale, NULL );
+        gCenterScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f};
         Position scaledCenterScreen = {gCenterScreen.x / scale, gCenterScreen.y / scale};
         
         SDL_Rect renderRect;

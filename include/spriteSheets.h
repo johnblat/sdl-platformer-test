@@ -13,18 +13,12 @@ struct SpriteSheet {
     size_t numCellCols;
 };   
 
-struct Sprite {
-    u32 spriteSheetId; // what sprite sheet?
-    u32 spriteSheetCellIndex; // which cell in the sprite sheet?
-};
-
-
 
 /**
  * The main idea here is that these variables will store the sprite sheets that are active in the game.
  * Other Objects that reference a sprite sheet will do so by name or id.
  * 
- * The reason is that mamny objects might share a sprite sheet. For example enemies, 
+ * The reason is that many objects might share a sprite sheet. For example enemies,
  * or perhaps any number of game objects or props might reference the same sprite sheet.
  * 
  * We could store a pointer in all of these objects, however, if that pointer goes haywire we handle that

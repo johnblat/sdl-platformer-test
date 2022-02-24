@@ -20,6 +20,9 @@
 SDL_Renderer *gRenderer;
 SDL_Window *gWindow;
 
+int gScreenWidth = 640 * 2;
+int gScreenHeight = 480 * 2;
+
 SpriteSheet gSpriteSheets[MAX_SPRITE_SHEETS]; 
 size_t gNumSpriteSheets = 0;
 
@@ -49,7 +52,7 @@ int main(){
      * 
      */
     SDL_Init(SDL_INIT_VIDEO);
-    gWindow = SDL_CreateWindow("title",0,0, 640,480, SDL_WINDOW_SHOWN);
+    gWindow = SDL_CreateWindow("title",0,0, gScreenWidth,gScreenHeight, SDL_WINDOW_SHOWN);
     gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
     SDL_Event event;
 
@@ -355,7 +358,7 @@ int main(){
     const float FPS = 60;
     const float secondsPerFrame = 1.0f / FPS;
 
-    float zoomAmount = 1.0f;
+    float zoomAmount = 2.0f;
     // main loop
     while(!quit){
         u64 startTicks = SDL_GetTicks();
