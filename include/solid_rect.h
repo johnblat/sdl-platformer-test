@@ -5,7 +5,7 @@
 
 typedef struct SolidRect SolidRect;
 struct SolidRect {
-    SDL_Rect rect;
+    float w, h;
     float rotation;
     SDL_Color color;
 };

@@ -16,6 +16,8 @@
 #include "solid_rect.h"
 #include "collisions.h"
 #include "debug_display.h"
+#define V2D_IMPLEMENTATION
+#include "v2d.h"
 
 SDL_Renderer *gRenderer;
 SDL_Window *gWindow;
@@ -317,7 +319,8 @@ int main(){
 
     world.system<Velocity, Input, State>("keyStateVelocitySetter").kind(flecs::PreUpdate).iter(InputVelocitySetterSystem);
 
-    world.system<Position, std::vector<Ray2d>, Velocity, State>("collision").kind(flecs::PostUpdate).iter(ray2dRectangularObjectCollisionSystem);
+    world.system<Position, std::vector<Ray2d>, Velocity, State>("collision").kind(flecs::PostUpdate).iter(
+            ray2dSolidRectCollisionSystem);
 
     world.system<Velocity, Position>("move").kind(flecs::OnUpdate).iter(moveSystem);
 
@@ -335,23 +338,36 @@ int main(){
 
     SDL_Rect floorRect = {0,300,2000,40};
     SDL_Color floorRectColor = {0,0,200};
-
+    Position frpos = {
+            (float)floorRect.x + (float)floorRect.w/2,
+            (float)floorRect.y + (float)floorRect.h/2,
+    };
     SolidRect robj;
-    robj.rect = floorRect;
+    robj.w = (float)floorRect.w;
+    robj.h = (float)floorRect.h;
+
     robj.color = floorRectColor;
 
     SDL_Rect floorRect2 = {500,290,2000,40};
     SDL_Color floorRectColor2 = {0,0,200};
 
+    Position frpos2 = {
+            (float)floorRect2.x + (float)floorRect2.w/2,
+            (float)floorRect2.y + (float)floorRect2.h/2,
+    };
+
     SolidRect robj2;
-    robj2.rect = floorRect2;
+    robj2.w = (float)floorRect2.w;
+    robj2.h = (float)floorRect2.h;
+
     robj2.color = floorRectColor2;
 
-    world.system<SolidRect>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
+    world.system<Position, SolidRect>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
 
     floor1Entity.set<SolidRect>(robj); 
-    floor2Entity.set<SolidRect>(robj2); 
-
+    floor2Entity.set<SolidRect>(robj2);
+    floor1Entity.set<Position>(frpos);
+    floor2Entity.set<Position>(frpos2);
 
     // timing
     // float deltaTime = 0.0f;

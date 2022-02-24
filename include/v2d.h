@@ -52,7 +52,7 @@ extern inline v2d v2d_sub(v2d a, v2d b);
 extern inline v2d v2d_scale(float val, v2d a);
 extern inline float v2d_dot( v2d a, v2d b );
 extern inline float v2d_magnitude( v2d v );
-extern inline float v2d_magnitude_noroot( v2d v );
+extern inline float v2d_magnitude_no_root(v2d v );
 extern inline v2d v2d_unit( v2d v );
 extern inline v2d v2d_perp(v2d v);
 extern inline float v2d_angle_between(v2d v, v2d u);
@@ -87,7 +87,7 @@ float v2d_magnitude( v2d v ) {
 }
 
 
-float v2d_magnitude_noroot( v2d v ){
+float v2d_magnitude_no_root( v2d v ){
     return v2d_dot(v, v);
 
 }

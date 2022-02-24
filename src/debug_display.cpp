@@ -8,7 +8,7 @@
 #include "ints.h"
 #include "window.h"
 
-void renderRectangularObjectsSystem(flecs::iter &it, SolidRect *rectObjects){
+void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidRect *rectObjects) {
     // FIX THIS
     Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f};
 
@@ -26,10 +26,12 @@ void renderRectangularObjectsSystem(flecs::iter &it, SolidRect *rectObjects){
         Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
 
         SDL_Rect renderRect;
-        renderRect.x = (int)rectObjects[i].rect.x - gCameraPosition.x + scaledCenterScreen.x;
-        renderRect.y = (int)rectObjects[i].rect.y - gCameraPosition.y + scaledCenterScreen.y;
-        renderRect.w = (int)rectObjects[i].rect.w;
-        renderRect.h = (int)rectObjects[i].rect.h;
+        renderRect.x =
+                positions[i].x - gCameraPosition.x + scaledCenterScreen.x - rectObjects[i].w * 0.5f;
+        renderRect.y =
+                positions[i].y - gCameraPosition.y + scaledCenterScreen.y - rectObjects[i].h * 0.5f;
+        renderRect.w = (int)rectObjects[i].w;
+        renderRect.h = (int)rectObjects[i].h;
 
         SDL_RenderFillRect(gRenderer, &renderRect);
     }
