@@ -6,7 +6,7 @@
 #include "position.h"
 #include "input.h"
 #include "ray2d.h"
-#include "jbInts.h"
+#include "ints.h"
 #include <vector>
 #include "states.h"
 

@@ -1,5 +1,5 @@
 #include "spriteSheets.h"
-#include "jbInts.h"
+#include "ints.h"
 #include <stdlib.h>
 #include "spriteSheetsProcessing.h"
 #include <SDL2/SDL.h>

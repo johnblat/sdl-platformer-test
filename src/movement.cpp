@@ -1,7 +1,7 @@
 #include "flecs.h"
 #include "velocity.h"
 #include "position.h"
-#include "jbInts.h"
+#include "ints.h"
 #include "input.h"
 #include "util.h"
 #include <vector>

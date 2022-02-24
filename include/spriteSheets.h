@@ -2,7 +2,7 @@
 #define sprsheeth
 
 #include <SDL2/SDL.h>
-#include "jbInts.h"
+#include "ints.h"
 
 struct SpriteSheet {
     char name[64];

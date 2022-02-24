@@ -2,7 +2,7 @@
 #define ssph
 
 #include "spriteSheets.h"
-#include "jbInts.h"
+#include "ints.h"
 #include <stdlib.h>
 
 u32 createSpriteSheet(const char *filename, size_t numCellRows, size_t numCellCols, const char *name);

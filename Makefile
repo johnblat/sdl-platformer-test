@@ -7,7 +7,7 @@ CXXFLAGS = -std=c++11 -Wno-expansion-to-defined
 
 CSOURCES = src/flecs.c
 
-CXXSOURCES = src/animationProcessing.cpp src/spriteSheetsProcessing.cpp src/game_main.cpp src/input.cpp src/movement.cpp src/collisions.cpp
+CXXSOURCES = src/animationProcessing.cpp src/spriteSheetsProcessing.cpp src/game_main.cpp src/input.cpp src/movement.cpp src/collisions.cpp src/debug_display.cpp src/camera.cpp
 
 
 LFLAGS = -L$(CWD)/lib
@@ -37,4 +37,4 @@ build/%.o: src/%.cpp
 
 .PHONY: clean 
 clean:
-	rm -f *.o 
+	rm -f build/*.o 

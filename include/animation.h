@@ -1,7 +1,7 @@
 #ifndef animh
 #define animh
 
-#include "jbInts.h"
+#include "ints.h"
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 

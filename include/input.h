@@ -1,7 +1,7 @@
 #ifndef inputh
 #define inputh
 
-#include "jbInts.h"
+#include "ints.h"
 #include <SDL2/SDL.h>
 #include <string>
 #include "flecs.h"
@@ -19,7 +19,6 @@ struct KeyboardState{
     u8 *keyStates;
 };
 
-// typedef enum InputState InputState;
 enum InputState {
     INPUT_IS_JUST_PRESSED,
     INPUT_IS_PRESSED,

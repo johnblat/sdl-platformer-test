@@ -10,7 +10,7 @@
 #include "flecs.h"
 #include "input.h"
 #include "velocity.h"
-
+#include "camera.h"
 //
 // HELPER
 //
@@ -52,8 +52,6 @@ void animationsAccumulationSystem(flecs::iter &it, AnimatedSprite *animatedSprit
 }
 
 
-Position gCameraPosition;
-Position gCenterScreen = {320, 240};
 
 void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions){
     for(auto i : it){

@@ -1,24 +1,21 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <string>
+#include <vector>
 #include "animation.h"
 #include "animationProcessing.h"
-#include "jbInts.h"
-#include "render.h"
+#include "ints.h"
 #include "spriteSheets.h"
 #include "spriteSheetsProcessing.h"
-#include "window.h"
-#include "string.h"
-#include "timestep.h"
 #include "velocity.h"
 #include "movement.h"
 #include "input.h"
 #include "flecs.h"
-#include <string>
-#include <vector>
 #include "ray2d.h"
 #include "states.h"
 #include "solid_rect.h"
 #include "collisions.h"
+#include "debug_display.h"
 
 SDL_Renderer *gRenderer;
 SDL_Window *gWindow;
@@ -27,75 +24,11 @@ SpriteSheet gSpriteSheets[MAX_SPRITE_SHEETS];
 size_t gNumSpriteSheets = 0;
 
 
-
-
 typedef struct Dimensions Dimensions;
 struct Dimensions {
     float w, h;
 };
 
-
-
-void renderRectangularObjectsSystem(flecs::iter &it, SolidRect *rectObjects){
-    // FIX THISS
-    Position centerScreen = {320, 240};
-
-
-    for(auto i : it){
-        SDL_SetRenderDrawColor(
-            gRenderer, 
-            rectObjects[i].color.r, 
-            rectObjects[i].color.g, 
-            rectObjects[i].color.b, 
-            255
-        );
-        float scale;
-        SDL_RenderGetScale(gRenderer,&scale, NULL );
-        Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
-
-        SDL_Rect renderRect;
-        renderRect.x = rectObjects[i].rect.x - gCameraPosition.x + scaledCenterScreen.x;
-        renderRect.y = rectObjects[i].rect.y - gCameraPosition.y + scaledCenterScreen.y;
-        renderRect.w = rectObjects[i].rect.w;
-        renderRect.h = rectObjects[i].rect.h;
-
-        SDL_RenderFillRect(gRenderer, &renderRect);
-    }
-}
-
-
-
-
-
-void renderRay2dCollectionsSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections){
-    // move this somewhere else
-    Position centerScreen = {320, 240};
-
-    for(int i : it){
-        std::vector<Ray2d> ray2ds = ray2dCollections[i];
-        for(int vi = 0; vi < ray2ds.size(); vi++ ){
-            float scale;
-            SDL_RenderGetScale(gRenderer,&scale, NULL );
-            Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
-
-            Ray2d ray = ray2ds[vi];
-            Position actualPosition; 
-            actualPosition.x = positions[i].x + ray.startingPosition.x;
-            actualPosition.y = positions[i].y + ray.startingPosition.y;
-            actualPosition.x = actualPosition.x - gCameraPosition.x + scaledCenterScreen.x;
-            actualPosition.y = actualPosition.y - gCameraPosition.y + scaledCenterScreen.y;
-
-            SDL_SetRenderDrawColor(gRenderer, 255,0,0,255);
-            SDL_RenderDrawLine(gRenderer, actualPosition.x, actualPosition.y, actualPosition.x, actualPosition.y + ray.distance);
-
-            SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
-            SDL_RenderDrawLine(gRenderer, actualPosition.x - 1, actualPosition.y, actualPosition.x - 1, actualPosition.y + ray.distance);
-            SDL_RenderDrawLine(gRenderer, actualPosition.x + 1, actualPosition.y, actualPosition.x + 1, actualPosition.y + ray.distance);
-
-
-        }
-    }
-}
 
 int main(){
     bool quit = false;
@@ -126,10 +59,10 @@ int main(){
      */
     SDL_Surface *bgSurface = IMG_Load("bg.png");
     SDL_Texture *bgTexture = SDL_CreateTextureFromSurface(gRenderer, bgSurface);
-    float parralaxBgScale = 0.25;
+    float parallaxBgScale = 0.25;
     int bg_w = bgSurface->w;
     int bg_h = bgSurface->h;
-    Position bgPosition = {640/2,480/2};
+    Position bgPosition = {640.0f/2,480.0f/2};
     SDL_Rect bgDestRect = {(int)bgPosition.x - bg_w/2,(int) bgPosition.y - bg_h/2, bg_w, bg_h}; 
     SDL_FreeSurface(bgSurface);
 
@@ -146,7 +79,7 @@ int main(){
     AnimatedSprite animatedSprite = createAnimatedSprite(spriteSheetId);
 
     // add animations to animatedSprite
-    Animation walkAnimation;
+    Animation walkAnimation{};
     {
         walkAnimation.accumulator = 0.0f;
         walkAnimation.arrFrames[0] = 15;
@@ -166,7 +99,7 @@ int main(){
     }
 
 
-    Animation runAnimation;
+    Animation runAnimation{};
     {
         runAnimation.accumulator = 0.0f;
         runAnimation.arrFrames[0] = 30;
@@ -186,7 +119,7 @@ int main(){
     }
     
 
-    Animation standingAttackAnimation;
+    Animation standingAttackAnimation{};
     {
         standingAttackAnimation.accumulator = 0.0f;
         standingAttackAnimation.arrFrames[0] = 45;
@@ -202,7 +135,7 @@ int main(){
         strncpy(standingAttackAnimation.name, standingAttackAnimationName, 16);
     }
 
-    Animation idleAnimation;
+    Animation idleAnimation{};
     {
         idleAnimation.accumulator = 0.0f;
         idleAnimation.arrFrames[0] = 75;
@@ -238,28 +171,28 @@ int main(){
     
     // ADD the setup AnimatedSprite to the pinkGuyEntity
     pinkGuyEntity.set<AnimatedSprite>(animatedSprite);
-    pinkGuyEntity.set<Position>((Position){640/2,480/2});
+    pinkGuyEntity.set<Position>((Position){640.0f/2.0f,480.0f/2.0f});
     pinkGuyEntity.set<Velocity>((Velocity){0,0});
     // pinkGuyEntity.set<CollisionRect>((CollisionRect){32,32});
     
-    InputButtonState bstates[3];
-    bstates[0].currentInputState = INPUT_IS_NOT_PRESSED;
-    bstates[0].previousInputState = INPUT_IS_NOT_PRESSED;
-    bstates[0].name = std::string("left");
-    bstates[0].sdlScancode = SDL_SCANCODE_A;
+    InputButtonState buttonStates[3];
+    buttonStates[0].currentInputState = INPUT_IS_NOT_PRESSED;
+    buttonStates[0].previousInputState = INPUT_IS_NOT_PRESSED;
+    buttonStates[0].name = std::string("left");
+    buttonStates[0].sdlScancode = SDL_SCANCODE_A;
 
-    bstates[1].currentInputState = INPUT_IS_NOT_PRESSED;
-    bstates[1].previousInputState = INPUT_IS_NOT_PRESSED;
-    bstates[1].name = "right";
-    bstates[1].sdlScancode = SDL_SCANCODE_D;
+    buttonStates[1].currentInputState = INPUT_IS_NOT_PRESSED;
+    buttonStates[1].previousInputState = INPUT_IS_NOT_PRESSED;
+    buttonStates[1].name = "right";
+    buttonStates[1].sdlScancode = SDL_SCANCODE_D;
 
-    bstates[2].currentInputState = INPUT_IS_NOT_PRESSED;
-    bstates[2].previousInputState = INPUT_IS_NOT_PRESSED;
-    bstates[2].name = "jump";
-    bstates[2].sdlScancode = SDL_SCANCODE_SPACE;
+    buttonStates[2].currentInputState = INPUT_IS_NOT_PRESSED;
+    buttonStates[2].previousInputState = INPUT_IS_NOT_PRESSED;
+    buttonStates[2].name = "jump";
+    buttonStates[2].sdlScancode = SDL_SCANCODE_SPACE;
 
     Input pinkGuyInput;
-    pinkGuyInput.buttonStates = bstates;
+    pinkGuyInput.buttonStates = buttonStates;
     pinkGuyInput.numButtomStates = 3;
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
@@ -296,7 +229,7 @@ int main(){
     AnimatedSprite animatedSprite2 = createAnimatedSprite(spriteSheetId2);
 
     // add animations to animatedSprite
-    Animation walkAnimation2;
+    Animation walkAnimation2{};
     {
         walkAnimation2.accumulator = 0.0f;
         walkAnimation2.arrFrames[0] = 15;
@@ -318,7 +251,7 @@ int main(){
 
     
 
-    Animation runAnimation2;
+    Animation runAnimation2{};
     {
         runAnimation2.accumulator = 0.0f;
         runAnimation2.arrFrames[0] = 30;
@@ -338,7 +271,7 @@ int main(){
     const char *runAnimation2Name = "run";
     strncpy(runAnimation2.name, runAnimation2Name, 3);
 
-    Animation standingAttackAnimation2;
+    Animation standingAttackAnimation2{};
     {
         standingAttackAnimation2.accumulator = 0.0f;
         standingAttackAnimation2.arrFrames[0] = 45;
@@ -367,7 +300,7 @@ int main(){
     animatedSprite2.currentAnimation = 0;
 
     owlGuyEntity.set<AnimatedSprite>(animatedSprite2);
-    owlGuyEntity.set<Position>((Position){640/2 + 50,480/2});
+    owlGuyEntity.set<Position>((Position){640.0f/2.0f + 50,480.0f/2.0f});
 
 
     
@@ -434,8 +367,8 @@ int main(){
                 break;
             }
         }
-        u8 *keyStates = (u8 *)SDL_GetKeyboardState(NULL);
-        KeyboardState keyboardState;
+        u8 *keyStates = (u8 *)SDL_GetKeyboardState(nullptr);
+        KeyboardState keyboardState{};
         keyboardState.keyStates = keyStates;    
 
         gKeyStates = keyStates;
@@ -463,23 +396,20 @@ int main(){
 
         Position centerScreen = {320, 240};
         Position scaledCenterScreen = {centerScreen.x / zoomAmount, centerScreen.y / zoomAmount};
-        float scaledParallaxScale = parralaxBgScale / zoomAmount; 
         // background moving with camera
-        bgDestRect.x = (((bgPosition.x - gCameraPosition.x)* parralaxBgScale + scaledCenterScreen.x) - (bg_w/2) ) ;
-        bgDestRect.y = ((bgPosition.y - gCameraPosition.y + scaledCenterScreen.y) - (bg_h / 2) );
+        bgDestRect.x =
+                ((int) bgPosition.x - (int) gCameraPosition.x) * (int) parallaxBgScale + (int) scaledCenterScreen.x -
+                ((int) bg_w / 2);
+        bgDestRect.y =
+                ((int) bgPosition.y - (int) gCameraPosition.y + (int) scaledCenterScreen.y - ((int) bg_h / 2) );
 
         SDL_RenderSetScale(gRenderer, zoomAmount, zoomAmount);
 
         // draw background
-        SDL_RenderCopy(gRenderer, bgTexture, NULL, &bgDestRect);
+        SDL_RenderCopy(gRenderer, bgTexture, nullptr, &bgDestRect);
 
         world.progress();
-        // animationsAccumulationSystem(&animatedSprite, 1, deltaTime);
 
-
-        // renderingAnimatedSpritesSystem(&animatedSprite, &position, 1);
-
-        //renderAnimatedSprite(640 / 2, 480 / 2, animatedSprite);
 
         SDL_RenderPresent(gRenderer);
 
@@ -491,7 +421,7 @@ int main(){
         if(totalSeconds < secondsPerFrame){
             float secondsRemainingToFixTimeStep = secondsPerFrame - totalSeconds;
             float msRemainingToFixTimeStep = secondsRemainingToFixTimeStep * 1000;
-            SDL_Delay(msRemainingToFixTimeStep);
+            SDL_Delay((u32)msRemainingToFixTimeStep);
             // printf("ms to wait: %f\n", msRemainingToFixTimeStep);
         }
     }
