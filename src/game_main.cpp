@@ -16,8 +16,7 @@
 #include "solid_rect.h"
 #include "collisions.h"
 #include "debug_display.h"
-#define V2D_IMPLEMENTATION
-#include "v2d.h"
+
 
 SDL_Renderer *gRenderer;
 SDL_Window *gWindow;
@@ -64,10 +63,10 @@ int main(){
      */
     SDL_Surface *bgSurface = IMG_Load("bg.png");
     SDL_Texture *bgTexture = SDL_CreateTextureFromSurface(gRenderer, bgSurface);
-    float parallaxBgScale = 0.25;
+    float parallaxBgScale = 0.5;
     int bg_w = bgSurface->w;
     int bg_h = bgSurface->h;
-    Position bgPosition = {640.0f/2,480.0f/2};
+    Position bgPosition = {gScreenWidth/2.0f,gScreenHeight/2.0f};
     SDL_Rect bgDestRect = {(int)bgPosition.x - bg_w/2,(int) bgPosition.y - bg_h/2, bg_w, bg_h}; 
     SDL_FreeSurface(bgSurface);
 
@@ -345,6 +344,7 @@ int main(){
     SolidRect robj;
     robj.w = (float)floorRect.w;
     robj.h = (float)floorRect.h;
+    robj.rotation = 0.05;
 
     robj.color = floorRectColor;
 
@@ -413,9 +413,10 @@ int main(){
         gCameraPosition.x = pinkGuyEntity.get<Position>()->x;
         gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
 
-        Position centerScreen = {320, 240};
+        Position centerScreen = {(float)gScreenWidth/2, (float)gScreenHeight/2};
         Position scaledCenterScreen = {centerScreen.x / zoomAmount, centerScreen.y / zoomAmount};
         // background moving with camera
+        // TODO: Fix this because it will only move visually when player is center of world
         bgDestRect.x =
                 ((int) bgPosition.x - (int) gCameraPosition.x) * (int) parallaxBgScale + (int) scaledCenterScreen.x -
                 ((int) bg_w / 2);

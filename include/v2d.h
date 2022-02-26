@@ -1,17 +1,15 @@
 #ifndef v2d_h
 #define v2d_h
 
-#include <math.h>
-#include <inttypes.h>
-#include <assert.h>
+#include <cmath>
+#include <cinttypes>
+#include <cassert>
 
 #define PI 3.14159265358979323846
 
 
 struct v2d {
     float x, y;
-
-    #ifdef __cplusplus
 
     v2d(float X, float Y) : x(X), y(Y) {}
     v2d() : x(0), y(0) {}
@@ -24,41 +22,24 @@ struct v2d {
         return (&x)[i];
     }
 
-    #endif // __cplusplus
-};
-
- 
-struct v2di {
-    int x, y;
-
-    #ifdef __cplusplus
-
-    v2di(float X, float Y) : x(X), y(Y) {}
-    v2di() : x(0), y(0) {}
-
-    int &operator[](const uint32_t i){
-        assert(i >= 0 && i <= 1);
-        return i == 0 ? x : y;
-    }
-
-    #endif // __cplusplus
 };
 
 
 
-
-extern inline v2d v2d_add(v2d a, v2d b);
-extern inline v2d v2d_sub(v2d a, v2d b);
-extern inline v2d v2d_scale(float val, v2d a);
-extern inline float v2d_dot( v2d a, v2d b );
-extern inline float v2d_magnitude( v2d v );
-extern inline float v2d_magnitude_no_root(v2d v );
-extern inline v2d v2d_unit( v2d v );
-extern inline v2d v2d_perp(v2d v);
-extern inline float v2d_angle_between(v2d v, v2d u);
-extern inline v2d v2d_rotate(v2d v, v2d o, float rads);
+ v2d v2d_add(v2d a, v2d b);
+ v2d v2d_sub(v2d a, v2d b);
+ v2d v2d_scale(float val, v2d a);
+ float v2d_dot( v2d a, v2d b );
+ float v2d_magnitude( v2d v );
+ float v2d_magnitude_no_root(v2d v );
+ v2d v2d_unit( v2d v );
+ v2d v2d_perp(v2d v);
+ float v2d_angle_between(v2d v, v2d u);
+ v2d v2d_rotate(v2d v, v2d o, float rads);
 
 #define v2d_normal v2d_unit
+
+#endif // v2d_h
 
 #ifdef V2D_IMPLEMENTATION
 
@@ -106,12 +87,16 @@ v2d v2d_unit( v2d v ) {
 
 
 v2d v2d_rotate(v2d v, v2d o, float rads){
+    // v2d rotatedV;
+    // float s = sin(rads);
+    // float c = cos(rads);
+    // v2d subtracted = v2d_sub(v, o);
+    // rotatedV.x = subtracted.x * c - subtracted.y * s;
+    // rotatedV.y = subtracted.x * s + subtracted.y * c;
+    // return rotatedV;
     v2d rotatedV;
-    float s = sin(rads);
-    float c = cos(rads);
-    v2d subtracted = v2d_sub(v, o);
-    rotatedV.x = subtracted.x * c - subtracted.y * s;
-    rotatedV.y = subtracted.x * s + subtracted.y * c;
+    rotatedV.x =      ((v.x - o.x) * cos(rads)) - ((v.y - o.y) * sin(rads)) + o.x;
+    rotatedV.y = o.y -((o.y - v.y) * cos(rads)) + ((v.x - o.x) * sin(rads));
     return rotatedV;
 }
     
@@ -120,7 +105,6 @@ v2d v2d_perp(v2d v){
     return perpV;
 }
 
-#ifdef __cplusplus
 
 inline v2d operator+(const v2d lhs, const v2d rhs){
      return v2d_add(lhs, rhs);
@@ -142,8 +126,5 @@ inline float operator*(v2d lhs, v2d rhs){
     return v2d_dot(lhs, rhs);
 }
 
-#endif // __cplusplus
 
 #endif // V2D_IMPLEMENTATION
-
-#endif // header guard
