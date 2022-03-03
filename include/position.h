@@ -4,4 +4,8 @@
 
 typedef v2d Position;
 
+struct Angle {
+    float rads;
+};
+
 #endif

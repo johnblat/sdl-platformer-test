@@ -11,6 +11,6 @@
 
 
 
-void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *rect, Velocity *velocities, State *states );
+void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections, Velocity *velocities, State *states, Angle *angles );
 
 #endif

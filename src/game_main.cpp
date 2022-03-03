@@ -175,8 +175,9 @@ int main(){
     
     // ADD the setup AnimatedSprite to the pinkGuyEntity
     pinkGuyEntity.set<AnimatedSprite>(animatedSprite);
-    pinkGuyEntity.set<Position>((Position){640.0f/2.0f,480.0f/2.0f});
+    pinkGuyEntity.set<Position>((Position){640.0f/2.0f,480.0f/2.0f - 400});
     pinkGuyEntity.set<Velocity>((Velocity){0,0});
+    pinkGuyEntity.set<Angle>((Angle){0.0f});
     // pinkGuyEntity.set<CollisionRect>((CollisionRect){32,32});
     
     InputButtonState buttonStates[3];
@@ -209,10 +210,10 @@ int main(){
     Ray2d ray0, ray1;
     ray0.startingPosition.x = -8.0f;
     ray0.startingPosition.y = 0.0f;
-    ray0.distance = 32.0f;
+    ray0.distance = 16.0f;
     ray1.startingPosition.x = 8.0f;
     ray1.startingPosition.y = 0.0f;
-    ray1.distance = 32.0f;
+    ray1.distance = 16.0f;
     rays.push_back(ray0);
     
     rays.push_back(ray1);
@@ -316,9 +317,9 @@ int main(){
 
     world.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState").kind(flecs::OnUpdate).iter(KeyboardStateAnimationSetterSystem);
 
-    world.system<Velocity, Input, State>("keyStateVelocitySetter").kind(flecs::PreUpdate).iter(InputVelocitySetterSystem);
+    world.system<Velocity, Input, State, Angle>("keyStateVelocitySetter").kind(flecs::PreUpdate).iter(InputVelocitySetterSystem);
 
-    world.system<Position, std::vector<Ray2d>, Velocity, State>("collision").kind(flecs::PostUpdate).iter(
+    world.system<Position, std::vector<Ray2d>, Velocity, State, Angle>("collision").kind(flecs::PostUpdate).iter(
             ray2dSolidRectCollisionSystem);
 
     world.system<Velocity, Position>("move").kind(flecs::OnUpdate).iter(moveSystem);
@@ -344,7 +345,7 @@ int main(){
     SolidRect robj;
     robj.w = (float)floorRect.w;
     robj.h = (float)floorRect.h;
-    robj.rotation = 0.05;
+    robj.rotation = 0.5;
 
     robj.color = floorRectColor;
 
@@ -442,7 +443,7 @@ int main(){
             float secondsRemainingToFixTimeStep = secondsPerFrame - totalSeconds;
             float msRemainingToFixTimeStep = secondsRemainingToFixTimeStep * 1000;
             SDL_Delay((u32)msRemainingToFixTimeStep);
-            // printf("ms to wait: %f\n", msRemainingToFixTimeStep);
+            //printf("ms to wait: %f\n", msRemainingToFixTimeStep);
         }
     }
 

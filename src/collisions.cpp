@@ -57,7 +57,8 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 }
 
 
-void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections, Velocity *velocities, State *states ){
+void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections, Velocity *velocities, State *states, Angle *angles ){
+    
     for(u64 i : it){
         // check against rectangular objects
         // if(velocities[i].y <= 0){
@@ -70,6 +71,8 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
             FLT_MAX,
             FLT_MAX
         );
+        v2d p1HighestIntersectingLine;
+        v2d p2HighestIntersectingLine;
 
         for(int vi = 0; vi < ray2dCollections[i].size(); vi++){
             if(velocities[i].y < 0){
@@ -101,39 +104,15 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
                         );
                         if(intersectionPoint.y < highestIntersectingPoint.y){
                             highestIntersectingPoint = intersectionPoint;
+                            // Depending on ground mode
+                            // this will have to change
+                            // for example, when normal
+                            // needs tp ensure p1.x < p2.x
+                            p1HighestIntersectingLine = p1;
+                            p2HighestIntersectingLine = p2;
                         }
                     }
                 }
-//                SDL_Rect rect = {
-//                        (int)position.x - (int)rect.w/2,
-//                        (int)position.y - (int)rect.h/2,
-//                        (int)rect.w,
-//                        (int)rect.h
-//                };
-//
-//                if(rayGlobal.startingPosition.x > rect.x
-//                && rayGlobal.startingPosition.x < rect.x + rect.w){
-//                    //ray x is in the rect
-//                    if(rayGlobal.startingPosition.y > rect.y
-//                    && rayGlobal.startingPosition.y < rect.y + rect.h){
-//                        ray2dCollections[i][0].distance = 32;
-//                        ray2dCollections[i][1].distance = 32;
-//
-//
-//                        // ray y is inside rect
-//                        positions[i].y = rect.y - rayLocal.distance/2 ;
-//                        state = STATE_ON_GROUND;
-//                    }
-//                    else if(rayGlobal.startingPosition.y + ray2dCollections[i][vi].distance > rect.y
-//                    && rayGlobal.startingPosition.y + rayLocal.distance < rect.y + rect.h){
-//                        ray2dCollections[i][0].distance = 32;
-//                        ray2dCollections[i][1].distance = 32;
-//
-//
-//                        positions[i].y = rect.y - ray2dCollections[i][vi].distance/2 ;
-//                        state = STATE_ON_GROUND;
-//                    }
-//                }
                 
             });
         }
@@ -141,7 +120,16 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
         if(highestIntersectingPoint.x != FLT_MAX){
             ray2dCollections[i][0].distance = 32;
             ray2dCollections[i][1].distance = 32;
-            positions[i].y = highestIntersectingPoint.y - ray2dCollections[i][0].distance/2;
+            positions[i].y = 
+                highestIntersectingPoint.y - ray2dCollections[i][0].distance/2;
+            v2d intersectingLineVector = 
+                p2HighestIntersectingLine - p1HighestIntersectingLine;
+            angles[i].rads = atan2(-intersectingLineVector.y, intersectingLineVector.x);
+            if(angles[i].rads < 0){
+                const float maxRads = 3.14 * 2;
+                angles[i].rads = maxRads +angles[i].rads;
+            }
+            
         }
 //        if(state == STATE_IN_AIR){
 //            continue;

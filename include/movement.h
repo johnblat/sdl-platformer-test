@@ -13,7 +13,7 @@
 
 void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions);
 
-void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inputs, State *states);
+void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inputs, State *states, Angle *angles);
 
 void gravitySystem(flecs::iter &it, Velocity *velocities, State *states);
 
