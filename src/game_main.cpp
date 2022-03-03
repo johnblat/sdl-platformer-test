@@ -63,7 +63,7 @@ int main(){
      */
     SDL_Surface *bgSurface = IMG_Load("bg.png");
     SDL_Texture *bgTexture = SDL_CreateTextureFromSurface(gRenderer, bgSurface);
-    float parallaxBgScale = 0.5;
+    float parallaxBgScale = 0.1;
     int bg_w = bgSurface->w;
     int bg_h = bgSurface->h;
     Position bgPosition = {gScreenWidth/2.0f,gScreenHeight/2.0f};
@@ -416,13 +416,12 @@ int main(){
 
         Position centerScreen = {(float)gScreenWidth/2, (float)gScreenHeight/2};
         Position scaledCenterScreen = {centerScreen.x / zoomAmount, centerScreen.y / zoomAmount};
-        // background moving with camera
-        // TODO: Fix this because it will only move visually when player is center of world
+    
         bgDestRect.x =
-                ((int) bgPosition.x - (int) gCameraPosition.x) * (int) parallaxBgScale + (int) scaledCenterScreen.x -
-                ((int) bg_w / 2);
+                (((int) bgPosition.x - (int) gCameraPosition.x*parallaxBgScale) + (int) scaledCenterScreen.x -
+                ((int) bg_w / 2));
         bgDestRect.y =
-                ((int) bgPosition.y - (int) gCameraPosition.y + (int) scaledCenterScreen.y - ((int) bg_h / 2) );
+                ((int) bgPosition.y - (int) gCameraPosition.y * parallaxBgScale + (int) scaledCenterScreen.y - ((int) bg_h / 2) );
 
         SDL_RenderSetScale(gRenderer, zoomAmount, zoomAmount);
 
