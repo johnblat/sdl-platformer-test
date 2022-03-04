@@ -334,6 +334,7 @@ int main(){
 
     world.system<Velocity, State>().kind(flecs::OnUpdate).iter(gravitySystem);
 
+    world.system<Position, SolidRect>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
     // TEST Rectangular objects
 
     SDL_Rect floorRect = {0,300,2000,40};
@@ -363,7 +364,7 @@ int main(){
 
     robj2.color = floorRectColor2;
 
-    world.system<Position, SolidRect>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
+    
 
     floor1Entity.set<SolidRect>(robj); 
     floor2Entity.set<SolidRect>(robj2);
@@ -383,7 +384,7 @@ int main(){
 
         while(SDL_PollEvent(&event)){
             if(event.type == SDL_QUIT){
-                quit = true;\
+                quit = true;
                 break;
             }
         }

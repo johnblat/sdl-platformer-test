@@ -58,7 +58,15 @@ bool inputIsJustReleased(Input input, std::string buttonName){
     assert(0 && "Exiting...");
 }
 
+InputButtonState createbuttonState(std::string name, SDL_Scancode scanCode){
+    InputButtonState ibs;
+    ibs.currentInputState = INPUT_IS_NOT_PRESSED;
+    ibs.previousInputState = INPUT_IS_NOT_PRESSED;
+    ibs.name = name;
+    ibs.sdlScancode = scanCode;
 
+    return ibs;
+}
 /**
  * SYSTEMS
  */

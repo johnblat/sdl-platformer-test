@@ -1,2 +1,2 @@
-#define SDL_REVISION "https://github.com/libsdl-org/SDL.git@eb8f332c2628ee3f24f625ea19f3772542a84911"
+#define SDL_REVISION "https://github.com/libsdl-org/SDL.git@2f7b885df954c130252e1a98b49ea0a7013c1dec"
 #define SDL_REVISION_NUMBER 0
