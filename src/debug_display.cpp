@@ -27,33 +27,22 @@ void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidR
         SDL_RenderGetScale(gRenderer,&scale, nullptr );
         Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
 
-        if(rectObjects[i].rotation == 0.0f){
-            SDL_Rect renderRect;
-            renderRect.x =
-                    positions[i].x - gCameraPosition.x + scaledCenterScreen.x - rectObjects[i].w * 0.5f;
-            renderRect.y =
-                    positions[i].y - gCameraPosition.y + scaledCenterScreen.y - rectObjects[i].h * 0.5f;
-            renderRect.w = (int)rectObjects[i].w;
-            renderRect.h = (int)rectObjects[i].h;
+        
 
-            SDL_RenderFillRect(gRenderer, &renderRect);
+        RectVertices rectVerts = generateRotatedRectVertices(rectObjects[i], positions[i]);
+        RectVertices cameraRectVerts;
+        for(int i = 0; i < 4; i++){
+            cameraRectVerts[i].x =
+                    rectVerts[i].x - gCameraPosition.x + scaledCenterScreen.x;
+            cameraRectVerts[i].y =
+                    rectVerts[i].y - gCameraPosition.y + scaledCenterScreen.y;
         }
-        else {
-
-            RectVertices rectVerts = generateRotatedRectVertices(rectObjects[i], positions[i]);
-            RectVertices cameraRectVerts;
-            for(int i = 0; i < 4; i++){
-                cameraRectVerts[i].x =
-                        rectVerts[i].x - gCameraPosition.x + scaledCenterScreen.x;
-                cameraRectVerts[i].y =
-                        rectVerts[i].y - gCameraPosition.y + scaledCenterScreen.y;
-            }
-            for(int i = 0; i < 4; i++){
-                v2d p1 = cameraRectVerts[i];
-                v2d p2 = cameraRectVerts[(i + 1) % 4];
-                SDL_RenderDrawLineF(gRenderer, p1.x, p1.y, p2.x, p2.y);
-            }
+        for(int i = 0; i < 4; i++){
+            v2d p1 = cameraRectVerts[i];
+            v2d p2 = cameraRectVerts[(i + 1) % 4];
+            SDL_RenderDrawLineF(gRenderer, p1.x, p1.y, p2.x, p2.y);
         }
+        
 
     }
 }
