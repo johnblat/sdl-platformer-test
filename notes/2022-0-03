@@ -1,0 +1,9 @@
+- I started filling out some code for the level editor. My first plan is to 
+just get a solid rect on the screen and then able to modify it using keyboard 
+keys
+
+- I realized i had sdl2 v 0.0.17 and not 0.17 and not 0.18. I git pulled to get the correct version and thenhad to use ./configure --prefix=<prefix> to configure it and then make and make install to install it to the correct location
+
+- I should probably figure out a way to build changes to SDL2 during development work on it to be not cumbersome
+
+- After i get the level editor working, i should probs reach out to someone on sfghq that would be interested in doing the art for it
