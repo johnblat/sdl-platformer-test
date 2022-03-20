@@ -1,40 +1,43 @@
 CXX = clang++
 CC = clang
 
-CWD = $(shell pwd)
 CFLAGS = -std=gnu99
 CXXFLAGS = -std=c++11 -Wno-expansion-to-defined
 
-CSOURCES = src/flecs.c
+SHARED_C_SOURCES = src/shared/flecs.c
+SHARED_C_OBJ_FILES := $(SHARED_C_SOURCES:%.c=%.c.o)
 
-CXXSOURCES = src/animationProcessing.cpp src/spriteSheetsProcessing.cpp src/game_main.cpp src/input.cpp src/movement.cpp src/collisions.cpp src/debug_display.cpp src/shapeTransformations.cpp src/camera.cpp
+SHARED_CXX_SOURCES =    src/shared/input.cpp   src/shared/debug_display.cpp src/shared/shapeTransformations.cpp src/shared/camera.cpp
+SHARED_CXX_OBJ_FILES := $(SHARED_CXX_SOURCES:%.cpp=%.cpp.o)
 
+GAME_CXX_SOURCES = src/game/game_main.cpp  src/game/collisions.cpp src/game/movement.cpp src/game/animationProcessing.cpp src/game/spriteSheetsProcessing.cpp
+GAME_CXX_OBJ_FILES := $(GAME_CXX_SOURCES:%.cpp=%.cpp.o)
 
-LFLAGS = -L$(CWD)/lib
-IFLAGS = -I$(CWD)/include -I$(CWD)/include/SDL2 -I$(CWD)/include/flecs 
+ED_CXX_SOURCES = src/levelEditor/levelEditorMain.cpp
+ED_CXX_OBJ_FILES := $(GAME_CXX_SOURCES:%.cpp=%.cpp.o)
 
-LIBS = -lSDL2 -lSDL2main -lSDL2_image -Wl,-rpath,$(CWD)/lib
+LFLAGS = -Llib
+IFLAGS = -Iinclude -Iinclude/SDL2 -Iinclude/flecs 
 
-BUILD_PATH = build
-
-CXXFILENAMES := $(notdir $(CXXSOURCES))
-CFILENAMES := $(notdir $(CSOURCES))
-
-CXXOBJ := $(CXXFILENAMES:%.cpp=build/%.o)
-COBJ := $(CFILENAMES:%.c=build/%.o)
-
-OBJ := $(COBJ) $(CXXOBJ)
+LIBS = -lSDL2 -lSDL2main -lSDL2_image -Wl,-rpath,lib
 
 
-all: $(COBJ) $(CXXOBJ)
-	$(CXX) $(CXXFLAGS) $(LFLAGS) $(LIBS) -g $^ -o app
+game: $(GAME_CXX_OBJ_FILES) $(SHARED_CXX_OBJ_FILES) $(SHARED_C_OBJ_FILES)
+	$(CXX) $(CXXFLAGS) $(LFLAGS) $(LIBS) -g $^ -o $@
 
-build/%.o: src/%.c
+ed: $(ED_CXX_OBJ_FILES) $(SHARED_C_OBJ_FILES) $(SHARED_CXX_OBJ_FILES)
+	$(CXX) $(CXXFLAGS) $(LFLAGS) $(LIBS) -g $^ -o $@
+
+%.c.o: %.c
 	$(CC) $(CFLAGS) $(IFLAGS) -c -g $^ -o $@
 
-build/%.o: src/%.cpp
+%.cpp.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(IFLAGS) -c -g $^ -o $@
 
-.PHONY: clean 
+
+
+# #.PHONY: clean 
 clean:
-	rm -f build/*.o 
+	rm -f src/game/*.o
+	rm -f src/shared/*.o
+	rm -f src/levelEditor/*.o 
