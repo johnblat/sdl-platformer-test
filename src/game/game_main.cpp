@@ -61,7 +61,7 @@ int main(){
      * SETUP BACKGROUND
      * 
      */
-    SDL_Surface *bgSurface = IMG_Load("res/bg.png");
+    SDL_Surface *bgSurface = IMG_Load("res/checkerboard-bg.png");
     SDL_Texture *bgTexture = SDL_CreateTextureFromSurface(gRenderer, bgSurface);
     float parallaxBgScale = 0.1;
     int bg_w = bgSurface->w;
@@ -385,7 +385,7 @@ int main(){
     // TEST Rectangular objects
 
     SDL_Rect floorRect = {0,300,2000,40};
-    SDL_Color floorRectColor = {0,0,200};
+    SDL_Color floorRectColor = {255,255,255};
     Position frpos = {
             (float)floorRect.x + (float)floorRect.w/2,
             (float)floorRect.y + (float)floorRect.h/2,
@@ -398,7 +398,7 @@ int main(){
     robj.color = floorRectColor;
 
     SDL_Rect floorRect2 = {500,290,2000,40};
-    SDL_Color floorRectColor2 = {0,0,200};
+    SDL_Color floorRectColor2 = {255,255,255};
 
     Position frpos2 = {
             (float)floorRect2.x + (float)floorRect2.w/2,

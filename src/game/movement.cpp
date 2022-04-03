@@ -25,39 +25,6 @@ void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
 
 
 
-// void updateAngleOnEntity(flecs::entity e, flecs::world &ecs){
-//     e.get(Position);
-//     std::vector<Ray2d> ray2dCollections = e.get(std::vector<Ray2d>);
-
-//     auto f = ecs.filter<Position, SolidRect>();
-
-//     f.each([&](flecs::entity e, Position &position, SolidRect &rect){
-//         RectVertices rotatedSolidRectVertices = generateRotatedRectVertices(rect, position);
-
-//         for(int i = 0; i < 4; i++){
-//             v2d p1 = rotatedSolidRectVertices[i];
-//             v2d p2 = rotatedSolidRectVertices[(i + 1) % 4];
-//             float distanceFromPoint;
-//             if(ray2dIntersectLineSegment(rayGlobal, p1, p2, distanceFromPoint)){
-//                 state = STATE_ON_GROUND;
-//                 v2d intersectionPoint(
-//                         rayGlobal.startingPosition.x,
-//                         rayGlobal.startingPosition.y + distanceFromPoint
-//                 );
-//                 if(intersectionPoint.y < highestIntersectingPoint.y){
-//                     highestIntersectingPoint = intersectionPoint;
-//                     // Depending on ground mode
-//                     // this will have to change
-//                     // for example, when normal
-//                     // needs tp ensure p1.x < p2.x
-//                     p1HighestIntersectingLine = p1;
-//                     p2HighestIntersectingLine = p2;
-//                 }
-//             }
-//         }
-//     })
-// }
-
 
 static float groundSpeed = 0.0f;
 
@@ -79,8 +46,6 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
 
     for(auto i : it){
         if(stateJustEntered(states[i], STATE_ON_GROUND)){
-            // flecs::entity e = it.entity(i);
-            // updateAngleOnEntity(e);
 
             // shallow
             if((angles[i].rads >= degToRads(0.0f) && angles[i].rads <= degToRads(23.0f))
@@ -120,19 +85,19 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
             // side
             if(inputIsPressed(inputs[i], "left")){
                 if(groundSpeed > 0){ // moving right
-                    groundSpeed -= dec;// * it.delta_time();
+                    groundSpeed -= dec;
                 }
                 else { // moving left
-                    groundSpeed -= acc;// * it.delta_time();
+                    groundSpeed -= acc;
                     groundSpeed = MAX(groundSpeed, -topSpeed);
                 }
             }
             else if(inputIsPressed(inputs[i], "right")){
                 if(groundSpeed < 0){ // moving left
-                    groundSpeed += dec;// * it.delta_time();
+                    groundSpeed += dec;
                 }
                 else { //moving right
-                    groundSpeed += acc;// * it.delta_time();
+                    groundSpeed += acc;
                     groundSpeed = MIN(groundSpeed, topSpeed);
                 }
             }
@@ -141,13 +106,13 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
 
                 }
                 else if(groundSpeed > 0){
-                    groundSpeed -= frc;//  * it.delta_time();
+                    groundSpeed -= frc;
                     if(groundSpeed < 0){
                         groundSpeed = 0;
                     }
                 }
                 else if(groundSpeed < 0){
-                    groundSpeed += frc;// * it.delta_time();
+                    groundSpeed += frc;
                     if(groundSpeed > 0){
                         groundSpeed = 0;
                     }
@@ -163,11 +128,17 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
 
             if(inputIsJustPressed(inputs[i], "jump") && states[i].currentState != STATE_IN_AIR){
                 setState(states[i], STATE_IN_AIR);
-                velocities[i].y = -jump;
+                velocities[i].x -= jump * sin(angles[i].rads);
+                velocities[i].y -= jump * cos(angles[i].rads);
             }
         }
         else if(states[i].currentState == STATE_IN_AIR){
-            
+            if(!inputIsPressed(inputs[i], "jump")){
+                if(velocities[i].y < -4.0f){
+                    velocities[i].y = -4.0f;
+
+                }
+            }
             // side
             if(inputIsPressed(inputs[i], "left")){
                 velocities[i].x -= airAcc;
@@ -185,14 +156,13 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
 
 void gravitySystem(flecs::iter &it, Velocity *velocities, StateCurrPrev *states){
     const float grv = 0.21875f;
-    const float max = 6.0f;
     for(int i : it){
         if(states[i].currentState == STATE_ON_GROUND){
             velocities[i].y = 0;
             continue;
         }
         if(states[i].currentState == STATE_IN_AIR){
-            if(velocities[i].y > 0.0f && velocities[i].y < 4.0f){
+            if(velocities[i].y < 0.0f && velocities[i].y > -4.0f){
                 velocities[i].x -= ((velocities[i].x / 0.125f) / 256);
             }
 
