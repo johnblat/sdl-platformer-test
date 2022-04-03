@@ -7,4 +7,9 @@ enum State {
     STATE_ON_GROUND
 };
 
+struct StateCurrPrev {
+    State currentState;
+    State prevState;
+};
+
 #endif

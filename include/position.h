@@ -8,4 +8,6 @@ struct Angle {
     float rads;
 };
 
+#define degToRads(deg)(deg * (3.14/180))
+
 #endif

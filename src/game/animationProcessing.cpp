@@ -11,6 +11,7 @@
 #include "input.h"
 #include "velocity.h"
 #include "camera.h"
+#include "stateProcessing.h"
 //
 // HELPER
 //
@@ -56,8 +57,8 @@ void animationsAccumulationSystem(flecs::iter &it, AnimatedSprite *animatedSprit
 void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions){
     for(auto i : it){
         SpriteSheet spriteSheet = getSpriteSheet(animatedSprites[i].spriteSheetId);
-        float cell_w = spriteSheet.w / spriteSheet.numCellRows;
-        float cell_h = spriteSheet.h / spriteSheet.numCellCols;
+        float cell_h = spriteSheet.h / spriteSheet.numCellRows;
+        float cell_w = spriteSheet.w / spriteSheet.numCellCols;
 
         float scale;
         SDL_RenderGetScale(gRenderer,&scale, NULL );
@@ -77,7 +78,7 @@ void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSpr
         u32 spriteSheetCellIndex = currentAnimation.arrFrames[currentAnimation.currentFrame];
         u32 cell_r;
         u32 cell_c;
-        iToRC(spriteSheetCellIndex, spriteSheet.numCellRows, &cell_r, &cell_c);
+        iToRC(spriteSheetCellIndex, spriteSheet.numCellCols, &cell_r, &cell_c);
         srcRect.x = cell_c * cell_w;
         srcRect.y = cell_r * cell_h;
         srcRect.w = cell_w;
@@ -125,10 +126,17 @@ void InputFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Input *in
     }
 }
 
-void setAnimationBasedOnSpeedSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities){
+void setAnimationBasedOnSpeedSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities, StateCurrPrev *states){
     for(int i : it){
         // set animation
-        if(velocities[i].x == 0){
+        
+        if(states[i].currentState == STATE_IN_AIR){
+            animatedSpritePlay(&animatedSprites[i], "jump");
+            if(stateJustEntered(states[i], STATE_IN_AIR)){
+                restartAnimation(&animatedSprites[i].animations[animatedSprites[i].currentAnimation]);
+            }
+        }
+        else if(velocities[i].x == 0){
             animatedSpritePlay(&animatedSprites[i], "idle");
         }
         else if(velocities[i].x < 5.0f && velocities[i].x > -5.0f){

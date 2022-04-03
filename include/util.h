@@ -13,4 +13,6 @@
 
 #define rads2deg(rads)(rads * 180 / 3.14)
 
+#define sign(x)(x >= 0 ? 1 : -1)
+
 #endif

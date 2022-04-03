@@ -10,7 +10,7 @@ SHARED_C_OBJ_FILES := $(SHARED_C_SOURCES:%.c=%.c.o)
 SHARED_CXX_SOURCES =    src/shared/input.cpp   src/shared/debug_display.cpp src/shared/shapeTransformations.cpp src/shared/camera.cpp
 SHARED_CXX_OBJ_FILES := $(SHARED_CXX_SOURCES:%.cpp=%.cpp.o)
 
-GAME_CXX_SOURCES = src/game/game_main.cpp  src/game/collisions.cpp src/game/movement.cpp src/game/animationProcessing.cpp src/game/spriteSheetsProcessing.cpp
+GAME_CXX_SOURCES = src/game/game_main.cpp  src/game/collisions.cpp src/game/movement.cpp src/game/animationProcessing.cpp src/game/spriteSheetsProcessing.cpp src/game/stateProcessing.cpp
 GAME_CXX_OBJ_FILES := $(GAME_CXX_SOURCES:%.cpp=%.cpp.o)
 
 ED_CXX_SOURCES = src/levelEditor/levelEditorMain.cpp

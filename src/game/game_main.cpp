@@ -61,7 +61,7 @@ int main(){
      * SETUP BACKGROUND
      * 
      */
-    SDL_Surface *bgSurface = IMG_Load("bg.png");
+    SDL_Surface *bgSurface = IMG_Load("res/bg.png");
     SDL_Texture *bgTexture = SDL_CreateTextureFromSurface(gRenderer, bgSurface);
     float parallaxBgScale = 0.1;
     int bg_w = bgSurface->w;
@@ -77,9 +77,9 @@ int main(){
      */
     pinkGuyEntity.add<AnimatedSprite>();
 
-    const char *filename = "pink-monster-animation-transparent.png";
+    const char *filename = "res/pink-monster-animation-transparent.png";
     const char *animatedSpriteName =  "pink-monster-animation";
-    u32 spriteSheetId = createSpriteSheet(filename, 15, 8, animatedSpriteName);
+    u32 spriteSheetId = createSpriteSheet(filename, 9, 15, animatedSpriteName);
     AnimatedSprite animatedSprite = createAnimatedSprite(spriteSheetId);
 
     // add animations to animatedSprite
@@ -141,6 +141,7 @@ int main(){
 
     Animation idleAnimation{};
     {
+
         idleAnimation.accumulator = 0.0f;
         idleAnimation.arrFrames[0] = 75;
         idleAnimation.arrFrames[1] = 76;
@@ -158,7 +159,44 @@ int main(){
         strncpy(idleAnimation.name, idleAnimationName, 16);
     }
     
-    
+    Animation jumpAnimation{};
+    {
+        jumpAnimation.accumulator = 0.0f;
+        jumpAnimation.arrFrames[0] = 120;
+        jumpAnimation.arrFrames[1] = 121;
+        jumpAnimation.arrFrames[2] = 122;
+        jumpAnimation.arrFrames[3] = 123;
+        jumpAnimation.arrFrames[4] = 124;
+        jumpAnimation.arrFrames[5] = 125;
+
+
+
+        jumpAnimation.numFrames = 6;
+        jumpAnimation.currentFrame = 0;
+        jumpAnimation.fps = 12;
+        jumpAnimation.msPerFrame = 0.0833;
+        jumpAnimation.isLoop = true;
+        const char *jumpAnimationName = "jump";
+        strncpy(jumpAnimation.name, jumpAnimationName, 16);
+    }
+
+    Animation fallAnimation{};
+    {
+        fallAnimation.accumulator = 0.0f;
+        fallAnimation.arrFrames[0] = 26;
+        fallAnimation.arrFrames[1] = 27;
+        fallAnimation.arrFrames[2] = 28;
+        fallAnimation.arrFrames[3] = 29;
+
+        fallAnimation.numFrames = 4;
+        fallAnimation.currentFrame = 0;
+        fallAnimation.fps = 12;
+        fallAnimation.msPerFrame = 0.0833;
+        fallAnimation.isLoop = false;
+        const char *fallAnimationName = "fall";
+        strncpy(fallAnimation.name, fallAnimationName, 16);
+    }
+
     addNewAnimationToAnimatedSprite(&animatedSprite);
     overwriteAnimationOnAnimatedSprite(&animatedSprite, 0, walkAnimation);
 
@@ -170,6 +208,12 @@ int main(){
 
     addNewAnimationToAnimatedSprite(&animatedSprite);
     overwriteAnimationOnAnimatedSprite(&animatedSprite, 3, idleAnimation);
+    
+    addNewAnimationToAnimatedSprite(&animatedSprite);
+    overwriteAnimationOnAnimatedSprite(&animatedSprite, 4, jumpAnimation);
+
+    addNewAnimationToAnimatedSprite(&animatedSprite);
+    overwriteAnimationOnAnimatedSprite(&animatedSprite, 5, fallAnimation);
 
     animatedSprite.currentAnimation = 0;
     
@@ -220,15 +264,18 @@ int main(){
 
     pinkGuyEntity.set<std::vector<Ray2d>>(rays);
 
-    State state = STATE_ON_GROUND;
-    pinkGuyEntity.set<State>(state);
+    StateCurrPrev state;
+    state.currentState = STATE_ON_GROUND;
+    state.prevState = STATE_ON_GROUND;
+
+    pinkGuyEntity.set<StateCurrPrev>(state);
     
 
     // OTHER CHARACTER SETUP
 
     owlGuyEntity.add<AnimatedSprite>();
 
-    const char *filename2 = "owlet-monster-animation-transparent.png";
+    const char *filename2 = "res/owlet-monster-animation-transparent.png";
     const char *animatedSpriteName2 =  "owl-monster-animation";
     u32 spriteSheetId2 = createSpriteSheet(filename2, 15, 8, animatedSpriteName2);
     AnimatedSprite animatedSprite2 = createAnimatedSprite(spriteSheetId2);
@@ -317,9 +364,9 @@ int main(){
 
     world.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState").kind(flecs::OnUpdate).iter(KeyboardStateAnimationSetterSystem);
 
-    world.system<Velocity, Input, State, Angle>("keyStateVelocitySetter").kind(flecs::PreUpdate).iter(InputVelocitySetterSystem);
+    world.system<Velocity, Input, StateCurrPrev, Angle>("keyStateVelocitySetter").kind(flecs::PreUpdate).iter(InputVelocitySetterSystem);
 
-    world.system<Position, std::vector<Ray2d>, Velocity, State, Angle>("collision").kind(flecs::PostUpdate).iter(
+    world.system<Position, std::vector<Ray2d>, Velocity, StateCurrPrev, Angle>("collision").kind(flecs::PostUpdate).iter(
             ray2dSolidRectCollisionSystem);
 
     world.system<Velocity, Position>("move").kind(flecs::OnUpdate).iter(moveSystem);
@@ -330,9 +377,9 @@ int main(){
 
     world.system<Position, std::vector<Ray2d>>().kind(flecs::OnStore).iter(renderRay2dCollectionsSystem);
 
-    world.system<AnimatedSprite, Velocity>().kind(flecs::OnUpdate).iter(setAnimationBasedOnSpeedSystem);
+    world.system<AnimatedSprite, Velocity, StateCurrPrev>().kind(flecs::OnUpdate).iter(setAnimationBasedOnSpeedSystem);
 
-    world.system<Velocity, State>().kind(flecs::OnUpdate).iter(gravitySystem);
+    world.system<Velocity, StateCurrPrev>("gravity system").kind(flecs::OnUpdate).iter(gravitySystem);
 
     world.system<Position, SolidRect>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
     // TEST Rectangular objects

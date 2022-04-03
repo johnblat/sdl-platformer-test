@@ -13,7 +13,7 @@
 #include <cassert>
 #include "shapes.h"
 #include "shapeTransformations.h"
-
+#include "stateProcessing.h"
 
 
 bool isInRange(float begin, float end, float x){
@@ -57,7 +57,7 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 }
 
 
-void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections, Velocity *velocities, State *states, Angle *angles ){
+void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections, Velocity *velocities, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         // check against rectangular objects
@@ -116,7 +116,7 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
                 
             });
         }
-        states[i] = state;
+        setState(states[i], state);
         if(highestIntersectingPoint.x != FLT_MAX){
             ray2dCollections[i][0].distance = 32;
             ray2dCollections[i][1].distance = 32;
