@@ -113,7 +113,36 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
                         }
                     }
                 }
+
                 
+                
+            });
+
+            auto f2 = it.world().filter<Position, PlatformVertices>();
+            f2.each([&](flecs::entity e, Position &position, PlatformVertices &platformVertices){
+                for(int i = 0; i < platformVertices.vals.size() - 1; i++){
+                    PlatformVertex p1 = platformVertices.vals.at(i);
+                    PlatformVertex p2 = platformVertices.vals.at(i+1);
+                    v2d v1(p1.x + position.x, p1.y + position.y);
+                    v2d v2(p2.x + position.x, p2.y + position.y);
+                    float distanceFromPoint;
+                    if(ray2dIntersectLineSegment(rayGlobal, v1, v2, distanceFromPoint)){
+                        state = STATE_ON_GROUND;
+                        v2d intersectionPoint(
+                                rayGlobal.startingPosition.x,
+                                rayGlobal.startingPosition.y + distanceFromPoint
+                        );
+                        if(intersectionPoint.y < highestIntersectingPoint.y){
+                            highestIntersectingPoint = intersectionPoint;
+                            // Depending on ground mode
+                            // this will have to change
+                            // for example, when normal
+                            // needs tp ensure p1.x < p2.x
+                            p1HighestIntersectingLine = v1;
+                            p2HighestIntersectingLine = v2;
+                        }
+                    }
+                }
             });
         }
         setState(states[i], state);

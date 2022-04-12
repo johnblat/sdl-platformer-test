@@ -48,6 +48,42 @@ void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidR
 }
 
 
+void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertices *platformVerticesCollection){
+    Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f};
+
+
+    for(auto i : it){
+        SDL_SetRenderDrawColor(
+            gRenderer, 
+            platformVerticesCollection[i].color.r,
+            platformVerticesCollection[i].color.g,
+            platformVerticesCollection[i].color.b,
+            255
+        );
+        float scale;
+        SDL_RenderGetScale(gRenderer,&scale, nullptr );
+        Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+
+        
+        std::vector<PlatformVertex> cameraPlatformVertices;
+        for(int j = 0; j < platformVerticesCollection[i].vals.size(); j++){
+            PlatformVertex pv;
+            pv.x = positions[i].x + platformVerticesCollection[i].vals[j].x - gCameraPosition.x + scaledCenterScreen.x;
+            pv.y = positions[i].y + platformVerticesCollection[i].vals[j].y - gCameraPosition.y + scaledCenterScreen.y;
+
+            cameraPlatformVertices.push_back(pv);
+
+        }
+        for(int i = 0; i < cameraPlatformVertices.size() - 1; i++){
+            v2d p1(cameraPlatformVertices.at(i).x, cameraPlatformVertices.at(i).y);
+            v2d p2(cameraPlatformVertices.at(i+1).x, cameraPlatformVertices.at(i+1).y);
+            SDL_RenderDrawLineF(gRenderer, p1.x, p1.y, p2.x, p2.y);
+        }
+        
+
+    }
+}
+
 
 
 

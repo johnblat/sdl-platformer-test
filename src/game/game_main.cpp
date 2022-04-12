@@ -34,6 +34,37 @@ struct Dimensions {
 };
 
 
+void registerSystems(flecs::world &ecs){
+// Set up the animation playing and rendering systems
+    ecs.system<AnimatedSprite>("AnimatedSpritePlay").kind(flecs::OnUpdate).iter(animationsAccumulationSystem);
+
+    ecs.system<AnimatedSprite, Position>("renderingAnimatedSprites").kind(flecs::OnStore).iter(renderingAnimatedSpritesSystem);
+
+    ecs.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState").kind(flecs::OnUpdate).iter(KeyboardStateAnimationSetterSystem);
+
+    ecs.system<Velocity, Input, StateCurrPrev, Angle>("keyStateVelocitySetter").kind(flecs::PreUpdate).iter(InputVelocitySetterSystem);
+
+    ecs.system<Position, std::vector<Ray2d>, Velocity, StateCurrPrev, Angle>("collision").kind(flecs::PostUpdate).iter(
+            ray2dSolidRectCollisionSystem);
+
+    ecs.system<Velocity, Position>("move").kind(flecs::OnUpdate).iter(moveSystem);
+
+    ecs.system<AnimatedSprite, Input>().kind(flecs::OnUpdate).iter(InputFlipSystem);
+
+    ecs.system<Input>().kind(flecs::PreUpdate).iter(inputUpdateSystem);
+
+    ecs.system<Position, std::vector<Ray2d>>().kind(flecs::OnStore).iter(renderRay2dCollectionsSystem);
+
+    ecs.system<AnimatedSprite, Velocity, StateCurrPrev>().kind(flecs::OnUpdate).iter(setAnimationBasedOnSpeedSystem);
+
+    ecs.system<Velocity, StateCurrPrev>("gravity system").kind(flecs::OnUpdate).iter(gravitySystem);
+
+    ecs.system<Position, SolidRect>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
+
+    ecs.system<Position, PlatformVertices>().kind(flecs::OnStore).iter(renderPlatformVerticesSystem);
+}
+
+
 int main(){
     bool quit = false;
     /**
@@ -273,150 +304,35 @@ int main(){
 
     // OTHER CHARACTER SETUP
 
-    owlGuyEntity.add<AnimatedSprite>();
-
-    const char *filename2 = "res/owlet-monster-animation-transparent.png";
-    const char *animatedSpriteName2 =  "owl-monster-animation";
-    u32 spriteSheetId2 = createSpriteSheet(filename2, 15, 8, animatedSpriteName2);
-    AnimatedSprite animatedSprite2 = createAnimatedSprite(spriteSheetId2);
-
-    // add animations to animatedSprite
-    Animation walkAnimation2{};
-    {
-        walkAnimation2.accumulator = 0.0f;
-        walkAnimation2.arrFrames[0] = 15;
-        walkAnimation2.arrFrames[1] = 16;
-        walkAnimation2.arrFrames[2] = 17;
-        walkAnimation2.arrFrames[3] = 18;
-        walkAnimation2.arrFrames[4] = 19;
-        walkAnimation2.arrFrames[5] = 20;
-        walkAnimation2.numFrames = 6;
-        walkAnimation2.currentFrame = 0;
-        walkAnimation2.fps = 12;
-        walkAnimation2.msPerFrame = 0.0833;
-        walkAnimation2.isLoop = true;
-    }
-
-
-    const char *walkAnimation2Name = "walk";
-    strncpy(walkAnimation2.name, walkAnimation2Name, 5);
-
     
-
-    Animation runAnimation2{};
-    {
-        runAnimation2.accumulator = 0.0f;
-        runAnimation2.arrFrames[0] = 30;
-        runAnimation2.arrFrames[1] = 31;
-        runAnimation2.arrFrames[2] = 32;
-        runAnimation2.arrFrames[3] = 33;
-        runAnimation2.arrFrames[4] = 34;
-        runAnimation2.arrFrames[5] = 35;
-        runAnimation2.numFrames = 6;
-        runAnimation2.currentFrame = 0;
-        runAnimation2.fps = 12;
-        runAnimation2.msPerFrame = 0.0833;
-        runAnimation2.isLoop = true;
-    }
-
-
-    const char *runAnimation2Name = "run";
-    strncpy(runAnimation2.name, runAnimation2Name, 3);
-
-    Animation standingAttackAnimation2{};
-    {
-        standingAttackAnimation2.accumulator = 0.0f;
-        standingAttackAnimation2.arrFrames[0] = 45;
-        standingAttackAnimation2.arrFrames[1] = 46;
-        standingAttackAnimation2.arrFrames[2] = 47;
-        standingAttackAnimation2.arrFrames[3] = 48;
-        standingAttackAnimation2.numFrames = 4;
-        standingAttackAnimation2.currentFrame = 0;
-        standingAttackAnimation2.fps = 12;
-        standingAttackAnimation2.msPerFrame = 0.0833;
-        standingAttackAnimation2.isLoop = false;
-        const char *standingAttackAnimation2Name = "stand-attack";
-        strncpy(standingAttackAnimation2.name, standingAttackAnimation2Name, 16);
-    }
-
-    
-    addNewAnimationToAnimatedSprite(&animatedSprite2);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite2, 0, walkAnimation);
-
-    addNewAnimationToAnimatedSprite(&animatedSprite2);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite2, 1, runAnimation);
-
-    addNewAnimationToAnimatedSprite(&animatedSprite2);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite2, 2, standingAttackAnimation);
-
-    animatedSprite2.currentAnimation = 0;
-
-    owlGuyEntity.set<AnimatedSprite>(animatedSprite2);
-    owlGuyEntity.set<Position>((Position){640.0f/2.0f + 50,480.0f/2.0f});
-
-
+    registerSystems(world);
     
     
-    // Set up the animation playing and rendering systems
-    world.system<AnimatedSprite>("AnimatedSpritePlay").kind(flecs::OnUpdate).iter(animationsAccumulationSystem);
+ 
 
-    world.system<AnimatedSprite, Position>("renderingAnimatedSprites").kind(flecs::OnStore).iter(renderingAnimatedSpritesSystem);
+    PlatformVertices platformVertices;
+    platformVertices.color.r = 255;
+    platformVertices.color.g = 255;
+    platformVertices.color.b = 255;
 
-    world.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState").kind(flecs::OnUpdate).iter(KeyboardStateAnimationSetterSystem);
+    platformVertices.vals.push_back((PlatformVertex){-200.0f, -50.0f});
+    platformVertices.vals.push_back((PlatformVertex){200.0f, -50.0f});
+    platformVertices.vals.push_back((PlatformVertex){210.0f, -48.0f});
+    platformVertices.vals.push_back((PlatformVertex){220.0f, -46.0f});
+    platformVertices.vals.push_back((PlatformVertex){320.0f, -30.0f});
+    platformVertices.vals.push_back((PlatformVertex){640.0f, -40.0f});
+    platformVertices.vals.push_back((PlatformVertex){800.0f, -40.0f});
+    platformVertices.vals.push_back((PlatformVertex){1000.0f, -40.0f});
 
-    world.system<Velocity, Input, StateCurrPrev, Angle>("keyStateVelocitySetter").kind(flecs::PreUpdate).iter(InputVelocitySetterSystem);
 
-    world.system<Position, std::vector<Ray2d>, Velocity, StateCurrPrev, Angle>("collision").kind(flecs::PostUpdate).iter(
-            ray2dSolidRectCollisionSystem);
 
-    world.system<Velocity, Position>("move").kind(flecs::OnUpdate).iter(moveSystem);
 
-    world.system<AnimatedSprite, Input>().kind(flecs::OnUpdate).iter(InputFlipSystem);
 
-    world.system<Input>().kind(flecs::PreUpdate).iter(inputUpdateSystem);
+    flecs::entity platform = world.entity("platform");
+    platform.set<Position>((Position){640.0f/2.0f, 480.0f/2.0f});
+    platform.set<PlatformVertices>(platformVertices);
 
-    world.system<Position, std::vector<Ray2d>>().kind(flecs::OnStore).iter(renderRay2dCollectionsSystem);
 
-    world.system<AnimatedSprite, Velocity, StateCurrPrev>().kind(flecs::OnUpdate).iter(setAnimationBasedOnSpeedSystem);
-
-    world.system<Velocity, StateCurrPrev>("gravity system").kind(flecs::OnUpdate).iter(gravitySystem);
-
-    world.system<Position, SolidRect>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
-    // TEST Rectangular objects
-
-    SDL_Rect floorRect = {0,300,2000,40};
-    SDL_Color floorRectColor = {0,0,200};
-    Position frpos = {
-            (float)floorRect.x + (float)floorRect.w/2,
-            (float)floorRect.y + (float)floorRect.h/2,
-    };
-    SolidRect robj;
-    robj.w = (float)floorRect.w;
-    robj.h = (float)floorRect.h;
-    robj.rotation = 0.5;
-
-    robj.color = floorRectColor;
-
-    SDL_Rect floorRect2 = {500,290,2000,40};
-    SDL_Color floorRectColor2 = {0,0,200};
-
-    Position frpos2 = {
-            (float)floorRect2.x + (float)floorRect2.w/2,
-            (float)floorRect2.y + (float)floorRect2.h/2,
-    };
-
-    SolidRect robj2;
-    robj2.w = (float)floorRect2.w;
-    robj2.h = (float)floorRect2.h;
-
-    robj2.color = floorRectColor2;
-
-    
-
-    floor1Entity.set<SolidRect>(robj); 
-    floor2Entity.set<SolidRect>(robj2);
-    floor1Entity.set<Position>(frpos);
-    floor2Entity.set<Position>(frpos2);
 
     // timing
     // float deltaTime = 0.0f;
