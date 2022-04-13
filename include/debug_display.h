@@ -3,6 +3,7 @@
 
 #include "ray2d.h"
 #include <vector>
+#include "solid_rect.h"
 
 void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidRect *rectObjects);
 void renderRay2dCollectionsSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections);

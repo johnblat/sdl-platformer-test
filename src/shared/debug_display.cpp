@@ -74,6 +74,9 @@ void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, Platform
             cameraPlatformVertices.push_back(pv);
 
         }
+        if(cameraPlatformVertices.size() < 1){
+            continue;
+        }
         for(int i = 0; i < cameraPlatformVertices.size() - 1; i++){
             v2d p1(cameraPlatformVertices.at(i).x, cameraPlatformVertices.at(i).y);
             v2d p2(cameraPlatformVertices.at(i+1).x, cameraPlatformVertices.at(i+1).y);

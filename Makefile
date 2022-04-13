@@ -13,8 +13,8 @@ SHARED_CXX_OBJ_FILES := $(SHARED_CXX_SOURCES:%.cpp=%.cpp.o)
 GAME_CXX_SOURCES = src/game/game_main.cpp  src/game/collisions.cpp src/game/movement.cpp src/game/animationProcessing.cpp src/game/spriteSheetsProcessing.cpp src/game/stateProcessing.cpp
 GAME_CXX_OBJ_FILES := $(GAME_CXX_SOURCES:%.cpp=%.cpp.o)
 
-ED_CXX_SOURCES = src/levelEditor/levelEditorMain.cpp
-ED_CXX_OBJ_FILES := $(GAME_CXX_SOURCES:%.cpp=%.cpp.o)
+ED_CXX_SOURCES = src/levelEditor/platformLevelEditor.cpp
+ED_CXX_OBJ_FILES := $(ED_CXX_SOURCES:%.cpp=%.cpp.o)
 
 LFLAGS = -Llib
 IFLAGS = -Iinclude -Iinclude/SDL2 -Iinclude/flecs 
