@@ -53,7 +53,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build level editor",
+            "preLaunchTask": "Build Ed",
             "miDebuggerPath": "/usr/bin/gdb"
         },
         {

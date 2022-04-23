@@ -41,6 +41,25 @@ void clearPlatformVertices(flecs::world &ecs, flecs::entity eid);
  */
 
 
+void savePlatformVertices(flecs::world &ecs){    
+    auto q = ecs.query<Position, PlatformVertices>();
+    q.iter([](flecs::iter &it, Position *positions, PlatformVertices *pvs){ 
+        SDL_RWops *saveContext = SDL_RWFromFile("platformVertices", "wb");
+        
+        i32 numEntities = it.count();
+        SDL_RWwrite(saveContext, &numEntities, sizeof(i32), 1);
+        SDL_RWwrite(saveContext, positions, sizeof(Position), it.count());
+
+        for(int i = 0; i < numEntities; i++){    
+            size_t vectorSize = pvs[i].vals.size();
+            SDL_RWwrite(saveContext, &vectorSize, sizeof(size_t), 1);
+            PlatformVertex *vectorData = pvs[i].vals.data();
+            SDL_RWwrite(saveContext, vectorData, sizeof(PlatformVertex), vectorSize);
+        }
+
+        SDL_RWclose(saveContext);
+    });
+};
 
 
 /**
@@ -211,6 +230,15 @@ int gScreenHeight = 480 * 2;
 SDL_Color bgColor = {20,20,20,255};
 
 int main(){
+    Input userInput;
+    InputButtonState buttonStates[1];
+    buttonStates[0].currentInputState = INPUT_IS_NOT_PRESSED;
+    buttonStates[0].previousInputState = INPUT_IS_NOT_PRESSED;
+    buttonStates[0].name = std::string("save");
+    buttonStates[0].sdlScancode = SDL_SCANCODE_S;
+    userInput.buttonStates = buttonStates;
+    userInput.numButtomStates = 1;
+
     gCameraPosition.x = gScreenWidth/2;
     gCameraPosition.y = gScreenHeight/2;
 
