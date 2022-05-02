@@ -7,6 +7,7 @@
 #include "camera.h"
 #define V2D_IMPLEMENTATION
 #include "v2d.h"
+#include "resourceLoading.h"
 /** PLATFORM RELATED STUFF
  * 
  */
@@ -41,9 +42,14 @@ void clearPlatformVertices(flecs::world &ecs, flecs::entity eid);
  */
 
 
+
+
 void savePlatformVertices(flecs::world &ecs){    
-    auto q = ecs.query<Position, PlatformVertices>();
-    q.iter([](flecs::iter &it, Position *positions, PlatformVertices *pvs){ 
+    ecs.defer_begin();
+
+    auto f = ecs.filter<Position, PlatformVertices>();
+
+    f.iter([](flecs::iter &it,const Position *positions,const PlatformVertices *pvs){ 
         SDL_RWops *saveContext = SDL_RWFromFile("platformVertices", "wb");
         
         i32 numEntities = it.count();
@@ -53,12 +59,14 @@ void savePlatformVertices(flecs::world &ecs){
         for(int i = 0; i < numEntities; i++){    
             size_t vectorSize = pvs[i].vals.size();
             SDL_RWwrite(saveContext, &vectorSize, sizeof(size_t), 1);
-            PlatformVertex *vectorData = pvs[i].vals.data();
+            const PlatformVertex *vectorData = pvs[i].vals.data();
             SDL_RWwrite(saveContext, vectorData, sizeof(PlatformVertex), vectorSize);
         }
 
         SDL_RWclose(saveContext);
     });
+
+    ecs.defer_end();
 };
 
 
@@ -206,6 +214,27 @@ void mouesStatePlatformVerticesRemoveAll(flecs::world &ecs){
  * 
  */
 
+void saveSystem(flecs::iter &it, Input *inputs){
+    for(u64 i : it){
+        if(inputIsJustReleased(inputs[i], "save")){
+            flecs::world ecs = it.world();
+            // auto q = ecs.query<Position, PlatformVertices>();
+            savePlatformVertices(ecs);
+            printf("SAVED!\n");
+        }
+    }
+}
+
+
+void loadInputSystem(flecs::iter &it, Input *inputs){
+    for(u64 i : it){
+        if(inputIsJustReleased(inputs[i], "load")){
+            flecs::world ecs = it.world();
+            loadPlatformVertices(ecs);
+            printf("LOADED!\n");
+        }
+    }
+}
 
 /**
  * @brief Registers the initial systems
@@ -217,7 +246,18 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::PreUpdate)
         .iter(inputUpdateSystem);
 
-    ecs.system<Position, PlatformVertices>().kind(flecs::OnStore).iter(renderPlatformVerticesSystem);
+    ecs.system<Input>()
+        .kind(flecs::OnUpdate)
+        .iter(saveSystem);
+    
+    ecs.system<Input>()
+        .kind(flecs::OnUpdate)
+        .iter(loadInputSystem);
+    
+    ecs.system<Position, PlatformVertices>()
+        .kind(flecs::OnStore)
+        .iter(renderPlatformVerticesSystem);
+    
 }
 
 
@@ -231,13 +271,17 @@ SDL_Color bgColor = {20,20,20,255};
 
 int main(){
     Input userInput;
-    InputButtonState buttonStates[1];
+    InputButtonState buttonStates[2];
     buttonStates[0].currentInputState = INPUT_IS_NOT_PRESSED;
     buttonStates[0].previousInputState = INPUT_IS_NOT_PRESSED;
     buttonStates[0].name = std::string("save");
     buttonStates[0].sdlScancode = SDL_SCANCODE_S;
+    buttonStates[1].currentInputState = INPUT_IS_NOT_PRESSED;
+    buttonStates[1].previousInputState = INPUT_IS_NOT_PRESSED;
+    buttonStates[1].name = std::string("load");
+    buttonStates[1].sdlScancode = SDL_SCANCODE_L;
     userInput.buttonStates = buttonStates;
-    userInput.numButtomStates = 1;
+    userInput.numButtomStates = 2;
 
     gCameraPosition.x = gScreenWidth/2;
     gCameraPosition.y = gScreenHeight/2;
@@ -272,6 +316,8 @@ int main(){
 
     registerSystems(ecs);
 
+    flecs::entity editorUser = ecs.entity();
+    editorUser.set<Input>(userInput);
 
     PlatformVertices pvs;
     pvs.color.r = 255;
@@ -296,12 +342,13 @@ int main(){
             }
         }
 
+        gKeyStates = (u8 *)SDL_GetKeyboardState(NULL);
+
         mouseStateSetter(mouseState);
         mouseStatePlatformVertexCreate(ecs);
 
         SDL_SetRenderDrawColor(gRenderer, bgColor.r, bgColor.b, bgColor.g, 255);
         SDL_RenderClear(gRenderer);
-
         ecs.progress();
 
         SDL_RenderPresent(gRenderer);

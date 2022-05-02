@@ -16,6 +16,7 @@
 #include "solid_rect.h"
 #include "collisions.h"
 #include "debug_display.h"
+#include "resourceLoading.h"
 
 
 SDL_Renderer *gRenderer;
@@ -63,6 +64,9 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<Position, PlatformVertices>().kind(flecs::OnStore).iter(renderPlatformVerticesSystem);
 }
+
+
+
 
 
 int main(){
@@ -331,6 +335,8 @@ int main(){
     flecs::entity platform = world.entity("platform");
     platform.set<Position>((Position){640.0f/2.0f, 480.0f/2.0f});
     platform.set<PlatformVertices>(platformVertices);
+
+    loadPlatformVertices(world);
 
 
 

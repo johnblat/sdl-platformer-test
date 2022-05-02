@@ -151,8 +151,12 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
             ray2dCollections[i][1].distance = 32;
             positions[i].y = 
                 highestIntersectingPoint.y - ray2dCollections[i][0].distance/2;
+            if(p2HighestIntersectingLine.x < p1HighestIntersectingLine.x){
+                swapValues(p2HighestIntersectingLine, p1HighestIntersectingLine, Position);
+            }
             v2d intersectingLineVector = 
                 p2HighestIntersectingLine - p1HighestIntersectingLine;
+
             angles[i].rads = atan2(-intersectingLineVector.y, intersectingLineVector.x);
             if(angles[i].rads < 0){
                 const float maxRads = 3.14 * 2;
