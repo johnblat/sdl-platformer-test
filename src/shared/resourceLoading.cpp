@@ -11,17 +11,28 @@ void copyDynamicArrayToVector(T *arr, size_t size, std::vector<T> &vec){
     }
 }
 
-struct PVsDynamicArray {
-    size_t count;
-    PlatformVertex *pvs;
-};
+// struct PVsDynamicArray {
+//     size_t count;
+//     PlatformVertex *pvs;
+// };
+
+// template <typename T> struct DynamicArray{
+//     size_t count;
+//     T *arr;
+// };
+
+// template<typename T>DynamicArray<T> *createDynamicArray(size_t count){
+//     DynamicArray<T> *da = malloc(sizeof(DynamicArray) + sizeof(T)*count);
+//     da->arr = da + sizeof(DynamicArray);
+// }
 
 
-struct PlatformVerticesFileDefintion {
-    size_t numEntities;
-    Position *positions;
-    PVsDynamicArray *PVsDynamicArrays;
-};
+// struct PlatformVerticesFileDefintion {
+//     size_t numEntities;
+//     Position *positions;
+//     PVsDynamicArray *PVsDynamicArrays;
+// };
+
 
 
 void loadPlatformVertices(flecs::world &ecs){

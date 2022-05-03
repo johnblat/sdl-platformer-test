@@ -17,6 +17,7 @@
 #include "collisions.h"
 #include "debug_display.h"
 #include "resourceLoading.h"
+#include "camera.h"
 
 
 SDL_Renderer *gRenderer;
@@ -259,25 +260,38 @@ int main(){
     pinkGuyEntity.set<Angle>((Angle){0.0f});
     // pinkGuyEntity.set<CollisionRect>((CollisionRect){32,32});
     
-    InputButtonState buttonStates[3];
-    buttonStates[0].currentInputState = INPUT_IS_NOT_PRESSED;
-    buttonStates[0].previousInputState = INPUT_IS_NOT_PRESSED;
-    buttonStates[0].name = std::string("left");
-    buttonStates[0].sdlScancode = SDL_SCANCODE_A;
-
-    buttonStates[1].currentInputState = INPUT_IS_NOT_PRESSED;
-    buttonStates[1].previousInputState = INPUT_IS_NOT_PRESSED;
-    buttonStates[1].name = "right";
-    buttonStates[1].sdlScancode = SDL_SCANCODE_D;
-
-    buttonStates[2].currentInputState = INPUT_IS_NOT_PRESSED;
-    buttonStates[2].previousInputState = INPUT_IS_NOT_PRESSED;
-    buttonStates[2].name = "jump";
-    buttonStates[2].sdlScancode = SDL_SCANCODE_SPACE;
-
     Input pinkGuyInput;
-    pinkGuyInput.buttonStates = buttonStates;
-    pinkGuyInput.numButtomStates = 3;
+    pinkGuyInput.buttonStates.push_back((InputButtonState){
+        std::string("left"),
+        SDL_SCANCODE_A,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+    pinkGuyInput.buttonStates.push_back((InputButtonState){
+        std::string("right"),
+        SDL_SCANCODE_D,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+    pinkGuyInput.buttonStates.push_back((InputButtonState){
+        std::string("jump"),
+        SDL_SCANCODE_SPACE,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+    pinkGuyInput.buttonStates.push_back((InputButtonState){
+        std::string("zoom-in"),
+        SDL_SCANCODE_UP,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+    pinkGuyInput.buttonStates.push_back((InputButtonState){
+        std::string("zoom-out"),
+        SDL_SCANCODE_DOWN,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
 
@@ -345,7 +359,6 @@ int main(){
     const float FPS = 60;
     const float secondsPerFrame = 1.0f / FPS;
 
-    float zoomAmount = 2.0f;
     // main loop
     while(!quit){
         u64 startTicks = SDL_GetTicks();
@@ -362,18 +375,7 @@ int main(){
         keyboardState.keyStates = keyStates;    
 
         gKeyStates = keyStates;
-
-        if(keyStates[SDL_SCANCODE_UP]){
-            zoomAmount += 0.005;
-        }       
-
-        if(keyStates[SDL_SCANCODE_DOWN]){
-            zoomAmount -= 0.005;
-        }       
-
-        if(keyStates[SDL_SCANCODE_R]){
-            zoomAmount = 1.0;
-        }       
+   
 
 
         pinkGuyEntity.set<KeyboardState>(keyboardState);
@@ -385,7 +387,7 @@ int main(){
         gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
 
         Position centerScreen = {(float)gScreenWidth/2, (float)gScreenHeight/2};
-        Position scaledCenterScreen = {centerScreen.x / zoomAmount, centerScreen.y / zoomAmount};
+        Position scaledCenterScreen = {centerScreen.x / gZoomAmount, centerScreen.y / gZoomAmount};
     
         bgDestRect.x =
                 (((int) bgPosition.x - (int) gCameraPosition.x*parallaxBgScale) + (int) scaledCenterScreen.x -
@@ -393,7 +395,7 @@ int main(){
         bgDestRect.y =
                 ((int) bgPosition.y - (int) gCameraPosition.y * parallaxBgScale + (int) scaledCenterScreen.y - ((int) bg_h / 2) );
 
-        SDL_RenderSetScale(gRenderer, zoomAmount, zoomAmount);
+        SDL_RenderSetScale(gRenderer, gZoomAmount, gZoomAmount);
 
         // draw background
         SDL_RenderCopy(gRenderer, bgTexture, nullptr, &bgDestRect);

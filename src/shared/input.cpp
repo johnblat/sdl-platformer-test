@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <iostream>
 #include <string>
-
+#include <SDL2/SDL.h>
 using namespace std;
 
 u8 *gKeyStates;
@@ -12,7 +12,7 @@ u8 *gKeyStates;
  */
 
 bool inputIsJustPressed(Input input, std::string buttonName){
-    for(int i = 0; i < input.numButtomStates; i++){
+    for(int i = 0; i < input.buttonStates.size(); i++){
         InputButtonState buttonState = input.buttonStates[i];
         if(buttonState.name == buttonName){
             if(buttonState.currentInputState == INPUT_IS_JUST_PRESSED){
@@ -27,8 +27,8 @@ bool inputIsJustPressed(Input input, std::string buttonName){
 
 
 bool inputIsPressed(Input input, std::string buttonName){
-    for(int i = 0; i < input.numButtomStates; i++){
-        InputButtonState buttonState = input.buttonStates[i];
+    for(int i = 0; i < input.buttonStates.size(); i++){
+        InputButtonState buttonState = input.buttonStates.at(i);
         if(buttonState.name == buttonName){
             if(buttonState.currentInputState == INPUT_IS_JUST_PRESSED){
                 return true;
@@ -45,7 +45,7 @@ bool inputIsPressed(Input input, std::string buttonName){
 
 
 bool inputIsJustReleased(Input input, std::string buttonName){
-    for(int i = 0; i < input.numButtomStates; i++){
+    for(int i = 0; i < input.buttonStates.size(); i++){
         InputButtonState buttonState = input.buttonStates[i];
         if(buttonState.name == buttonName){
             if(buttonState.currentInputState == INPUT_IS_JUST_RELEASED){
@@ -76,7 +76,7 @@ void inputUpdateSystem(flecs::iter &it, Input *inputs){
 
         Input input = inputs[i];
 
-        for(int j = 0; j < input.numButtomStates; j++){
+        for(int j = 0; j < input.buttonStates.size(); j++){
 
             InputButtonState bs = input.buttonStates[j];
             bs.previousInputState = bs.currentInputState;

@@ -5,6 +5,7 @@
 #include <SDL2/SDL.h>
 #include <string>
 #include "flecs.h"
+#include <vector>
 
 /**
  * @brief Contains the current key states of the game
@@ -37,8 +38,7 @@ struct InputButtonState {
 
 typedef struct Input Input;
 struct Input {
-    InputButtonState *buttonStates;
-    u64 numButtomStates;
+    std::vector<InputButtonState> buttonStates;
 };
 
 
