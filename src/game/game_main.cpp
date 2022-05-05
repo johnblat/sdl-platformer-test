@@ -342,14 +342,14 @@ int main(){
     platformVertices.color.g = 255;
     platformVertices.color.b = 255;
 
-    platformVertices.vals.push_back((PlatformVertex){-200.0f, -50.0f});
-    platformVertices.vals.push_back((PlatformVertex){200.0f, -50.0f});
-    platformVertices.vals.push_back((PlatformVertex){210.0f, -48.0f});
-    platformVertices.vals.push_back((PlatformVertex){220.0f, -46.0f});
-    platformVertices.vals.push_back((PlatformVertex){320.0f, -30.0f});
-    platformVertices.vals.push_back((PlatformVertex){640.0f, -40.0f});
-    platformVertices.vals.push_back((PlatformVertex){800.0f, -40.0f});
-    platformVertices.vals.push_back((PlatformVertex){1000.0f, -40.0f});
+    platformVertices.vals.push_back((Position){-200.0f, -50.0f});
+    platformVertices.vals.push_back((Position){200.0f, -50.0f});
+    platformVertices.vals.push_back((Position){210.0f, -48.0f});
+    platformVertices.vals.push_back((Position){220.0f, -46.0f});
+    platformVertices.vals.push_back((Position){320.0f, -30.0f});
+    platformVertices.vals.push_back((Position){640.0f, -40.0f});
+    platformVertices.vals.push_back((Position){800.0f, -40.0f});
+    platformVertices.vals.push_back((Position){1000.0f, -40.0f});
 
 
 

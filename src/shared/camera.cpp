@@ -46,3 +46,4 @@ void inputCameraMoveSystem(flecs::iter &it, Input *inputs){
 void zoomRenderSetupSystem(flecs::iter &it){
     SDL_RenderSetScale(gRenderer, gZoomAmount, gZoomAmount);
 }
+

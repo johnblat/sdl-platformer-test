@@ -12,13 +12,13 @@ struct Angle {
 };
 
 
-struct PlatformVertex {
-    float x, y;
-};
+// struct Position {
+//     float x, y;
+// };
 
 
 struct PlatformVertices {
-    std::vector<PlatformVertex> vals;
+    std::vector<Position> vals;
     SDL_Color color;
 };
 

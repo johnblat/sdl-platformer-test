@@ -13,7 +13,7 @@ void copyDynamicArrayToVector(T *arr, size_t size, std::vector<T> &vec){
 
 // struct PVsDynamicArray {
 //     size_t count;
-//     PlatformVertex *pvs;
+//     Position *pvs;
 // };
 
 // template <typename T> struct DynamicArray{
@@ -53,13 +53,13 @@ void loadPlatformVertices(flecs::world &ecs){
         size_t count = 0;
         SDL_RWread(loadContext, &count, sizeof(size_t), 1);
 
-        PlatformVertex *platformVertices = (PlatformVertex *)malloc(sizeof(PlatformVertex) * count);
-        SDL_RWread(loadContext, platformVertices, sizeof(PlatformVertex), count);
+        Position *platformVertices = (Position *)malloc(sizeof(Position) * count);
+        SDL_RWread(loadContext, platformVertices, sizeof(Position), count);
 
         PlatformVertices pvs;
         pvs.color = (SDL_Color){255,255,255,255};
     
-        copyDynamicArrayToVector<PlatformVertex>(platformVertices, count, pvs.vals);
+        copyDynamicArrayToVector<Position>(platformVertices, count, pvs.vals);
 
 
         platformVerticesCollection[i].color = pvs.color;

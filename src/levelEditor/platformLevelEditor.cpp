@@ -10,6 +10,7 @@
 #include "resourceLoading.h"
 #include "mouseState.h"
 #include "eventHandling.h"
+#include "timestep.h"
 
 
 SDL_Renderer *gRenderer;
@@ -147,10 +148,10 @@ void mouseStateSetter(MouseState &mouseState){
 
 }
 
-void mouseStatePlatformVertexCreate(flecs::world &ecs){
+void mouseStatePositionCreate(flecs::world &ecs){
     if(mouseState.lmbCurrentState == INPUT_IS_JUST_RELEASED){
         Position p = {mouseState.cameraAdjustedPosition.x, mouseState.cameraAdjustedPosition.y};
-        PlatformVertex pv;
+        Position pv;
         pv.x = p.x;
         pv.y = p.y;
 
@@ -227,13 +228,13 @@ void mouseWheelStateEventProcessor(SDL_Event &event){
 void createPlatformVerticesAtPosition(flecs::world &ecs, Position pos);
 
 /**
- * @brief adds a platformVertex to the platformVertices vector
+ * @brief adds a Position to the platformVertices vector
  * 
  * @param ecs 
  * @param platformVertices 
- * @param platformVertex 
+ * @param Position 
  */
-void addPlatformVertex(flecs::world &ecs, PlatformVertices &platformVertices, PlatformVertex platformVertex);
+void addPosition(flecs::world &ecs, PlatformVertices &platformVertices, Position Position);
 
 /**
  * @brief Removes platform vertices componet from the entity
@@ -265,8 +266,8 @@ void savePlatformVertices(flecs::world &ecs){
         for(int i = 0; i < numEntities; i++){    
             size_t vectorSize = pvs[i].vals.size();
             SDL_RWwrite(saveContext, &vectorSize, sizeof(size_t), 1);
-            const PlatformVertex *vectorData = pvs[i].vals.data();
-            SDL_RWwrite(saveContext, vectorData, sizeof(PlatformVertex), vectorSize);
+            const Position *vectorData = pvs[i].vals.data();
+            SDL_RWwrite(saveContext, vectorData, sizeof(Position), vectorSize);
         }
 
         SDL_RWclose(saveContext);
@@ -298,6 +299,13 @@ void loadInputSystem(flecs::iter &it, Input *inputs){
             printf("LOADED!\n");
         }
     }
+}
+
+
+void renderFrameStartSystem(flecs::iter &it){
+    SDL_Color bgColor = {20,20,20,255};
+    SDL_SetRenderDrawColor(gRenderer, bgColor.r, bgColor.b, bgColor.g, 255);
+    SDL_RenderClear(gRenderer);
 }
 
 /**
@@ -334,14 +342,26 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(inputCameraMoveSystem);
     
+    ecs.system<>()
+        .kind(flecs::PreFrame)
+        .iter(renderFrameStartSystem);
+    
+}
+
+
+void mouseScrollWheelZoomSetter(MouseState mouseState);
+void mouseScrollWheelZoomSetter(MouseState mouseState){
+    if(mouseState.currentMouseWheelState == SCROLL_UP){
+        gZoomAmount += 0.05;
+    }
+    else if(mouseState.currentMouseWheelState == SCROLL_DOWN){
+        gZoomAmount -= 0.05;
+    }
 }
 
 
 
 
-
-
-SDL_Color bgColor = {20,20,20,255};
 
 int main(){
     gZoomAmount = 1.0f;
@@ -411,7 +431,6 @@ int main(){
         INPUT_IS_NOT_PRESSED
     });
 
-
     gCameraPosition.x = gScreenWidth/2;
     gCameraPosition.y = gScreenHeight/2;
 
@@ -433,7 +452,6 @@ int main(){
 
     mouseState.lmbCurrentState = INPUT_IS_NOT_PRESSED;
     mouseState.rmbCurrentState = INPUT_IS_NOT_PRESSED;
-
 
     SDL_Event event;
     registerEventProcessor(quitEventProcessor);
@@ -458,11 +476,11 @@ int main(){
     pvsetity.set<PlatformVertices>(pvs);
     pvsetity.set<Position>((Position){0,0});
 
-    const float FPS = 60;
-    const float secondsPerFrame = 1.0f / FPS;
+    TimeStep ts = TimeStepInit(60.0f);
 
     while(!quit){
-        u64 startTicks = SDL_GetTicks();
+
+        TimeStepSetStartTicks(ts);
 
         mouseState.currentMouseWheelState = NOT_SCROLLING;
 
@@ -470,37 +488,16 @@ int main(){
             runRegisteredEventProcessors(event);
         }
         
-        if(mouseState.currentMouseWheelState == SCROLL_UP){
-            gZoomAmount += 0.05;
-        }
-        else if(mouseState.currentMouseWheelState == SCROLL_DOWN){
-            gZoomAmount -= 0.05;
-        }
-        
-
         gKeyStates = (u8 *)SDL_GetKeyboardState(NULL);
 
         mouseStateSetter(mouseState);
-        mouseStatePlatformVertexCreate(ecs);
+        mouseScrollWheelZoomSetter(mouseState);
+        mouseStatePositionCreate(ecs);
 
-        SDL_SetRenderDrawColor(gRenderer, bgColor.r, bgColor.b, bgColor.g, 255);
-        SDL_RenderClear(gRenderer);
         ecs.progress();
 
         SDL_RenderPresent(gRenderer);
 
-        u64 endTicks = SDL_GetTicks();
-
-        u64 totalTicks = endTicks - startTicks;
-        float totalSeconds = (float)totalTicks / 1000.0f;
-
-        if(totalSeconds < secondsPerFrame){
-            float secondsRemainingToFixTimeStep = secondsPerFrame - totalSeconds;
-            float msRemainingToFixTimeStep = secondsRemainingToFixTimeStep * 1000;
-            SDL_Delay((u32)msRemainingToFixTimeStep);
-            //printf("ms to wait: %f\n", msRemainingToFixTimeStep);
-        }
-
-
+        TimeStepSkip(ts);
     }
 }

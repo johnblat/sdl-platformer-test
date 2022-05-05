@@ -121,8 +121,8 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
             auto f2 = it.world().filter<Position, PlatformVertices>();
             f2.each([&](flecs::entity e, Position &position, PlatformVertices &platformVertices){
                 for(int i = 0; i < platformVertices.vals.size() - 1; i++){
-                    PlatformVertex p1 = platformVertices.vals.at(i);
-                    PlatformVertex p2 = platformVertices.vals.at(i+1);
+                    Position p1 = platformVertices.vals.at(i);
+                    Position p2 = platformVertices.vals.at(i+1);
                     v2d v1(p1.x + position.x, p1.y + position.y);
                     v2d v2(p2.x + position.x, p2.y + position.y);
                     float distanceFromPoint;
