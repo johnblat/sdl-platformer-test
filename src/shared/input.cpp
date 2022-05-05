@@ -22,7 +22,7 @@ bool inputIsJustPressed(Input input, std::string buttonName){
         }
     }
     fprintf(stderr, "%s not found\n", buttonName.c_str());
-    assert(0 && "Exiting...");
+    return false;
 }
 
 
@@ -40,7 +40,7 @@ bool inputIsPressed(Input input, std::string buttonName){
         }
     }
     fprintf(stderr, "%s not found\n", buttonName.c_str());
-    assert(0 && "Exiting...");
+    return false;
 }
 
 
@@ -55,7 +55,7 @@ bool inputIsJustReleased(Input input, std::string buttonName){
         }
     }
     fprintf(stderr, "%s not found\n", buttonName.c_str());
-    assert(0 && "Exiting...");
+    return false;
 }
 
 InputButtonState createbuttonState(std::string name, SDL_Scancode scanCode){
@@ -74,11 +74,9 @@ InputButtonState createbuttonState(std::string name, SDL_Scancode scanCode){
 void inputUpdateSystem(flecs::iter &it, Input *inputs){
     for(auto i : it){
 
-        Input input = inputs[i];
+        for(int j = 0; j < inputs[i].buttonStates.size(); j++){
 
-        for(int j = 0; j < input.buttonStates.size(); j++){
-
-            InputButtonState bs = input.buttonStates[j];
+            InputButtonState bs = inputs[i].buttonStates[j];
             bs.previousInputState = bs.currentInputState;
 
             if(gKeyStates[bs.sdlScancode]){
@@ -109,8 +107,7 @@ void inputUpdateSystem(flecs::iter &it, Input *inputs){
                     bs.currentInputState = INPUT_IS_JUST_RELEASED;
                 }
             }
-
-            input.buttonStates[j] = bs;
+            inputs[i].buttonStates[j] = bs;
         }
     }
 }

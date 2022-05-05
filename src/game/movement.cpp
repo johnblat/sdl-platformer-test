@@ -126,7 +126,7 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
             velocities[i].y = groundSpeed * -sin(angles[i].rads);
 
 
-            if(inputIsJustPressed(inputs[i], "jump") && states[i].currentState != STATE_IN_AIR){
+            if(inputIsJustPressed(inputs[i], "jump")){
                 setState(states[i], STATE_IN_AIR);
                 velocities[i].x -= jump * sin(angles[i].rads);
                 velocities[i].y -= jump * cos(angles[i].rads);

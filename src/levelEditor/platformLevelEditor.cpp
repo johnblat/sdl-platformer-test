@@ -8,66 +8,19 @@
 #define V2D_IMPLEMENTATION
 #include "v2d.h"
 #include "resourceLoading.h"
-/** PLATFORM RELATED STUFF
- * 
- */
+#include "mouseState.h"
+#include "eventHandling.h"
 
 
-/**
- * @brief Creates an entity for the platform vertices
- * 
- * @param ecs 
- */
-void createPlatformVerticesAtPosition(flecs::world &ecs, Position pos);
-
-/**
- * @brief adds a platformVertex to the platformVertices vector
- * 
- * @param ecs 
- * @param platformVertices 
- * @param platformVertex 
- */
-void addPlatformVertex(flecs::world &ecs, PlatformVertices &platformVertices, PlatformVertex platformVertex);
-
-/**
- * @brief Removes platform vertices componet from the entity
- * 
- * @param ecs 
- * @param eid 
- */
-void clearPlatformVertices(flecs::world &ecs, flecs::entity eid);
-
-/** END PLATFORM RELATED STUFF
- * 
- */
+SDL_Renderer *gRenderer;
+SDL_Window *gWindow;
 
 
+int gScreenWidth = 640 * 2;
+int gScreenHeight = 480 * 2;
 
-
-void savePlatformVertices(flecs::world &ecs){    
-    ecs.defer_begin();
-
-    auto f = ecs.filter<Position, PlatformVertices>();
-
-    f.iter([](flecs::iter &it,const Position *positions,const PlatformVertices *pvs){ 
-        SDL_RWops *saveContext = SDL_RWFromFile("platformVertices", "wb");
-        
-        i32 numEntities = it.count();
-        SDL_RWwrite(saveContext, &numEntities, sizeof(i32), 1);
-        SDL_RWwrite(saveContext, positions, sizeof(Position), it.count());
-
-        for(int i = 0; i < numEntities; i++){    
-            size_t vectorSize = pvs[i].vals.size();
-            SDL_RWwrite(saveContext, &vectorSize, sizeof(size_t), 1);
-            const PlatformVertex *vectorData = pvs[i].vals.data();
-            SDL_RWwrite(saveContext, vectorData, sizeof(PlatformVertex), vectorSize);
-        }
-
-        SDL_RWclose(saveContext);
-    });
-
-    ecs.defer_end();
-};
+// main loop flag
+bool quit = false;
 
 
 /**
@@ -75,15 +28,6 @@ void savePlatformVertices(flecs::world &ecs){
  * 
  */
 
-
-struct MouseState {
-    Position windowPosition;
-    Position logicalPosition;
-    InputState lmbCurrentState;
-    InputState lmbPreviousState;
-    InputState rmbCurrentState;
-    InputState rmbPreviousState;
-};
 
 MouseState mouseState;
 
@@ -94,12 +38,13 @@ bool isMouseButtonPressed(int button);
 
 
 // CALL THIS AFTER DONE EVENT POLLING
-void mouseStateSetter(MouseState &mouseState);
+
 
 void mouseStateSetter(MouseState &mouseState){
     u32 buttons;
     int x, y;
     float lx, ly;
+    float caX, caY;
 
     buttons = SDL_GetMouseState(&x, &y);
 
@@ -110,11 +55,33 @@ void mouseStateSetter(MouseState &mouseState){
         &lx,
         &ly
     );
+    // if(buttons & SDL_BUTTON_LMASK){
+    //     printf("hi");
+    // }
+
+    float scaleX, scaleY;
+    SDL_RenderGetScale(gRenderer, &scaleX, &scaleY);
+
+    float centerScreenX, centerScreenY;
+    centerScreenX = gScreenWidth/2;
+    centerScreenY = gScreenHeight/2;
+
+    float scaledCenterScreenX, scaledCenterScreenY;
+    scaledCenterScreenX = centerScreenX / scaleX;
+    scaledCenterScreenY = centerScreenY / scaleY;
+
+
+
+    caX = lx - (scaledCenterScreenX - gCameraPosition.x);
+    caY = ly - (scaledCenterScreenY - gCameraPosition.y);
+
 
     mouseState.windowPosition.x = (float)x;
     mouseState.windowPosition.y = (float)y;
     mouseState.logicalPosition.x = lx;
     mouseState.logicalPosition.y = ly;
+    mouseState.cameraAdjustedPosition.x = caX;
+    mouseState.cameraAdjustedPosition.y = caY;
 
     mouseState.lmbPreviousState = mouseState.lmbCurrentState;
     mouseState.rmbPreviousState = mouseState.rmbCurrentState;
@@ -182,7 +149,7 @@ void mouseStateSetter(MouseState &mouseState){
 
 void mouseStatePlatformVertexCreate(flecs::world &ecs){
     if(mouseState.lmbCurrentState == INPUT_IS_JUST_RELEASED){
-        Position p = {mouseState.logicalPosition.x, mouseState.logicalPosition.y};
+        Position p = {mouseState.cameraAdjustedPosition.x, mouseState.cameraAdjustedPosition.y};
         PlatformVertex pv;
         pv.x = p.x;
         pv.y = p.y;
@@ -213,6 +180,103 @@ void mouesStatePlatformVerticesRemoveAll(flecs::world &ecs){
  * @brief END MOUSE RELATED STUFF
  * 
  */
+
+
+/**
+ * @brief EVENT PROCESSNIG
+ * 
+ */
+
+
+
+
+void quitEventProcessor(SDL_Event &event){
+    if(event.type == SDL_QUIT){
+        quit = true;
+    }
+}
+
+
+void mouseWheelStateEventProcessor(SDL_Event &event){
+    if(event.type == SDL_MOUSEWHEEL){
+        if(event.wheel.y > 0){
+            mouseState.currentMouseWheelState = SCROLL_UP;
+        }
+        else if(event.wheel.y < 0){
+            mouseState.currentMouseWheelState = SCROLL_DOWN;
+        }
+    }
+}
+
+/**
+ * @brief END EVENT PROCESSNIG
+ * 
+ */
+
+
+/** PLATFORM RELATED STUFF
+ * 
+ */
+
+
+/**
+ * @brief Creates an entity for the platform vertices
+ * 
+ * @param ecs 
+ */
+void createPlatformVerticesAtPosition(flecs::world &ecs, Position pos);
+
+/**
+ * @brief adds a platformVertex to the platformVertices vector
+ * 
+ * @param ecs 
+ * @param platformVertices 
+ * @param platformVertex 
+ */
+void addPlatformVertex(flecs::world &ecs, PlatformVertices &platformVertices, PlatformVertex platformVertex);
+
+/**
+ * @brief Removes platform vertices componet from the entity
+ * 
+ * @param ecs 
+ * @param eid 
+ */
+void clearPlatformVertices(flecs::world &ecs, flecs::entity eid);
+
+/** END PLATFORM RELATED STUFF
+ * 
+ */
+
+
+
+
+void savePlatformVertices(flecs::world &ecs){    
+    ecs.defer_begin();
+
+    auto f = ecs.filter<Position, PlatformVertices>();
+
+    f.iter([](flecs::iter &it,const Position *positions,const PlatformVertices *pvs){ 
+        SDL_RWops *saveContext = SDL_RWFromFile("platformVertices", "wb");
+        
+        i32 numEntities = it.count();
+        SDL_RWwrite(saveContext, &numEntities, sizeof(i32), 1);
+        SDL_RWwrite(saveContext, positions, sizeof(Position), it.count());
+
+        for(int i = 0; i < numEntities; i++){    
+            size_t vectorSize = pvs[i].vals.size();
+            SDL_RWwrite(saveContext, &vectorSize, sizeof(size_t), 1);
+            const PlatformVertex *vectorData = pvs[i].vals.data();
+            SDL_RWwrite(saveContext, vectorData, sizeof(PlatformVertex), vectorSize);
+        }
+
+        SDL_RWclose(saveContext);
+    });
+
+    ecs.defer_end();
+};
+
+
+
 
 void saveSystem(flecs::iter &it, Input *inputs){
     for(u64 i : it){
@@ -258,30 +322,95 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnStore)
         .iter(renderPlatformVerticesSystem);
     
+    ecs.system<Input>()
+        .kind(flecs::OnUpdate)
+        .iter(inputZoomSystem);
+    
+    ecs.system<>()
+        .kind(flecs::OnUpdate)
+        .iter(zoomRenderSetupSystem);
+    
+    ecs.system<Input>()
+        .kind(flecs::OnUpdate)
+        .iter(inputCameraMoveSystem);
+    
 }
 
 
-SDL_Renderer *gRenderer;
-SDL_Window *gWindow;
 
-int gScreenWidth = 640 * 2;
-int gScreenHeight = 480 * 2;
+
+
 
 SDL_Color bgColor = {20,20,20,255};
 
 int main(){
+    gZoomAmount = 1.0f;
+
     Input userInput;
-    InputButtonState buttonStates[2];
-    buttonStates[0].currentInputState = INPUT_IS_NOT_PRESSED;
-    buttonStates[0].previousInputState = INPUT_IS_NOT_PRESSED;
-    buttonStates[0].name = std::string("save");
-    buttonStates[0].sdlScancode = SDL_SCANCODE_S;
-    buttonStates[1].currentInputState = INPUT_IS_NOT_PRESSED;
-    buttonStates[1].previousInputState = INPUT_IS_NOT_PRESSED;
-    buttonStates[1].name = std::string("load");
-    buttonStates[1].sdlScancode = SDL_SCANCODE_L;
-    userInput.buttonStates = buttonStates;
-    userInput.numButtomStates = 2;
+
+    userInput.buttonStates.push_back((InputButtonState){
+        std::string("save"),
+        SDL_SCANCODE_S,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
+    userInput.buttonStates.push_back((InputButtonState){
+        std::string("load"),
+        SDL_SCANCODE_L,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
+    userInput.buttonStates.push_back((InputButtonState){
+        std::string("zoom-in"),
+        SDL_SCANCODE_UP,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
+    userInput.buttonStates.push_back((InputButtonState){
+        std::string("zoom-out"),
+        SDL_SCANCODE_DOWN,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
+    userInput.buttonStates.push_back((InputButtonState){
+        std::string("zoom-reset"),
+        SDL_SCANCODE_R,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
+    userInput.buttonStates.push_back((InputButtonState){
+        std::string("camera-pan-up"),
+        SDL_SCANCODE_W,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
+    userInput.buttonStates.push_back((InputButtonState){
+        std::string("camera-pan-down"),
+        SDL_SCANCODE_S,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
+    userInput.buttonStates.push_back((InputButtonState){
+        std::string("camera-pan-left"),
+        SDL_SCANCODE_A,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
+    userInput.buttonStates.push_back((InputButtonState){
+        std::string("camera-pan-right"),
+        SDL_SCANCODE_D,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
 
     gCameraPosition.x = gScreenWidth/2;
     gCameraPosition.y = gScreenHeight/2;
@@ -307,9 +436,9 @@ int main(){
 
 
     SDL_Event event;
-
-    // main loop flag
-    bool quit = false;
+    registerEventProcessor(quitEventProcessor);
+    registerEventProcessor(mouseWheelStateEventProcessor);
+    
 
     // flecs
     flecs::world ecs;
@@ -335,12 +464,19 @@ int main(){
     while(!quit){
         u64 startTicks = SDL_GetTicks();
 
+        mouseState.currentMouseWheelState = NOT_SCROLLING;
+
         while(SDL_PollEvent(&event)){
-            if(event.type == SDL_QUIT){
-                quit = true;
-                break;
-            }
+            runRegisteredEventProcessors(event);
         }
+        
+        if(mouseState.currentMouseWheelState == SCROLL_UP){
+            gZoomAmount += 0.05;
+        }
+        else if(mouseState.currentMouseWheelState == SCROLL_DOWN){
+            gZoomAmount -= 0.05;
+        }
+        
 
         gKeyStates = (u8 *)SDL_GetKeyboardState(NULL);
 

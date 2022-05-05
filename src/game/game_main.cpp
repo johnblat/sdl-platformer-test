@@ -64,6 +64,9 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Position, SolidRect>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
 
     ecs.system<Position, PlatformVertices>().kind(flecs::OnStore).iter(renderPlatformVerticesSystem);
+
+    ecs.system<>().kind(flecs::OnStore).iter(zoomRenderSetupSystem);
+    ecs.system<Input>().kind(flecs::OnUpdate).iter(inputZoomSystem);
 }
 
 
@@ -291,6 +294,12 @@ int main(){
         INPUT_IS_NOT_PRESSED,
         INPUT_IS_NOT_PRESSED
     });
+    pinkGuyInput.buttonStates.push_back((InputButtonState){
+        std::string("zoom-reset"),
+        SDL_SCANCODE_R,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
 
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
@@ -388,17 +397,16 @@ int main(){
 
         Position centerScreen = {(float)gScreenWidth/2, (float)gScreenHeight/2};
         Position scaledCenterScreen = {centerScreen.x / gZoomAmount, centerScreen.y / gZoomAmount};
-    
+
         bgDestRect.x =
                 (((int) bgPosition.x - (int) gCameraPosition.x*parallaxBgScale) + (int) scaledCenterScreen.x -
                 ((int) bg_w / 2));
         bgDestRect.y =
                 ((int) bgPosition.y - (int) gCameraPosition.y * parallaxBgScale + (int) scaledCenterScreen.y - ((int) bg_h / 2) );
 
-        SDL_RenderSetScale(gRenderer, gZoomAmount, gZoomAmount);
-
         // draw background
         SDL_RenderCopy(gRenderer, bgTexture, nullptr, &bgDestRect);
+
 
         world.progress();
 

@@ -33,6 +33,7 @@
         "string_view": "cpp",
         "initializer_list": "cpp",
         "iostream": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "functional": "cpp"
     }
 }
