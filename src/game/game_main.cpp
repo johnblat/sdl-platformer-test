@@ -18,6 +18,10 @@
 #include "debug_display.h"
 #include "resourceLoading.h"
 #include "camera.h"
+#include "timestep.h"
+#include "render.h"
+#include "ParallaxSprite.h"
+#include "parallaxSpriteProcessing.h"
 
 
 SDL_Renderer *gRenderer;
@@ -38,35 +42,77 @@ struct Dimensions {
 
 void registerSystems(flecs::world &ecs){
 // Set up the animation playing and rendering systems
-    ecs.system<AnimatedSprite>("AnimatedSpritePlay").kind(flecs::OnUpdate).iter(animationsAccumulationSystem);
+    ecs.system<AnimatedSprite>("AnimatedSpritePlay")
+        .kind(flecs::OnUpdate)
+        .iter(animationsAccumulationSystem);
 
-    ecs.system<AnimatedSprite, Position>("renderingAnimatedSprites").kind(flecs::OnStore).iter(renderingAnimatedSpritesSystem);
+    ecs.system<AnimatedSprite, Position>("renderingAnimatedSprites")
+        .kind(flecs::OnStore)
+        .iter(renderingAnimatedSpritesSystem);
 
-    ecs.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState").kind(flecs::OnUpdate).iter(KeyboardStateAnimationSetterSystem);
+    ecs.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState")
+        .kind(flecs::OnUpdate)
+        .iter(KeyboardStateAnimationSetterSystem);
 
-    ecs.system<Velocity, Input, StateCurrPrev, Angle>("keyStateVelocitySetter").kind(flecs::PreUpdate).iter(InputVelocitySetterSystem);
+    ecs.system<Velocity, Input, StateCurrPrev, Angle>("keyStateVelocitySetter")
+        .kind(flecs::PreUpdate)
+        .iter(InputVelocitySetterSystem);
 
-    ecs.system<Position, std::vector<Ray2d>, Velocity, StateCurrPrev, Angle>("collision").kind(flecs::PostUpdate).iter(
-            ray2dSolidRectCollisionSystem);
+    ecs.system<Position, std::vector<Ray2d>, Velocity, StateCurrPrev, Angle>("collision")
+        .kind(flecs::PostUpdate)
+        .iter(ray2dSolidRectCollisionSystem);
 
-    ecs.system<Velocity, Position>("move").kind(flecs::OnUpdate).iter(moveSystem);
+    ecs.system<Velocity, Position>("move")
+        .kind(flecs::OnUpdate)
+        .iter(moveSystem);
 
-    ecs.system<AnimatedSprite, Input>().kind(flecs::OnUpdate).iter(InputFlipSystem);
+    ecs.system<AnimatedSprite, Input>()
+        .kind(flecs::OnUpdate)
+        .iter(InputFlipSystem);
 
-    ecs.system<Input>().kind(flecs::PreUpdate).iter(inputUpdateSystem);
+    ecs.system<Input>()
+        .kind(flecs::PreUpdate)
+        .iter(inputUpdateSystem);
 
-    ecs.system<Position, std::vector<Ray2d>>().kind(flecs::OnStore).iter(renderRay2dCollectionsSystem);
+    ecs.system<Position, std::vector<Ray2d>>()
+        .kind(flecs::OnStore)
+        .iter(renderRay2dCollectionsSystem);
 
-    ecs.system<AnimatedSprite, Velocity, StateCurrPrev>().kind(flecs::OnUpdate).iter(setAnimationBasedOnSpeedSystem);
+    ecs.system<AnimatedSprite, Velocity, StateCurrPrev>()
+        .kind(flecs::OnUpdate)
+        .iter(setAnimationBasedOnSpeedSystem);
 
-    ecs.system<Velocity, StateCurrPrev>("gravity system").kind(flecs::OnUpdate).iter(gravitySystem);
+    ecs.system<Velocity, StateCurrPrev>("gravity system")
+        .kind(flecs::OnUpdate)
+        .iter(gravitySystem);
 
-    ecs.system<Position, SolidRect>().kind(flecs::OnStore).iter(renderRectangularObjectsSystem);
+    ecs.system<Position, SolidRect>()
+        .kind(flecs::OnStore)
+        .iter(renderRectangularObjectsSystem);
 
-    ecs.system<Position, PlatformVertices>().kind(flecs::OnStore).iter(renderPlatformVerticesSystem);
+    ecs.system<Position, PlatformVertices>()
+        .kind(flecs::OnStore)
+        .iter(renderPlatformVerticesSystem);
 
-    ecs.system<>().kind(flecs::OnStore).iter(zoomRenderSetupSystem);
-    ecs.system<Input>().kind(flecs::OnUpdate).iter(inputZoomSystem);
+    ecs.system<>()
+        .kind(flecs::OnStore)
+        .iter(zoomRenderSetupSystem);
+
+    ecs.system<Input>()
+        .kind(flecs::OnUpdate)
+        .iter(inputZoomSystem);
+
+    ecs.system<>()
+        .kind(flecs::PreFrame)
+        .iter(renderFrameStartSystem);
+
+    ecs.system<Position, ParallaxSprite>()
+        .kind(flecs::OnUpdate)
+        .iter(renderParallaxSpriteSystem);
+
+    ecs.system<>()
+        .kind(flecs::PostFrame)
+        .iter(renderEndFrameSystem);
 }
 
 
@@ -100,14 +146,24 @@ int main(){
      * SETUP BACKGROUND
      * 
      */
-    SDL_Surface *bgSurface = IMG_Load("res/checkerboard-bg.png");
-    SDL_Texture *bgTexture = SDL_CreateTextureFromSurface(gRenderer, bgSurface);
-    float parallaxBgScale = 0.1;
-    int bg_w = bgSurface->w;
-    int bg_h = bgSurface->h;
-    Position bgPosition = {gScreenWidth/2.0f,gScreenHeight/2.0f};
-    SDL_Rect bgDestRect = {(int)bgPosition.x - bg_w/2,(int) bgPosition.y - bg_h/2, bg_w, bg_h}; 
-    SDL_FreeSurface(bgSurface);
+    u32 bgSpriteId = createSpriteSheet(
+        "res/checkerboard-bg.png", 
+        1, 
+        1, 
+        "checkerboard-background"
+    );
+    ParallaxSprite parallaxSprite;
+    parallaxSprite.name = "checkerboard-background-px";
+    parallaxSprite.scale = 0.1f;
+    parallaxSprite.spriteSheetId = bgSpriteId;
+
+    Position parallaxSpritePosition = {gScreenWidth/2.0f, gScreenHeight/2.0f};
+
+    flecs::entity pxBgEntity = world.entity();
+    pxBgEntity.set<Position>(parallaxSpritePosition);
+    pxBgEntity.set<ParallaxSprite>(parallaxSprite);
+
+
 
 
     /**
@@ -117,7 +173,7 @@ int main(){
     pinkGuyEntity.add<AnimatedSprite>();
 
     const char *filename = "res/pink-monster-animation-transparent.png";
-    const char *animatedSpriteName =  "pink-monster-animation";
+    std::string animatedSpriteName =  "pink-monster-animation";
     u32 spriteSheetId = createSpriteSheet(filename, 9, 15, animatedSpriteName);
     AnimatedSprite animatedSprite = createAnimatedSprite(spriteSheetId);
 
@@ -329,8 +385,6 @@ int main(){
     pinkGuyEntity.set<StateCurrPrev>(state);
     
 
-    // OTHER CHARACTER SETUP
-
     
     registerSystems(world);
     
@@ -352,9 +406,6 @@ int main(){
     platformVertices.vals.push_back((Position){1000.0f, -40.0f});
 
 
-
-
-
     flecs::entity platform = world.entity("platform");
     platform.set<Position>((Position){640.0f/2.0f, 480.0f/2.0f});
     platform.set<PlatformVertices>(platformVertices);
@@ -362,16 +413,12 @@ int main(){
     loadPlatformVertices(world);
 
 
-
-    // timing
-    // float deltaTime = 0.0f;
-    const float FPS = 60;
-    const float secondsPerFrame = 1.0f / FPS;
+    gTimeStep = TimeStepInit(60.0f);
 
     // main loop
     while(!quit){
-        u64 startTicks = SDL_GetTicks();
-        // deltaTime = getDeltaTime();
+
+        TimeStepSetStartTicks(gTimeStep);
 
         while(SDL_PollEvent(&event)){
             if(event.type == SDL_QUIT){
@@ -384,48 +431,10 @@ int main(){
         keyboardState.keyStates = keyStates;    
 
         gKeyStates = keyStates;
-   
-
-
-        pinkGuyEntity.set<KeyboardState>(keyboardState);
-
-        SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
-        SDL_RenderClear(gRenderer);
 
         gCameraPosition.x = pinkGuyEntity.get<Position>()->x;
         gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
 
-        Position centerScreen = {(float)gScreenWidth/2, (float)gScreenHeight/2};
-        Position scaledCenterScreen = {centerScreen.x / gZoomAmount, centerScreen.y / gZoomAmount};
-
-        bgDestRect.x =
-                (((int) bgPosition.x - (int) gCameraPosition.x*parallaxBgScale) + (int) scaledCenterScreen.x -
-                ((int) bg_w / 2));
-        bgDestRect.y =
-                ((int) bgPosition.y - (int) gCameraPosition.y * parallaxBgScale + (int) scaledCenterScreen.y - ((int) bg_h / 2) );
-
-        // draw background
-        SDL_RenderCopy(gRenderer, bgTexture, nullptr, &bgDestRect);
-
-
         world.progress();
-
-
-        SDL_RenderPresent(gRenderer);
-
-        u64 endTicks = SDL_GetTicks();
-
-        u64 totalTicks = endTicks - startTicks;
-        float totalSeconds = (float)totalTicks / 1000.0f;
-
-        if(totalSeconds < secondsPerFrame){
-            float secondsRemainingToFixTimeStep = secondsPerFrame - totalSeconds;
-            float msRemainingToFixTimeStep = secondsRemainingToFixTimeStep * 1000;
-            SDL_Delay((u32)msRemainingToFixTimeStep);
-            //printf("ms to wait: %f\n", msRemainingToFixTimeStep);
-        }
     }
-
-
-    
 }

@@ -4,6 +4,7 @@
 #include "ints.h"
 #include <stdlib.h>
 #include <SDL2/SDL.h>
+#include <string>
 
 struct Animation {
     char name[32]; // animation name
@@ -18,7 +19,7 @@ struct Animation {
 
 struct AnimatedSprite { 
     char filename[64]; 
-    char spriteSheetName[64];
+    std::string spriteSheetName;
     u32 spriteSheetId; // Id into the global array of sprite sheets
     u32 numAnimations;
     Animation animations[8];// collection of animations for this animated sprite

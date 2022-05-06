@@ -302,11 +302,6 @@ void loadInputSystem(flecs::iter &it, Input *inputs){
 }
 
 
-void renderFrameStartSystem(flecs::iter &it){
-    SDL_Color bgColor = {20,20,20,255};
-    SDL_SetRenderDrawColor(gRenderer, bgColor.r, bgColor.b, bgColor.g, 255);
-    SDL_RenderClear(gRenderer);
-}
 
 /**
  * @brief Registers the initial systems
@@ -345,6 +340,10 @@ void registerSystems(flecs::world &ecs){
     ecs.system<>()
         .kind(flecs::PreFrame)
         .iter(renderFrameStartSystem);
+    
+    ecs.system<>()
+        .kind(flecs::PostFrame)
+        .iter(renderEndFrameSystem);
     
 }
 
@@ -476,11 +475,11 @@ int main(){
     pvsetity.set<PlatformVertices>(pvs);
     pvsetity.set<Position>((Position){0,0});
 
-    TimeStep ts = TimeStepInit(60.0f);
+    gTimeStep = TimeStepInit(60.0f);
 
     while(!quit){
 
-        TimeStepSetStartTicks(ts);
+        TimeStepSetStartTicks(gTimeStep);
 
         mouseState.currentMouseWheelState = NOT_SCROLLING;
 
@@ -496,8 +495,5 @@ int main(){
 
         ecs.progress();
 
-        SDL_RenderPresent(gRenderer);
-
-        TimeStepSkip(ts);
     }
 }

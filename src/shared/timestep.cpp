@@ -2,6 +2,8 @@
 #include <SDL2/SDL.h>
 #include "ints.h"
 
+TimeStep gTimeStep;
+
 
 TimeStep TimeStepInit(float FPS){
     TimeStep ts;

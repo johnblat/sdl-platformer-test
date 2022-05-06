@@ -3,9 +3,10 @@
 
 #include <SDL2/SDL.h>
 #include "ints.h"
+#include <string>
 
 struct SpriteSheet {
-    char name[64];
+    std::string name;
     SDL_Texture *texture;
     size_t w;
     size_t h;

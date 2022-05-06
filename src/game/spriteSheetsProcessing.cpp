@@ -7,9 +7,9 @@
 #include "render.h"
 #include <string.h>
 #include <assert.h>
+#include <string>
 
-
-u32 createSpriteSheet(const char *filename, size_t numCellRows, size_t numCellCols, const char *name){
+u32 createSpriteSheet(const char *filename, size_t numCellRows, size_t numCellCols, const std::string name){
     SDL_Surface *imgSurface = IMG_Load(filename);
     Uint32 alphaColor = 0x234c73;
 
@@ -30,7 +30,7 @@ u32 createSpriteSheet(const char *filename, size_t numCellRows, size_t numCellCo
     spriteSheet.numCellCols = numCellCols;
     spriteSheet.w = imgSurface->w;
     spriteSheet.h = imgSurface->h;
-    strncpy(spriteSheet.name, name, 64);
+    spriteSheet.name = name;
     u32 spriteSheetId = gNumSpriteSheets;
     gSpriteSheets[spriteSheetId] = spriteSheet; // need to make sure this has mem allocated
     gNumSpriteSheets++;

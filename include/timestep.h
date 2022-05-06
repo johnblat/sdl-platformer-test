@@ -14,11 +14,14 @@
 //     return deltaTime;
 // }
 
+
 typedef struct TimeStep TimeStep;
 struct TimeStep {
     float secondsPerFrame;
     float startTicks;
 };
+
+extern TimeStep gTimeStep;
 
 TimeStep TimeStepInit(float FPS);
 void TimeStepSetStartTicks(TimeStep &ts);

@@ -3,6 +3,14 @@
 #include "position.h"
 #include <SDL2/SDL.h>
 #include "window.h"
+#include "timestep.h"
+
+
+void renderFrameStartSystem(flecs::iter &it){
+    SDL_Color bgColor = {20,20,20,255};
+    SDL_SetRenderDrawColor(gRenderer, bgColor.r, bgColor.b, bgColor.g, 255);
+    SDL_RenderClear(gRenderer);
+}
 
 
 void renderPolyLineInCamera(Position offsetPosition, std::vector<Position> points, SDL_Color color){
@@ -38,4 +46,10 @@ void renderPolyLineInCamera(Position offsetPosition, std::vector<Position> point
         v2d p2(cameraPlatformVertices.at(i+1).x, cameraPlatformVertices.at(i+1).y);
         SDL_RenderDrawLineF(gRenderer, p1.x, p1.y, p2.x, p2.y);
     }
+}
+
+
+void renderEndFrameSystem(flecs::iter &it){
+    SDL_RenderPresent(gRenderer);
+    TimeStepSkip(gTimeStep);
 }
