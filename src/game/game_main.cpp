@@ -128,9 +128,6 @@ int main(){
 
     flecs::world world;
     flecs::entity pinkGuyEntity = world.entity("PinkGuy");
-    flecs::entity owlGuyEntity = world.entity("OwlGuy");
-    flecs::entity floor1Entity = world.entity("Floor");
-    flecs::entity floor2Entity = world.entity("Floor2");
 
 
     /**
@@ -146,22 +143,22 @@ int main(){
      * SETUP BACKGROUND
      * 
      */
-    u32 bgSpriteId = createSpriteSheet(
-        "res/checkerboard-bg.png", 
-        1, 
-        1, 
-        "checkerboard-background"
-    );
-    ParallaxSprite parallaxSprite;
-    parallaxSprite.name = "checkerboard-background-px";
-    parallaxSprite.scale = 0.1f;
-    parallaxSprite.spriteSheetId = bgSpriteId;
+    // u32 bgSpriteId = createSpriteSheet(
+    //     "res/checkerboard-bg.png", 
+    //     1, 
+    //     1, 
+    //     "checkerboard-background"
+    // );
+    // ParallaxSprite parallaxSprite;
+    // parallaxSprite.name = "checkerboard-background-px";
+    // parallaxSprite.scale = 0.1f;
+    // parallaxSprite.spriteSheetId = bgSpriteId;
 
-    Position parallaxSpritePosition = {gScreenWidth/2.0f, gScreenHeight/2.0f};
+    // Position parallaxSpritePosition = {gScreenWidth/2.0f, gScreenHeight/2.0f};
 
-    flecs::entity pxBgEntity = world.entity();
-    pxBgEntity.set<Position>(parallaxSpritePosition);
-    pxBgEntity.set<ParallaxSprite>(parallaxSprite);
+    // flecs::entity pxBgEntity = world.entity();
+    // pxBgEntity.set<Position>(parallaxSpritePosition);
+    // pxBgEntity.set<ParallaxSprite>(parallaxSprite);
 
 
 
@@ -170,7 +167,7 @@ int main(){
      * ANIMATED SPRITE SETUP
      * 
      */
-    pinkGuyEntity.add<AnimatedSprite>();
+     pinkGuyEntity.add<AnimatedSprite>();
 
     const char *filename = "res/pink-monster-animation-transparent.png";
     std::string animatedSpriteName =  "pink-monster-animation";

@@ -9,9 +9,10 @@
 #include "v2d.h"
 #include "resourceLoading.h"
 #include "mouseState.h"
+#include "mouseStateProcessing.h"
 #include "eventHandling.h"
 #include "timestep.h"
-
+#include "loadSave.h"
 
 SDL_Renderer *gRenderer;
 SDL_Window *gWindow;
@@ -33,150 +34,10 @@ bool quit = false;
 MouseState mouseState;
 
 
-bool isMouseButtonJustPressed(int button);
-bool isMouseButtonJustReleased(int button);
-bool isMouseButtonPressed(int button);
-
-
-// CALL THIS AFTER DONE EVENT POLLING
-
-
-void mouseStateSetter(MouseState &mouseState){
-    u32 buttons;
-    int x, y;
-    float lx, ly;
-    float caX, caY;
-
-    buttons = SDL_GetMouseState(&x, &y);
-
-    SDL_RenderWindowToLogical(
-        gRenderer,
-        x,
-        y,
-        &lx,
-        &ly
-    );
-    // if(buttons & SDL_BUTTON_LMASK){
-    //     printf("hi");
-    // }
-
-    float scaleX, scaleY;
-    SDL_RenderGetScale(gRenderer, &scaleX, &scaleY);
-
-    float centerScreenX, centerScreenY;
-    centerScreenX = gScreenWidth/2;
-    centerScreenY = gScreenHeight/2;
-
-    float scaledCenterScreenX, scaledCenterScreenY;
-    scaledCenterScreenX = centerScreenX / scaleX;
-    scaledCenterScreenY = centerScreenY / scaleY;
 
 
 
-    caX = lx - (scaledCenterScreenX - gCameraPosition.x);
-    caY = ly - (scaledCenterScreenY - gCameraPosition.y);
 
-
-    mouseState.windowPosition.x = (float)x;
-    mouseState.windowPosition.y = (float)y;
-    mouseState.logicalPosition.x = lx;
-    mouseState.logicalPosition.y = ly;
-    mouseState.cameraAdjustedPosition.x = caX;
-    mouseState.cameraAdjustedPosition.y = caY;
-
-    mouseState.lmbPreviousState = mouseState.lmbCurrentState;
-    mouseState.rmbPreviousState = mouseState.rmbCurrentState;
-
-    if(buttons & SDL_BUTTON_LMASK){
-        if(mouseState.lmbPreviousState == INPUT_IS_JUST_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_PRESSED;
-        }
-        else if(mouseState.lmbPreviousState == INPUT_IS_NOT_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_JUST_PRESSED;
-        }
-        else if(mouseState.lmbPreviousState == INPUT_IS_JUST_RELEASED){
-            mouseState.lmbCurrentState = INPUT_IS_JUST_PRESSED;
-        }
-        else if(mouseState.lmbPreviousState == INPUT_IS_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_PRESSED;
-        }
-    }
-    else {
-        if(mouseState.lmbPreviousState == INPUT_IS_JUST_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_JUST_RELEASED;
-        }
-        else if(mouseState.lmbPreviousState == INPUT_IS_NOT_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_NOT_PRESSED;
-        }
-        else if(mouseState.lmbPreviousState == INPUT_IS_JUST_RELEASED){
-            mouseState.lmbCurrentState = INPUT_IS_NOT_PRESSED;
-        }
-        else if(mouseState.lmbPreviousState == INPUT_IS_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_JUST_RELEASED;
-        }
-    }
-
-    if(buttons & SDL_BUTTON_RMASK){
-        if(mouseState.rmbPreviousState == INPUT_IS_JUST_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_PRESSED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_NOT_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_JUST_PRESSED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_JUST_RELEASED){
-            mouseState.rmbCurrentState = INPUT_IS_JUST_PRESSED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_PRESSED;
-        }
-    }
-    else {
-        if(mouseState.rmbPreviousState == INPUT_IS_JUST_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_JUST_RELEASED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_NOT_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_NOT_PRESSED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_JUST_RELEASED){
-            mouseState.rmbCurrentState = INPUT_IS_NOT_PRESSED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_JUST_RELEASED;
-        }
-    }
-
-
-}
-
-void mouseStatePositionCreate(flecs::world &ecs){
-    if(mouseState.lmbCurrentState == INPUT_IS_JUST_RELEASED){
-        Position p = {mouseState.cameraAdjustedPosition.x, mouseState.cameraAdjustedPosition.y};
-        Position pv;
-        pv.x = p.x;
-        pv.y = p.y;
-
-        // THIS IS WACKY.
-        // TODO FIX ME
-        auto f = ecs.filter<PlatformVertices>();
-        f.each([&](flecs::entity e, PlatformVertices &pvs){
-            pvs.vals.push_back(pv);
-        });
-    }
-}
-
-
-void mouesStatePlatformVerticesRemoveAll(flecs::world &ecs){
-    if(mouseState.rmbCurrentState == INPUT_IS_JUST_RELEASED){
-        // THIS IS WACKY.
-        // TODO FIX ME
-        auto f = ecs.filter<PlatformVertices>();
-        ecs.defer_begin();
-        f.each([&](flecs::entity e, PlatformVertices pvs){
-            e.remove<PlatformVertices>();
-        });
-        ecs.defer_end();
-    }
-}
 /**
  * @brief END MOUSE RELATED STUFF
  * 
@@ -220,29 +81,6 @@ void mouseWheelStateEventProcessor(SDL_Event &event){
  */
 
 
-/**
- * @brief Creates an entity for the platform vertices
- * 
- * @param ecs 
- */
-void createPlatformVerticesAtPosition(flecs::world &ecs, Position pos);
-
-/**
- * @brief adds a Position to the platformVertices vector
- * 
- * @param ecs 
- * @param platformVertices 
- * @param Position 
- */
-void addPosition(flecs::world &ecs, PlatformVertices &platformVertices, Position Position);
-
-/**
- * @brief Removes platform vertices componet from the entity
- * 
- * @param ecs 
- * @param eid 
- */
-void clearPlatformVertices(flecs::world &ecs, flecs::entity eid);
 
 /** END PLATFORM RELATED STUFF
  * 
@@ -250,56 +88,6 @@ void clearPlatformVertices(flecs::world &ecs, flecs::entity eid);
 
 
 
-
-void savePlatformVertices(flecs::world &ecs){    
-    ecs.defer_begin();
-
-    auto f = ecs.filter<Position, PlatformVertices>();
-
-    f.iter([](flecs::iter &it,const Position *positions,const PlatformVertices *pvs){ 
-        SDL_RWops *saveContext = SDL_RWFromFile("platformVertices", "wb");
-        
-        i32 numEntities = it.count();
-        SDL_RWwrite(saveContext, &numEntities, sizeof(i32), 1);
-        SDL_RWwrite(saveContext, positions, sizeof(Position), it.count());
-
-        for(int i = 0; i < numEntities; i++){    
-            size_t vectorSize = pvs[i].vals.size();
-            SDL_RWwrite(saveContext, &vectorSize, sizeof(size_t), 1);
-            const Position *vectorData = pvs[i].vals.data();
-            SDL_RWwrite(saveContext, vectorData, sizeof(Position), vectorSize);
-        }
-
-        SDL_RWclose(saveContext);
-    });
-
-    ecs.defer_end();
-};
-
-
-
-
-void saveSystem(flecs::iter &it, Input *inputs){
-    for(u64 i : it){
-        if(inputIsJustReleased(inputs[i], "save")){
-            flecs::world ecs = it.world();
-            // auto q = ecs.query<Position, PlatformVertices>();
-            savePlatformVertices(ecs);
-            printf("SAVED!\n");
-        }
-    }
-}
-
-
-void loadInputSystem(flecs::iter &it, Input *inputs){
-    for(u64 i : it){
-        if(inputIsJustReleased(inputs[i], "load")){
-            flecs::world ecs = it.world();
-            loadPlatformVertices(ecs);
-            printf("LOADED!\n");
-        }
-    }
-}
 
 
 
@@ -491,7 +279,7 @@ int main(){
 
         mouseStateSetter(mouseState);
         mouseScrollWheelZoomSetter(mouseState);
-        mouseStatePositionCreate(ecs);
+        mouseStatePositionCreate(ecs, mouseState);
 
         ecs.progress();
 
