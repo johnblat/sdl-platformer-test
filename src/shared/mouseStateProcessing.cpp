@@ -1,10 +1,13 @@
 #include "mouseState.h"
 #include "render.h"
+#include "window.h"
+#include "camera.h"
 
 void mouseStateSetter(MouseState &mouseState){
     u32 buttons;
     int x, y;
     float lx, ly;
+    float caX, caY;
 
     buttons = SDL_GetMouseState(&x, &y);
 
@@ -15,11 +18,33 @@ void mouseStateSetter(MouseState &mouseState){
         &lx,
         &ly
     );
+    // if(buttons & SDL_BUTTON_LMASK){
+    //     printf("hi");
+    // }
+
+    float scaleX, scaleY;
+    SDL_RenderGetScale(gRenderer, &scaleX, &scaleY);
+
+    float centerScreenX, centerScreenY;
+    centerScreenX = gScreenWidth/2;
+    centerScreenY = gScreenHeight/2;
+
+    float scaledCenterScreenX, scaledCenterScreenY;
+    scaledCenterScreenX = centerScreenX / scaleX;
+    scaledCenterScreenY = centerScreenY / scaleY;
+
+
+
+    caX = lx - (scaledCenterScreenX - gCameraPosition.x);
+    caY = ly - (scaledCenterScreenY - gCameraPosition.y);
+
 
     mouseState.windowPosition.x = (float)x;
     mouseState.windowPosition.y = (float)y;
     mouseState.logicalPosition.x = lx;
     mouseState.logicalPosition.y = ly;
+    mouseState.cameraAdjustedPosition.x = caX;
+    mouseState.cameraAdjustedPosition.y = caY;
 
     mouseState.lmbPreviousState = mouseState.lmbCurrentState;
     mouseState.rmbPreviousState = mouseState.rmbCurrentState;
