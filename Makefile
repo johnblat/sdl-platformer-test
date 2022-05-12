@@ -7,7 +7,8 @@ CXXFLAGS = -std=c++11 -Wno-expansion-to-defined
 SHARED_C_SOURCES = src/shared/flecs.c
 SHARED_C_OBJ_FILES := $(SHARED_C_SOURCES:%.c=%.c.o)
 
-SHARED_CXX_SOURCES =    src/shared/input.cpp   src/shared/debug_display.cpp src/shared/shapeTransformations.cpp src/shared/camera.cpp src/shared/resourceLoading.cpp src/shared/eventHandling.cpp src/shared/timestep.cpp src/shared/render.cpp
+SHARED_CXX_SOURCES =    src/shared/input.cpp   src/shared/debug_display.cpp src/shared/shapeTransformations.cpp src/shared/camera.cpp src/shared/resourceLoading.cpp src/shared/eventHandling.cpp src/shared/timestep.cpp src/shared/render.cpp src/shared/mouseStateProcessing.cpp src/shared/loadSave.cpp
+
 SHARED_CXX_OBJ_FILES := $(SHARED_CXX_SOURCES:%.cpp=%.cpp.o)
 
 GAME_CXX_SOURCES = src/game/game_main.cpp  src/game/collisions.cpp src/game/movement.cpp src/game/animationProcessing.cpp src/game/spriteSheetsProcessing.cpp src/game/stateProcessing.cpp src/game/parallaxSpriteProcessing.cpp

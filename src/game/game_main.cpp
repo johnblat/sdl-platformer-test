@@ -22,7 +22,12 @@
 #include "render.h"
 #include "ParallaxSprite.h"
 #include "parallaxSpriteProcessing.h"
+#include "mouseState.h"
+#include "mouseStateProcessing.h"
+#include "loadSave.h"
 
+
+MouseState mouseState;
 
 SDL_Renderer *gRenderer;
 SDL_Window *gWindow;
@@ -102,6 +107,10 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(inputZoomSystem);
 
+    ecs.system<Input>()
+        .kind(flecs::OnStore)
+        .iter(loadInputSystem);
+
     ecs.system<>()
         .kind(flecs::PreFrame)
         .iter(renderFrameStartSystem);
@@ -114,7 +123,6 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::PostFrame)
         .iter(renderEndFrameSystem);
 }
-
 
 
 
@@ -354,6 +362,19 @@ int main(){
         INPUT_IS_NOT_PRESSED
     });
 
+    pinkGuyInput.buttonStates.push_back((InputButtonState){
+        std::string("save"),
+        SDL_SCANCODE_1,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
+    pinkGuyInput.buttonStates.push_back((InputButtonState){
+        std::string("load"),
+        SDL_SCANCODE_2,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
 
@@ -431,6 +452,9 @@ int main(){
 
         gCameraPosition.x = pinkGuyEntity.get<Position>()->x;
         gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
+
+        mouseStateSetter(mouseState);
+        mouseStatePositionCreate(world, mouseState);
 
         world.progress();
     }
