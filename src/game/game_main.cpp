@@ -40,7 +40,6 @@ size_t gNumSpriteSheets = 0;
 
 
 
-
 void registerSystems(flecs::world &ecs){
 // Set up the animation playing and rendering systems
     ecs.system<AnimatedSprite>("AnimatedSpritePlay")
@@ -178,7 +177,6 @@ int main(){
     u32 spriteSheetId = createSpriteSheet(filename, 9, 15, animatedSpriteName);
     AnimatedSprite animatedSprite = createAnimatedSprite(spriteSheetId);
 
-    // add animations to animatedSprite
     Animation walkAnimation = createAnimation({15,16,17,18,19,20}, 12.0f, true, "walk");
 
     Animation runAnimation = createAnimation({30,31,32,33,34,35}, 12.0f, true, "run");
@@ -206,13 +204,6 @@ int main(){
     overwriteAnimationOnAnimatedSprite(&animatedSprite, 4, jumpAnimation);
 
 
-    
-    // ADD the setup AnimatedSprite to the pinkGuyEntity
-    pinkGuyEntity.set<AnimatedSprite>(animatedSprite);
-    pinkGuyEntity.set<Position>((Position){640.0f/2.0f,480.0f/2.0f - 400});
-    pinkGuyEntity.set<Velocity>((Velocity){0,0});
-    pinkGuyEntity.set<Angle>((Angle){0.0f});
-    // pinkGuyEntity.set<CollisionRect>((CollisionRect){32,32});
     
     Input pinkGuyInput;
     pinkGuyInput.buttonStates.push_back((InputButtonState){
@@ -281,14 +272,18 @@ int main(){
     
     rays.push_back(ray1);
 
-    pinkGuyEntity.set<std::vector<Ray2d>>(rays);
 
     StateCurrPrev state;
     state.currentState = STATE_ON_GROUND;
     state.prevState = STATE_ON_GROUND;
 
+    pinkGuyEntity.set<AnimatedSprite>(animatedSprite);
+    pinkGuyEntity.set<Position>((Position){640.0f/2.0f,480.0f/2.0f - 400});
+    pinkGuyEntity.set<Velocity>((Velocity){0,0});
+    pinkGuyEntity.set<Angle>((Angle){0.0f});
     pinkGuyEntity.set<StateCurrPrev>(state);
-    
+    pinkGuyEntity.set<std::vector<Ray2d>>(rays);
+
 
     
     registerSystems(world);
@@ -331,11 +326,8 @@ int main(){
                 break;
             }
         }
-        u8 *keyStates = (u8 *)SDL_GetKeyboardState(nullptr);
-        KeyboardState keyboardState{};
-        keyboardState.keyStates = keyStates;    
-
-        gKeyStates = keyStates;
+        gKeyStates = (u8 *)SDL_GetKeyboardState(nullptr);
+   
 
         gCameraPosition.x = pinkGuyEntity.get<Position>()->x;
         gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
