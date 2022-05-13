@@ -98,7 +98,7 @@ void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSpr
  * @param as the animatedSprite to set current animation of
  * @param animationName the name of the new current animation
  */
-void animatedSpritePlay(AnimatedSprite *as, const char *animationName);
+void animatedSpritePlay(AnimatedSprite *as, std::string animationName);
 
 /**
  * @brief just sets the currentFrame to 0. This can be very helpful for non looping animatins
@@ -112,5 +112,16 @@ void restartAnimation(Animation *animation);
  * 
  */
 bool isAnimationFinished(Animation *animation);
+
+/**
+ * @brief Create a Animation object
+ * 
+ * @param frameIndices the indices into a sprite sheet that will be the frames
+ * @param FPS the frames per second
+ * @param isLoop does the animation loop?
+ * @param name name of the animation
+ * @return Animation 
+ */
+Animation createAnimation(std::vector<u32> frameIndices, float FPS, bool isLoop, std::string name);
 
 #endif

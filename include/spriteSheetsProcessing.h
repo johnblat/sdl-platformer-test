@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string>
 
-u32 createSpriteSheet(const char *filename, size_t numCellRows, size_t numCellCols, std::string name);
+u32 createSpriteSheet(std::string filename, size_t numCellRows, size_t numCellCols, const std::string name);
 SpriteSheet getSpriteSheet(u32 id);
 
 #endif

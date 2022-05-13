@@ -9,8 +9,8 @@
 #include <assert.h>
 #include <string>
 
-u32 createSpriteSheet(const char *filename, size_t numCellRows, size_t numCellCols, const std::string name){
-    SDL_Surface *imgSurface = IMG_Load(filename);
+u32 createSpriteSheet(std::string filename, size_t numCellRows, size_t numCellCols, const std::string name){
+    SDL_Surface *imgSurface = IMG_Load(filename.c_str());
 
     SDL_Texture *texture = SDL_CreateTextureFromSurface(gRenderer, imgSurface);
     SpriteSheet spriteSheet;

@@ -75,7 +75,7 @@ void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSpr
 
         Animation currentAnimation = animatedSprites[i].animations[animatedSprites[i].currentAnimation];
         SDL_Rect srcRect;
-        u32 spriteSheetCellIndex = currentAnimation.arrFrames[currentAnimation.currentFrame];
+        u32 spriteSheetCellIndex = currentAnimation.frameIndeces[currentAnimation.currentFrame];
         u32 cell_r;
         u32 cell_c;
         iToRC(spriteSheetCellIndex, spriteSheet.numCellCols, &cell_r, &cell_c);
@@ -153,9 +153,9 @@ void setAnimationBasedOnSpeedSystem(flecs::iter &it, AnimatedSprite *animatedSpr
 // MANAGING, LOADING, CREATION, ETC
 // 
 
-void animatedSpritePlay(AnimatedSprite *as, const char *animationName){
+void animatedSpritePlay(AnimatedSprite *as, std::string animationName){
     for(int i = 0; i < as->numAnimations; i++){
-        if(strncmp(as->animations[i].name, animationName, 16) == 0){
+        if(as->animations[i].name == animationName){
             as->currentAnimation = i;
             return;
         }
@@ -174,7 +174,6 @@ AnimatedSprite createAnimatedSprite(u32 spriteSheetId){
 
 void addNewAnimationToAnimatedSprite(AnimatedSprite *animatedSprite){
     Animation animation;
-    animation.numFrames = 0;
     animation.currentFrame = 0;
     animation.accumulator = 0.0f;
     animation.fps = 0.0f;
@@ -196,5 +195,19 @@ void restartAnimation(Animation *animation){
 
 
 bool isAnimationFinished(Animation *animation){
-    return animation->currentFrame >= animation->numFrames - 1;
+    return animation->currentFrame >= animation->frameIndeces.size() - 1;
+}
+
+
+
+Animation createAnimation(std::vector<u32> frameIndices, float FPS, bool isLoop, std::string name){
+    Animation a;
+    a.frameIndeces = frameIndices;
+    a.fps = FPS;
+    a.msPerFrame = 1.0 / FPS;
+    a.isLoop = isLoop;
+    a.name = name;
+    a.currentFrame = 0;
+    a.accumulator = 0;
+    return a;
 }

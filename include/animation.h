@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <string>
+#include <vector>
+
 
 struct Animation {
-    char name[32]; // animation name
-    size_t numFrames;
-    u32 arrFrames[16]; // indexes into some sprite sheet. should be made dynamic eventually
+    std::string name; // animation name
+    std::vector<u32> frameIndeces;
     u32 currentFrame; // current index into arrFrames
     float accumulator; // current time through the current frame
     float fps; // frames per second
