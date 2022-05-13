@@ -6,4 +6,3 @@
 
 void mouseStateSetter(MouseState &mouseState);
 void mouesStatePlatformVerticesRemoveAll(flecs::world &ecs, MouseState &mouseState);
-void mouseStatePositionCreate(flecs::world &ecs, MouseState &mouseState);

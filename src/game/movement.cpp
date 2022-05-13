@@ -14,8 +14,6 @@
 #include "collisions.h"
 
 void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
-    
-
     for(auto i : it){
         positions[i].x += velocities[i].x ;//* it.delta_time();
         positions[i].y += velocities[i].y ;//* it.delta_time();

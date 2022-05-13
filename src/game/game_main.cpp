@@ -25,6 +25,7 @@
 #include "mouseState.h"
 #include "mouseStateProcessing.h"
 #include "loadSave.h"
+#include "editingFunctionality.h"
 
 
 MouseState mouseState;
@@ -123,6 +124,10 @@ void registerSystems(flecs::world &ecs){
 
 
 int main(){
+
+    mouseState.lmbCurrentState = INPUT_IS_NOT_PRESSED;
+    mouseState.rmbCurrentState = INPUT_IS_NOT_PRESSED;
+
     bool quit = false;
     /**
      * FLECS SETUP
@@ -333,7 +338,7 @@ int main(){
         gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
 
         mouseStateSetter(mouseState);
-        mouseStatePositionCreate(world, mouseState);
+        EditPlatformVerticesAddVertexAtMousePositionOnSelected(world, mouseState);
 
         world.progress();
     }

@@ -16,6 +16,7 @@ struct Angle {
 //     float x, y;
 // };
 
+struct SelectedForEditing {};
 
 struct PlatformVertices {
     std::vector<Position> vals;

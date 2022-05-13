@@ -2,6 +2,7 @@
 #include "render.h"
 #include "window.h"
 #include "camera.h"
+#include "mouseStateProcessing.h"
 
 void mouseStateSetter(MouseState &mouseState){
     u32 buttons;
@@ -126,18 +127,4 @@ void mouesStatePlatformVerticesRemoveAll(flecs::world &ecs, MouseState &mouseSta
 }
 
 
-void mouseStatePositionCreate(flecs::world &ecs, MouseState &mouseState){
-    if(mouseState.lmbCurrentState == INPUT_IS_JUST_RELEASED){
-        Position p = {mouseState.cameraAdjustedPosition.x, mouseState.cameraAdjustedPosition.y};
-        Position pv;
-        pv.x = p.x;
-        pv.y = p.y;
 
-        // THIS IS WACKY.
-        // TODO FIX ME
-        auto f = ecs.filter<PlatformVertices>();
-        f.each([&](flecs::entity e, PlatformVertices &pvs){
-            pvs.vals.push_back(pv);
-        });
-    }
-}

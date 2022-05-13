@@ -279,7 +279,7 @@ int main(){
 
         mouseStateSetter(mouseState);
         mouseScrollWheelZoomSetter(mouseState);
-        mouseStatePositionCreate(ecs, mouseState);
+        EditPlatformVerticesAddVertexAtMousePositionOnSelected(ecs, mouseState);
 
         ecs.progress();
 
