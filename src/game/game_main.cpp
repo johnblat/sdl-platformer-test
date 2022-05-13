@@ -39,10 +39,6 @@ SpriteSheet gSpriteSheets[MAX_SPRITE_SHEETS];
 size_t gNumSpriteSheets = 0;
 
 
-typedef struct Dimensions Dimensions;
-struct Dimensions {
-    float w, h;
-};
 
 
 void registerSystems(flecs::world &ecs){
@@ -177,125 +173,22 @@ int main(){
      */
      pinkGuyEntity.add<AnimatedSprite>();
 
-    const char *filename = "res/pink-monster-animation-transparent.png";
+    std::string filename = "res/pink-monster-animation-transparent.png";
     std::string animatedSpriteName =  "pink-monster-animation";
     u32 spriteSheetId = createSpriteSheet(filename, 9, 15, animatedSpriteName);
     AnimatedSprite animatedSprite = createAnimatedSprite(spriteSheetId);
 
     // add animations to animatedSprite
-    Animation walkAnimation{};
-    {
-        walkAnimation.accumulator = 0.0f;
-        walkAnimation.arrFrames[0] = 15;
-        walkAnimation.arrFrames[1] = 16;
-        walkAnimation.arrFrames[2] = 17;
-        walkAnimation.arrFrames[3] = 18;
-        walkAnimation.arrFrames[4] = 19;
-        walkAnimation.arrFrames[5] = 20;
-        walkAnimation.numFrames = 6;
-        walkAnimation.currentFrame = 0;
-        walkAnimation.fps = 12;
-        walkAnimation.msPerFrame = 0.0833;
-        walkAnimation.isLoop = true;
+    Animation walkAnimation = createAnimation({15,16,17,18,19,20}, 12.0f, true, "walk");
 
-        const char *walkAnimationName = "walk";
-        strncpy(walkAnimation.name, walkAnimationName, 5);
-    }
+    Animation runAnimation = createAnimation({30,31,32,33,34,35}, 12.0f, true, "run");
 
+    Animation standingAttackAnimation = createAnimation({45,46,47,48}, 12.0f, false, "stand-attack");
 
-    Animation runAnimation{};
-    {
-        runAnimation.accumulator = 0.0f;
-        runAnimation.arrFrames[0] = 30;
-        runAnimation.arrFrames[1] = 31;
-        runAnimation.arrFrames[2] = 32;
-        runAnimation.arrFrames[3] = 33;
-        runAnimation.arrFrames[4] = 34;
-        runAnimation.arrFrames[5] = 35;
-        runAnimation.numFrames = 6;
-        runAnimation.currentFrame = 0;
-        runAnimation.fps = 12;
-        runAnimation.msPerFrame = 0.0833;
-        runAnimation.isLoop = true;
+    Animation idleAnimation = createAnimation({75,76,77,78,77,76}, 12.0f, true, "idle");
 
-        const char *runAnimationName = "run";
-        strncpy(runAnimation.name, runAnimationName, 4);
-    }
+    Animation jumpAnimation = createAnimation({120,121,122,123,124,125}, 12.0f, true, "jump");
     
-
-    Animation standingAttackAnimation{};
-    {
-        standingAttackAnimation.accumulator = 0.0f;
-        standingAttackAnimation.arrFrames[0] = 45;
-        standingAttackAnimation.arrFrames[1] = 46;
-        standingAttackAnimation.arrFrames[2] = 47;
-        standingAttackAnimation.arrFrames[3] = 48;
-        standingAttackAnimation.numFrames = 4;
-        standingAttackAnimation.currentFrame = 0;
-        standingAttackAnimation.fps = 12;
-        standingAttackAnimation.msPerFrame = 0.0833;
-        standingAttackAnimation.isLoop = false;
-        const char *standingAttackAnimationName = "stand-attack";
-        strncpy(standingAttackAnimation.name, standingAttackAnimationName, 16);
-    }
-
-    Animation idleAnimation{};
-    {
-
-        idleAnimation.accumulator = 0.0f;
-        idleAnimation.arrFrames[0] = 75;
-        idleAnimation.arrFrames[1] = 76;
-        idleAnimation.arrFrames[2] = 77;
-        idleAnimation.arrFrames[3] = 78;
-        idleAnimation.arrFrames[4] = 77;
-        idleAnimation.arrFrames[5] = 76;
-
-        idleAnimation.numFrames = 6;
-        idleAnimation.currentFrame = 0;
-        idleAnimation.fps = 12;
-        idleAnimation.msPerFrame = 0.0833;
-        idleAnimation.isLoop = true;
-        const char *idleAnimationName = "idle";
-        strncpy(idleAnimation.name, idleAnimationName, 16);
-    }
-    
-    Animation jumpAnimation{};
-    {
-        jumpAnimation.accumulator = 0.0f;
-        jumpAnimation.arrFrames[0] = 120;
-        jumpAnimation.arrFrames[1] = 121;
-        jumpAnimation.arrFrames[2] = 122;
-        jumpAnimation.arrFrames[3] = 123;
-        jumpAnimation.arrFrames[4] = 124;
-        jumpAnimation.arrFrames[5] = 125;
-
-
-
-        jumpAnimation.numFrames = 6;
-        jumpAnimation.currentFrame = 0;
-        jumpAnimation.fps = 12;
-        jumpAnimation.msPerFrame = 0.0833;
-        jumpAnimation.isLoop = true;
-        const char *jumpAnimationName = "jump";
-        strncpy(jumpAnimation.name, jumpAnimationName, 16);
-    }
-
-    Animation fallAnimation{};
-    {
-        fallAnimation.accumulator = 0.0f;
-        fallAnimation.arrFrames[0] = 26;
-        fallAnimation.arrFrames[1] = 27;
-        fallAnimation.arrFrames[2] = 28;
-        fallAnimation.arrFrames[3] = 29;
-
-        fallAnimation.numFrames = 4;
-        fallAnimation.currentFrame = 0;
-        fallAnimation.fps = 12;
-        fallAnimation.msPerFrame = 0.0833;
-        fallAnimation.isLoop = false;
-        const char *fallAnimationName = "fall";
-        strncpy(fallAnimation.name, fallAnimationName, 16);
-    }
 
     addNewAnimationToAnimatedSprite(&animatedSprite);
     overwriteAnimationOnAnimatedSprite(&animatedSprite, 0, walkAnimation);
@@ -312,10 +205,7 @@ int main(){
     addNewAnimationToAnimatedSprite(&animatedSprite);
     overwriteAnimationOnAnimatedSprite(&animatedSprite, 4, jumpAnimation);
 
-    addNewAnimationToAnimatedSprite(&animatedSprite);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite, 5, fallAnimation);
 
-    animatedSprite.currentAnimation = 0;
     
     // ADD the setup AnimatedSprite to the pinkGuyEntity
     pinkGuyEntity.set<AnimatedSprite>(animatedSprite);
@@ -378,9 +268,6 @@ int main(){
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
 
-    Dimensions pinkDimensions;
-    pinkDimensions.h = 32;
-    pinkGuyEntity.set<Dimensions>(pinkDimensions);
      
     std::vector<Ray2d> rays;
     Ray2d ray0, ray1;
