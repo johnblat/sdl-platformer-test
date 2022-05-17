@@ -2,7 +2,7 @@
 #include "flecs.h"
 #include <SDL2/SDL.h>
 #include "mouseState.h"
-
+#include "input.h"
 
 void EndEditingSelectedPlatformVertices(flecs::world &ecs){
     auto f = ecs.filter<PlatformVertices, SelectedForEditing>();
@@ -54,5 +54,22 @@ void EditPlatformVerticesAddVertexAtMousePositionOnSelected(flecs::world &ecs, M
             pvs.vals.push_back((pv));
             createAndSelectPlatformVerticesEntity(ecs, pvs);
         }
+    }
+}
+
+
+void DeselectInputSystem(flecs::iter &it, Input *inputs, SelectedForEditing *selecteds){
+    
+    for(int i : it){
+        
+        if(inputIsJustReleased(inputs[i], "deselect")){
+            it.world().defer_begin();
+
+            it.entity(i).remove<SelectedForEditing>();
+
+
+            it.world().defer_end();
+        }
+        
     }
 }
