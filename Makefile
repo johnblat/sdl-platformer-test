@@ -23,12 +23,8 @@ IFLAGS = -Iinclude -Iinclude/SDL2 -Iinclude/flecs
 
 LIBS = -lSDL2 -lSDL2main -lSDL2_image -Wl,-rpath,lib
 
-# test
-BASE = build/src/game/game_main
-FILE = $(BASE).cpp.o 
-RESULT = $(subst build/,,$(BASE)).cpp
-$(info $(RESULT))
-# end test
+DEPDIR := .deps
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.cpp.d
 
 game: $(GAME_CXX_OBJ_FILES) $(SHARED_CXX_OBJ_FILES) $(SHARED_C_OBJ_FILES)
 	$(CXX) $(CXXFLAGS) $(LFLAGS) $(LIBS) -g $^ -o $@
@@ -39,17 +35,27 @@ ed: $(ED_CXX_OBJ_FILES) $(SHARED_C_OBJ_FILES) $(SHARED_CXX_OBJ_FILES)
 build/%.c.o: src/%.c
 	$(CC) $(CFLAGS) $(IFLAGS) -c -g $^ -o $@
 
-# .SECONDEXPANSION:
 build/%.cpp.o: src/%.cpp
-	$(CXX) $(CXXFLAGS) $(IFLAGS) -c -g $^ -o $@
+build/%.cpp.o: src/%.cpp $(DEPDIR)/%.cpp.d | $(DEPDIR)
+	$(CXX) $(DEPFLAGS) $(CXXFLAGS) $(IFLAGS) -c -g $< -o $@
+
+$(DEPDIR):
+	mkdir -p $@
+	mkdir -p $@/game
+	mkdir -p $@/shared
 
 
+DEPFILES := $(GAME_CXX_SOURCES:%.cpp=$(DEPDIR)/%.cpp.d)
+DEPFILES += $(SHARED_CXX_SOURCES:%.cpp=$(DEPDIR)/%.cpp.d)
+$(DEPFILES):
+
+include $(wildcard $(DEPFILES))
 
 # #.PHONY: clean 
 clean:
 	rm -f src/game/*.o
 	rm -f src/shared/*.o
 	rm -f src/levelEditor/*.o 
-	rm -f build/src/game/*.o
-	rm -f build/src/shared/*.o
-	rm -f build/src/levelEditor/*.o
+	rm -f build/game/*.o
+	rm -f build/shared/*.o
+	rm -f build/levelEditor/*.o

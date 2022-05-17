@@ -4,3 +4,4 @@ build
 SDL
 .idea
 app
+.deps
