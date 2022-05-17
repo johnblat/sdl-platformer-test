@@ -12,6 +12,7 @@
 #include "velocity.h"
 #include "camera.h"
 #include "stateProcessing.h"
+#include "util.h"
 //
 // HELPER
 //
@@ -54,7 +55,7 @@ void animationsAccumulationSystem(flecs::iter &it, AnimatedSprite *animatedSprit
 
 
 
-void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions){
+void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions, Angle *angles){
     for(auto i : it){
         SpriteSheet spriteSheet = getSpriteSheet(animatedSprites[i].spriteSheetId);
         float cell_h = spriteSheet.h / spriteSheet.numCellRows;
@@ -84,7 +85,7 @@ void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSpr
         srcRect.w = cell_w;
         srcRect.h = cell_h;
         SDL_RendererFlip flip = animatedSprites[i].flip == SDL_FLIP_HORIZONTAL ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE; 
-        SDL_RenderCopyEx(gRenderer, spriteSheet.texture, &srcRect, &renderRect, 0.0, NULL, flip);
+        SDL_RenderCopyEx(gRenderer, spriteSheet.texture, &srcRect, &renderRect, -rads2deg(angles[i].rads), NULL, flip);
     }
     
 }

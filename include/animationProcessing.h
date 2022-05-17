@@ -90,7 +90,7 @@ void setFpsForAnimatedSprite(AnimatedSprite *animatedSprite, float fps);
  * @param positions list of posisitions for all the animated sprites
  * @param numEntities number of iterations over the above arrays
  */
-void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions);
+void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions, Angle *angles);
 
 /**
  * @brief Sets the current animation of animated sprite to the one that matches  the animationName. Crashes if animationName doesn't exist

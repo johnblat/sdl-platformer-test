@@ -47,7 +47,7 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(animationsAccumulationSystem);
 
-    ecs.system<AnimatedSprite, Position>("renderingAnimatedSprites")
+    ecs.system<AnimatedSprite, Position, Angle>("renderingAnimatedSprites")
         .kind(flecs::OnStore)
         .iter(renderingAnimatedSpritesSystem);
 
