@@ -58,14 +58,17 @@ void EditPlatformVerticesAddVertexAtMousePositionOnSelected(flecs::world &ecs, M
 }
 
 
-void DeselectInputSystem(flecs::iter &it, Input *inputs, SelectedForEditing *selecteds){
+void DeselectInputSystem(flecs::iter &it, Input *inputs){
     
     for(int i : it){
         
         if(inputIsJustReleased(inputs[i], "deselect")){
             it.world().defer_begin();
 
-            it.entity(i).remove<SelectedForEditing>();
+            auto f = it.world().filter<SelectedForEditing>();
+            f.each([&](flecs::entity e, SelectedForEditing s){
+                e.remove<SelectedForEditing>();
+            });
 
 
             it.world().defer_end();

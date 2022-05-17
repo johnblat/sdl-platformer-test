@@ -107,6 +107,10 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnStore)
         .iter(loadInputSystem);
 
+    ecs.system<Input>()
+        .kind(flecs::OnUpdate)
+        .iter(DeselectInputSystem);
+
     ecs.system<>()
         .kind(flecs::PreFrame)
         .iter(renderFrameStartSystem);
@@ -258,6 +262,13 @@ int main(){
     pinkGuyInput.buttonStates.push_back((InputButtonState){
         std::string("load"),
         SDL_SCANCODE_2,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
+    pinkGuyInput.buttonStates.push_back((InputButtonState){
+        std::string("deselect"),
+        SDL_SCANCODE_SEMICOLON,
         INPUT_IS_NOT_PRESSED,
         INPUT_IS_NOT_PRESSED
     });
