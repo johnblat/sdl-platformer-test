@@ -86,37 +86,7 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
             rayGlobal.distance = rayLocal.distance;
 
 
-            auto f = it.world().filter<Position, SolidRect>();
-
-            f.each([&](flecs::entity e, Position &position, SolidRect &rect){
-                RectVertices rotatedSolidRectVertices = generateRotatedRectVertices(rect, position);
-
-
-                for(int i = 0; i < 4; i++){
-                    v2d p1 = rotatedSolidRectVertices[i];
-                    v2d p2 = rotatedSolidRectVertices[(i + 1) % 4];
-                    float distanceFromPoint;
-                    if(ray2dIntersectLineSegment(rayGlobal, p1, p2, distanceFromPoint)){
-                        state = STATE_ON_GROUND;
-                        v2d intersectionPoint(
-                                rayGlobal.startingPosition.x,
-                                rayGlobal.startingPosition.y + distanceFromPoint
-                        );
-                        if(intersectionPoint.y < highestIntersectingPoint.y){
-                            highestIntersectingPoint = intersectionPoint;
-                            // Depending on ground mode
-                            // this will have to change
-                            // for example, when normal
-                            // needs tp ensure p1.x < p2.x
-                            p1HighestIntersectingLine = p1;
-                            p2HighestIntersectingLine = p2;
-                        }
-                    }
-                }
-
-                
-                
-            });
+            
 
             auto f2 = it.world().filter<Position, PlatformVertices>();
             f2.each([&](flecs::entity e, Position &position, PlatformVertices &platformVertices){
@@ -146,7 +116,7 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
             });
         }
         setState(states[i], state);
-        if(highestIntersectingPoint.x != FLT_MAX){
+        if(state == STATE_ON_GROUND){
             ray2dCollections[i][0].distance = 32;
             ray2dCollections[i][1].distance = 32;
             positions[i].y = 
@@ -164,9 +134,10 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
             }
             
         }
-//        if(state == STATE_IN_AIR){
-//            continue;
-//        }
+        else {
+            ray2dCollections[i][0].distance = 16;
+            ray2dCollections[i][1].distance = 16;
+        }
         
     }
 }
