@@ -12,7 +12,6 @@
 #include "util.h"
 #include <cassert>
 #include "shapes.h"
-#include "shapeTransformations.h"
 #include "stateProcessing.h"
 
 
@@ -57,7 +56,7 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 }
 
 
-void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections, Velocity *velocities, StateCurrPrev *states, Angle *angles ){
+void ray2dPvsCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections, Velocity *velocities, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         // check against rectangular objects

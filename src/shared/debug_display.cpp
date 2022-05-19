@@ -8,44 +8,7 @@
 #include "ints.h"
 #include "window.h"
 #include "shapes.h"
-#include "shapeTransformations.h"
 
-void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidRect *rectObjects) {
-    // FIX THIS
-    Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f};
-
-
-    for(auto i : it){
-        SDL_SetRenderDrawColor(
-            gRenderer, 
-            rectObjects[i].color.r,
-            rectObjects[i].color.g,
-            rectObjects[i].color.b,
-            255
-        );
-        float scale;
-        SDL_RenderGetScale(gRenderer,&scale, nullptr );
-        Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
-
-        
-
-        RectVertices rectVerts = generateRotatedRectVertices(rectObjects[i], positions[i]);
-        RectVertices cameraRectVerts;
-        for(int i = 0; i < 4; i++){
-            cameraRectVerts[i].x =
-                    rectVerts[i].x - gCameraPosition.x + scaledCenterScreen.x;
-            cameraRectVerts[i].y =
-                    rectVerts[i].y - gCameraPosition.y + scaledCenterScreen.y;
-        }
-        for(int i = 0; i < 4; i++){
-            v2d p1 = cameraRectVerts[i];
-            v2d p2 = cameraRectVerts[(i + 1) % 4];
-            SDL_RenderDrawLineF(gRenderer, p1.x, p1.y, p2.x, p2.y);
-        }
-        
-
-    }
-}
 
 
 void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertices *platformVerticesCollection){

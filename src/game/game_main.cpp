@@ -61,7 +61,7 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<Position, std::vector<Ray2d>, Velocity, StateCurrPrev, Angle>("collision")
         .kind(flecs::PostUpdate)
-        .iter(ray2dSolidRectCollisionSystem);
+        .iter(ray2dPvsCollisionSystem);
 
     ecs.system<Velocity, Position>("move")
         .kind(flecs::OnUpdate)
@@ -87,9 +87,7 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(gravitySystem);
 
-    ecs.system<Position, SolidRect>()
-        .kind(flecs::OnStore)
-        .iter(renderRectangularObjectsSystem);
+
 
     ecs.system<Position, PlatformVertices>()
         .kind(flecs::OnStore)
