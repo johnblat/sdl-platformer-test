@@ -3,6 +3,5 @@
 #include "mouseState.h"
 #include "flecs.h"
 
-
-void mouseStateSetter(MouseState &mouseState);
+void mouseStateSetterSystem(flecs::iter &it, MouseState *mouseStates);
 void mouesStatePlatformVerticesRemoveAll(flecs::world &ecs, MouseState &mouseState);

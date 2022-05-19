@@ -277,7 +277,7 @@ int main(){
         
         gKeyStates = (u8 *)SDL_GetKeyboardState(NULL);
 
-        mouseStateSetter(mouseState);
+        mouseStateSetterSystem(mouseState);
         mouseScrollWheelZoomSetter(mouseState);
         EditPlatformVerticesAddVertexAtMousePositionOnSelected(ecs, mouseState);
 

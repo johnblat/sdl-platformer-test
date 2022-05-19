@@ -6,5 +6,5 @@
 
 void EndEditingSelectedPlatformVertices(flecs::world &ecs);
 void createAndSelectPlatformVerticesEntity(flecs::world &ecs, PlatformVertices pvs);
-void EditPlatformVerticesAddVertexAtMousePositionOnSelected(flecs::world &ecs, MouseState &mouseState);
+void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates);
 void DeselectInputSystem(flecs::iter &it, Input *inputs);

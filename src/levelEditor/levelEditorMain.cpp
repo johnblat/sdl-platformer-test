@@ -136,7 +136,7 @@ int main(){
         }
         gKeyStates = (u8 *)SDL_GetKeyboardState(nullptr);
 
-        mouseStateSetter(mouseState);
+        mouseStateSetterSystem(mouseState);
         mouseStateSolidRectCreator(ecs);
 
         SDL_SetRenderDrawColor(gRenderer, bgColor.r, bgColor.g, bgColor.b, 255);

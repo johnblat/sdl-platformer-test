@@ -4,7 +4,7 @@
 #include "camera.h"
 #include "mouseStateProcessing.h"
 
-void mouseStateSetter(MouseState &mouseState){
+void mouseStateSetterSystem(flecs::iter &it, MouseState *mouseStates){
     u32 buttons;
     int x, y;
     float lx, ly;
@@ -39,74 +39,77 @@ void mouseStateSetter(MouseState &mouseState){
     caX = lx - (scaledCenterScreenX - gCameraPosition.x);
     caY = ly - (scaledCenterScreenY - gCameraPosition.y);
 
+    for(int i : it){
+        mouseStates[i].windowPosition.x = (float)x;
+        mouseStates[i].windowPosition.y = (float)y;
+        mouseStates[i].logicalPosition.x = lx;
+        mouseStates[i].logicalPosition.y = ly;
+        mouseStates[i].cameraAdjustedPosition.x = caX;
+        mouseStates[i].cameraAdjustedPosition.y = caY;
 
-    mouseState.windowPosition.x = (float)x;
-    mouseState.windowPosition.y = (float)y;
-    mouseState.logicalPosition.x = lx;
-    mouseState.logicalPosition.y = ly;
-    mouseState.cameraAdjustedPosition.x = caX;
-    mouseState.cameraAdjustedPosition.y = caY;
+        mouseStates[i].lmbPreviousState = mouseStates[i].lmbCurrentState;
+        mouseStates[i].rmbPreviousState = mouseStates[i].rmbCurrentState;
 
-    mouseState.lmbPreviousState = mouseState.lmbCurrentState;
-    mouseState.rmbPreviousState = mouseState.rmbCurrentState;
+        if(buttons & SDL_BUTTON_LMASK){
+            if(mouseStates[i].lmbPreviousState == INPUT_IS_JUST_PRESSED){
+                mouseStates[i].lmbCurrentState = INPUT_IS_PRESSED;
+            }
+            else if(mouseStates[i].lmbPreviousState == INPUT_IS_NOT_PRESSED){
+                mouseStates[i].lmbCurrentState = INPUT_IS_JUST_PRESSED;
+            }
+            else if(mouseStates[i].lmbPreviousState == INPUT_IS_JUST_RELEASED){
+                mouseStates[i].lmbCurrentState = INPUT_IS_JUST_PRESSED;
+            }
+            else if(mouseStates[i].lmbPreviousState == INPUT_IS_PRESSED){
+                mouseStates[i].lmbCurrentState = INPUT_IS_PRESSED;
+            }
+        }
+        else {
+            if(mouseStates[i].lmbPreviousState == INPUT_IS_JUST_PRESSED){
+                mouseStates[i].lmbCurrentState = INPUT_IS_JUST_RELEASED;
+            }
+            else if(mouseStates[i].lmbPreviousState == INPUT_IS_NOT_PRESSED){
+                mouseStates[i].lmbCurrentState = INPUT_IS_NOT_PRESSED;
+            }
+            else if(mouseStates[i].lmbPreviousState == INPUT_IS_JUST_RELEASED){
+                mouseStates[i].lmbCurrentState = INPUT_IS_NOT_PRESSED;
+            }
+            else if(mouseStates[i].lmbPreviousState == INPUT_IS_PRESSED){
+                mouseStates[i].lmbCurrentState = INPUT_IS_JUST_RELEASED;
+            }
+        }
 
-    if(buttons & SDL_BUTTON_LMASK){
-        if(mouseState.lmbPreviousState == INPUT_IS_JUST_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_PRESSED;
+        if(buttons & SDL_BUTTON_RMASK){
+            if(mouseStates[i].rmbPreviousState == INPUT_IS_JUST_PRESSED){
+                mouseStates[i].rmbCurrentState = INPUT_IS_PRESSED;
+            }
+            else if(mouseStates[i].rmbPreviousState == INPUT_IS_NOT_PRESSED){
+                mouseStates[i].rmbCurrentState = INPUT_IS_JUST_PRESSED;
+            }
+            else if(mouseStates[i].rmbPreviousState == INPUT_IS_JUST_RELEASED){
+                mouseStates[i].rmbCurrentState = INPUT_IS_JUST_PRESSED;
+            }
+            else if(mouseStates[i].rmbPreviousState == INPUT_IS_PRESSED){
+                mouseStates[i].rmbCurrentState = INPUT_IS_PRESSED;
+            }
         }
-        else if(mouseState.lmbPreviousState == INPUT_IS_NOT_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_JUST_PRESSED;
-        }
-        else if(mouseState.lmbPreviousState == INPUT_IS_JUST_RELEASED){
-            mouseState.lmbCurrentState = INPUT_IS_JUST_PRESSED;
-        }
-        else if(mouseState.lmbPreviousState == INPUT_IS_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_PRESSED;
+        else {
+            if(mouseStates[i].rmbPreviousState == INPUT_IS_JUST_PRESSED){
+                mouseStates[i].rmbCurrentState = INPUT_IS_JUST_RELEASED;
+            }
+            else if(mouseStates[i].rmbPreviousState == INPUT_IS_NOT_PRESSED){
+                mouseStates[i].rmbCurrentState = INPUT_IS_NOT_PRESSED;
+            }
+            else if(mouseStates[i].rmbPreviousState == INPUT_IS_JUST_RELEASED){
+                mouseStates[i].rmbCurrentState = INPUT_IS_NOT_PRESSED;
+            }
+            else if(mouseStates[i].rmbPreviousState == INPUT_IS_PRESSED){
+                mouseStates[i].rmbCurrentState = INPUT_IS_JUST_RELEASED;
+            }
         }
     }
-    else {
-        if(mouseState.lmbPreviousState == INPUT_IS_JUST_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_JUST_RELEASED;
-        }
-        else if(mouseState.lmbPreviousState == INPUT_IS_NOT_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_NOT_PRESSED;
-        }
-        else if(mouseState.lmbPreviousState == INPUT_IS_JUST_RELEASED){
-            mouseState.lmbCurrentState = INPUT_IS_NOT_PRESSED;
-        }
-        else if(mouseState.lmbPreviousState == INPUT_IS_PRESSED){
-            mouseState.lmbCurrentState = INPUT_IS_JUST_RELEASED;
-        }
-    }
 
-    if(buttons & SDL_BUTTON_RMASK){
-        if(mouseState.rmbPreviousState == INPUT_IS_JUST_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_PRESSED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_NOT_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_JUST_PRESSED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_JUST_RELEASED){
-            mouseState.rmbCurrentState = INPUT_IS_JUST_PRESSED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_PRESSED;
-        }
-    }
-    else {
-        if(mouseState.rmbPreviousState == INPUT_IS_JUST_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_JUST_RELEASED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_NOT_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_NOT_PRESSED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_JUST_RELEASED){
-            mouseState.rmbCurrentState = INPUT_IS_NOT_PRESSED;
-        }
-        else if(mouseState.rmbPreviousState == INPUT_IS_PRESSED){
-            mouseState.rmbCurrentState = INPUT_IS_JUST_RELEASED;
-        }
-    }
+    
 
 
 }

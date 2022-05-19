@@ -28,8 +28,6 @@
 #include "editingFunctionality.h"
 
 
-MouseState mouseState;
-
 SDL_Renderer *gRenderer;
 SDL_Window *gWindow;
 
@@ -74,6 +72,10 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Input>()
         .kind(flecs::PreUpdate)
         .iter(inputUpdateSystem);
+    
+    ecs.system<MouseState>()
+        .kind(flecs::PreUpdate)
+        .iter(mouseStateSetterSystem);
 
     ecs.system<Position, Sensors>()
         .kind(flecs::OnStore)
@@ -112,6 +114,10 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
         .iter(DeselectInputSystem);
+    
+    ecs.system<Input, MouseState>()
+        .kind(flecs::OnUpdate)
+        .iter(EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem);
 
     ecs.system<>()
         .kind(flecs::PreFrame)
@@ -130,7 +136,7 @@ void registerSystems(flecs::world &ecs){
 
 
 int main(){
-
+    MouseState mouseState;
     mouseState.lmbCurrentState = INPUT_IS_NOT_PRESSED;
     mouseState.rmbCurrentState = INPUT_IS_NOT_PRESSED;
 
@@ -283,6 +289,7 @@ int main(){
     });
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
+    pinkGuyEntity.set<MouseState>(mouseState);
 
     Sensors pinkGuySensors;
     pinkGuySensors.rays[LF_SENSOR].startingPosition = (Position){-8.0f, 0.0f};
@@ -351,8 +358,6 @@ int main(){
         gCameraPosition.x = pinkGuyEntity.get<Position>()->x;
         gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
 
-        mouseStateSetter(mouseState);
-        EditPlatformVerticesAddVertexAtMousePositionOnSelected(world, mouseState);
 
         world.progress();
     }

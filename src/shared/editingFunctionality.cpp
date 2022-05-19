@@ -30,31 +30,35 @@ void createAndSelectPlatformVerticesEntity(flecs::world &ecs, PlatformVertices p
 }
 
 
-void EditPlatformVerticesAddVertexAtMousePositionOnSelected(flecs::world &ecs, MouseState &mouseState){
-    if(mouseState.lmbCurrentState == INPUT_IS_JUST_RELEASED){
-        Position p = {mouseState.cameraAdjustedPosition.x, mouseState.cameraAdjustedPosition.y};
-        Position pv;
-        pv.x = p.x;
-        pv.y = p.y;
+void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates){
+    for(int i : it){
+        if(mouseStates[i].lmbCurrentState == INPUT_IS_JUST_RELEASED){
+            Position pv = {mouseStates[i].cameraAdjustedPosition.x, mouseStates[i].cameraAdjustedPosition.y};
 
-        // THIS IS WACKY.
-        // TODO FIX ME
-        bool NoneSelected = true;
-        auto f = ecs.filter<PlatformVertices, SelectedForEditing>();
-        f.iter([&](flecs::iter &it, PlatformVertices *pvs, SelectedForEditing *selected){
-            for(int i : it){
-                pvs[i].vals.push_back(pv);
+
+            flecs::world ecs = it.world();
+        
+            bool NoneSelected = true;
+            auto f = ecs.filter<PlatformVertices, SelectedForEditing>();
+            f.iter([&](flecs::iter &it, PlatformVertices *pvs, SelectedForEditing *selected){
+                if(inputIsPressed(inputs[i], "edit-angle-snap")){
+                    pv.x = pvs[i].vals.at(pvs[i].vals.size()-1).x;
+                }
+                for(int i : it){
+                    pvs[i].vals.push_back(pv);
+                }
+                NoneSelected = false;
+            });
+
+            if(NoneSelected){
+                PlatformVertices pvs;
+                pvs.color = (SDL_Color){255,255,255,255};
+                pvs.vals.push_back((pv));
+                createAndSelectPlatformVerticesEntity(ecs, pvs);
             }
-            NoneSelected = false;
-        });
-
-        if(NoneSelected){
-            PlatformVertices pvs;
-            pvs.color = (SDL_Color){255,255,255,255};
-            pvs.vals.push_back((pv));
-            createAndSelectPlatformVerticesEntity(ecs, pvs);
         }
     }
+    
 }
 
 
