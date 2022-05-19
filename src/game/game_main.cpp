@@ -59,9 +59,9 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::PreUpdate)
         .iter(InputVelocitySetterSystem);
 
-    ecs.system<Position, std::vector<Ray2d>, Velocity, StateCurrPrev, Angle>("collision")
+    ecs.system<Position, Sensors, Velocity, StateCurrPrev, Angle>("collision")
         .kind(flecs::PostUpdate)
-        .iter(ray2dSolidRectCollisionSystem);
+        .iter(sensorsPvsCollisionSystem);
 
     ecs.system<Velocity, Position>("move")
         .kind(flecs::OnUpdate)
@@ -75,9 +75,9 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::PreUpdate)
         .iter(inputUpdateSystem);
 
-    ecs.system<Position, std::vector<Ray2d>>()
+    ecs.system<Position, Sensors>()
         .kind(flecs::OnStore)
-        .iter(renderRay2dCollectionsSystem);
+        .iter(renderSensorsSystem);
 
     ecs.system<AnimatedSprite, Velocity, StateCurrPrev>()
         .kind(flecs::OnUpdate)
@@ -87,13 +87,15 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(gravitySystem);
 
-    ecs.system<Position, SolidRect>()
-        .kind(flecs::OnStore)
-        .iter(renderRectangularObjectsSystem);
+
 
     ecs.system<Position, PlatformVertices>()
         .kind(flecs::OnStore)
         .iter(renderPlatformVerticesSystem);
+
+    ecs.system<Position, PlatformVertices>()
+        .kind(flecs::OnStore)
+        .iter(renderPlatformVerticesNodesSystem);
 
     ecs.system<>()
         .kind(flecs::OnStore)
@@ -273,20 +275,21 @@ int main(){
         INPUT_IS_NOT_PRESSED
     });
 
+    pinkGuyInput.buttonStates.push_back((InputButtonState){
+        std::string("edit-angle-snap"),
+        SDL_SCANCODE_LSHIFT,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
     pinkGuyEntity.set<Input>(pinkGuyInput);
 
-     
-    std::vector<Ray2d> rays;
-    Ray2d ray0, ray1;
-    ray0.startingPosition.x = -8.0f;
-    ray0.startingPosition.y = 0.0f;
-    ray0.distance = 16.0f;
-    ray1.startingPosition.x = 8.0f;
-    ray1.startingPosition.y = 0.0f;
-    ray1.distance = 16.0f;
-    rays.push_back(ray0);
-    
-    rays.push_back(ray1);
+    Sensors pinkGuySensors;
+    pinkGuySensors.rays[LF_SENSOR].startingPosition = (Position){-8.0f, 0.0f};
+    pinkGuySensors.rays[LF_SENSOR].distance = 16.0f;
+    pinkGuySensors.rays[RF_SENSOR].startingPosition = (Position){8.0f, 0.0f};
+    pinkGuySensors.rays[RF_SENSOR].distance = 16.0f;
+
 
 
     StateCurrPrev state;
@@ -298,7 +301,7 @@ int main(){
     pinkGuyEntity.set<Velocity>((Velocity){0,0});
     pinkGuyEntity.set<Angle>((Angle){0.0f});
     pinkGuyEntity.set<StateCurrPrev>(state);
-    pinkGuyEntity.set<std::vector<Ray2d>>(rays);
+    pinkGuyEntity.set<Sensors>(pinkGuySensors);
 
 
     

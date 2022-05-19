@@ -6,8 +6,8 @@
 #include "solid_rect.h"
 
 void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidRect *rectObjects);
-void renderRay2dCollectionsSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections);
+void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections);
 
 void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertices *platformVerticesCollection);
-
+void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertices *PlatformVerticesCollection);
 #endif

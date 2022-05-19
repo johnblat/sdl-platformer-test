@@ -48,6 +48,29 @@ void renderPolyLineInCamera(Position offsetPosition, std::vector<Position> point
     }
 }
 
+void renderDiamond(Position centerPoint){
+    const int DIAMOND_RADIUS = 5;
+    const SDL_Color DIAMOND_COLOR = (SDL_Color){0,255,255,255};
+
+    Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f};
+
+    float scale;
+    SDL_RenderGetScale(gRenderer,&scale, nullptr );
+    Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+
+    SDL_SetRenderDrawColor(gRenderer, DIAMOND_COLOR.r, DIAMOND_COLOR.g, DIAMOND_COLOR.b, DIAMOND_COLOR.a);
+
+    for(int y = -DIAMOND_RADIUS; y < DIAMOND_RADIUS+1; y++){
+        float y1 = centerPoint.y + y   - gCameraPosition.y + scaledCenterScreen.y;
+        float x1 = centerPoint.x - (DIAMOND_RADIUS - abs(y))   - gCameraPosition.x + scaledCenterScreen.x;
+
+        float y2 = y1;
+        float x2 = centerPoint.x + (DIAMOND_RADIUS - abs(y))   - gCameraPosition.x + scaledCenterScreen.x;
+
+        SDL_RenderDrawLineF(gRenderer, x1, y1, x2, y2);
+    }
+
+}
 
 void renderEndFrameSystem(flecs::iter &it){
     SDL_RenderPresent(gRenderer);

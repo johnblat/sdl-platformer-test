@@ -11,4 +11,19 @@ struct Ray2d {
     float distance; 
 };
 
+enum SensorType {
+    LF_SENSOR, // Left Floor
+    RF_SENSOR, // Right Floor
+    LW_SENSOR, // Left Wall
+    RW_SENSOR, // Right Wall
+    LC_SENSOR, // Left Ceiling
+    RC_SENSOR // Right Ceiling
+};
+
+
+typedef struct Sensors Sensors;
+struct Sensors {
+    Ray2d rays[6];
+};
+
 #endif

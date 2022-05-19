@@ -12,7 +12,6 @@
 #include "util.h"
 #include <cassert>
 #include "shapes.h"
-#include "shapeTransformations.h"
 #include "stateProcessing.h"
 
 
@@ -57,7 +56,7 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 }
 
 
-void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::vector<Ray2d> *ray2dCollections, Velocity *velocities, StateCurrPrev *states, Angle *angles ){
+void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         // check against rectangular objects
@@ -74,53 +73,81 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
         v2d p1HighestIntersectingLine;
         v2d p2HighestIntersectingLine;
 
-        for(int vi = 0; vi < ray2dCollections[i].size(); vi++){
-            if(velocities[i].y < 0){
-                ray2dCollections[i][vi].distance = 16;
-            }
-            Ray2d rayLocal = ray2dCollections[i].at(vi);
-
-            Ray2d rayGlobal;
-            rayGlobal.startingPosition.x = positions[i].x + rayLocal.startingPosition.x;
-            rayGlobal.startingPosition.y = positions[i].y + rayLocal.startingPosition.y;
-            rayGlobal.distance = rayLocal.distance;
 
 
-            
 
-            auto f2 = it.world().filter<Position, PlatformVertices>();
-            f2.each([&](flecs::entity e, Position &position, PlatformVertices &platformVertices){
-                for(int i = 0; i < platformVertices.vals.size() - 1; i++){
-                    Position p1 = platformVertices.vals.at(i);
-                    Position p2 = platformVertices.vals.at(i+1);
-                    v2d v1(p1.x + position.x, p1.y + position.y);
-                    v2d v2(p2.x + position.x, p2.y + position.y);
-                    float distanceFromPoint;
-                    if(ray2dIntersectLineSegment(rayGlobal, v1, v2, distanceFromPoint)){
-                        state = STATE_ON_GROUND;
-                        v2d intersectionPoint(
-                                rayGlobal.startingPosition.x,
-                                rayGlobal.startingPosition.y + distanceFromPoint
-                        );
-                        if(intersectionPoint.y < highestIntersectingPoint.y){
-                            highestIntersectingPoint = intersectionPoint;
-                            // Depending on ground mode
-                            // this will have to change
-                            // for example, when normal
-                            // needs tp ensure p1.x < p2.x
-                            p1HighestIntersectingLine = v1;
-                            p2HighestIntersectingLine = v2;
-                        }
+        if(velocities[i].y < 0){
+            sensorCollections[i].rays[LF_SENSOR].distance = 16;
+            sensorCollections[i].rays[RF_SENSOR].distance = 16;
+
+        }
+
+        Ray2d lfSesnorRayLocal = sensorCollections[i].rays[LF_SENSOR];
+        Ray2d lfRayGlobal;
+        lfRayGlobal.startingPosition.x = positions[i].x + lfSesnorRayLocal.startingPosition.x;
+        lfRayGlobal.startingPosition.y = positions[i].y + lfSesnorRayLocal.startingPosition.y;
+        lfRayGlobal.distance = lfSesnorRayLocal.distance;
+
+        Ray2d rfRayLocal = sensorCollections[i].rays[RF_SENSOR];
+        Ray2d rfRayGlobal;
+        rfRayGlobal.startingPosition.x = positions[i].x + rfRayLocal.startingPosition.x;
+        rfRayGlobal.startingPosition.y = positions[i].y + rfRayLocal.startingPosition.y;
+        rfRayGlobal.distance = rfRayLocal.distance;
+
+
+        
+
+        auto f = it.world().filter<Position, PlatformVertices>();
+        f.each([&](flecs::entity e, Position &position, PlatformVertices &platformVertices){
+            for(int i = 0; i < platformVertices.vals.size() - 1; i++){
+                Position p1 = platformVertices.vals.at(i);
+                Position p2 = platformVertices.vals.at(i+1);
+                v2d v1(p1.x + position.x, p1.y + position.y);
+                v2d v2(p2.x + position.x, p2.y + position.y);
+                float distanceFromPoint;
+
+                if(ray2dIntersectLineSegment(lfRayGlobal, v1, v2, distanceFromPoint)){
+                    state = STATE_ON_GROUND;
+                    v2d intersectionPoint(
+                            lfRayGlobal.startingPosition.x,
+                            lfRayGlobal.startingPosition.y + distanceFromPoint
+                    );
+                    if(intersectionPoint.y < highestIntersectingPoint.y){
+                        highestIntersectingPoint = intersectionPoint;
+                        // Depending on ground mode
+                        // this will have to change
+                        // for example, when normal
+                        // needs tp ensure p1.x < p2.x
+                        p1HighestIntersectingLine = v1;
+                        p2HighestIntersectingLine = v2;
                     }
                 }
-            });
-        }
+
+                if(ray2dIntersectLineSegment(rfRayGlobal, v1, v2, distanceFromPoint)){
+                    state = STATE_ON_GROUND;
+                    v2d intersectionPoint(
+                            rfRayGlobal.startingPosition.x,
+                            rfRayGlobal.startingPosition.y + distanceFromPoint
+                    );
+                    if(intersectionPoint.y < highestIntersectingPoint.y){
+                        highestIntersectingPoint = intersectionPoint;
+                        // Depending on ground mode
+                        // this will have to change
+                        // for example, when normal
+                        // needs tp ensure p1.x < p2.x
+                        p1HighestIntersectingLine = v1;
+                        p2HighestIntersectingLine = v2;
+                    }
+                }
+            }
+        });
+        
         setState(states[i], state);
         if(state == STATE_ON_GROUND){
-            ray2dCollections[i][0].distance = 32;
-            ray2dCollections[i][1].distance = 32;
+            sensorCollections[i].rays[LF_SENSOR].distance = 32;
+            sensorCollections[i].rays[RF_SENSOR].distance = 32;
             positions[i].y = 
-                highestIntersectingPoint.y - ray2dCollections[i][0].distance/2;
+                highestIntersectingPoint.y - sensorCollections[i].rays[LF_SENSOR].distance/2;
             if(p2HighestIntersectingLine.x < p1HighestIntersectingLine.x){
                 swapValues(p2HighestIntersectingLine, p1HighestIntersectingLine, Position);
             }
@@ -135,9 +162,9 @@ void ray2dSolidRectCollisionSystem(flecs::iter &it, Position *positions, std::ve
             
         }
         else {
-            ray2dCollections[i][0].distance = 16;
-            ray2dCollections[i][1].distance = 16;
+            sensorCollections[i].rays[LF_SENSOR].distance = 16;
+            sensorCollections[i].rays[RF_SENSOR].distance = 16;
         }
-        
-    }
+}
+    
 }

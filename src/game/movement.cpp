@@ -10,7 +10,6 @@
 #include "stateProcessing.h"
 #include <cmath>
 #include "solid_rect.h"
-#include "shapeTransformations.h"
 #include "collisions.h"
 
 void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
