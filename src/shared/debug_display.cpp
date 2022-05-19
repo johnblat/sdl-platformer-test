@@ -22,6 +22,20 @@ void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, Platform
 }
 
 
+void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertices *PlatformVerticesCollection){
+    for(auto i : it){
+        int size = PlatformVerticesCollection[i].vals.size();
+        for(int j = 0; j < size; j++){
+            Position vertexPositionGlobal;
+            vertexPositionGlobal.x = positions[i].x + PlatformVerticesCollection[i].vals[j].x;
+            vertexPositionGlobal.y = positions[i].y + PlatformVerticesCollection[i].vals[j].y;
+
+            renderDiamond(vertexPositionGlobal);
+        }
+    }
+}
+
+
 
 
 void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections){

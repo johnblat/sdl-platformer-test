@@ -93,6 +93,10 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnStore)
         .iter(renderPlatformVerticesSystem);
 
+    ecs.system<Position, PlatformVertices>()
+        .kind(flecs::OnStore)
+        .iter(renderPlatformVerticesNodesSystem);
+
     ecs.system<>()
         .kind(flecs::OnStore)
         .iter(zoomRenderSetupSystem);
@@ -267,6 +271,13 @@ int main(){
     pinkGuyInput.buttonStates.push_back((InputButtonState){
         std::string("deselect"),
         SDL_SCANCODE_SEMICOLON,
+        INPUT_IS_NOT_PRESSED,
+        INPUT_IS_NOT_PRESSED
+    });
+
+    pinkGuyInput.buttonStates.push_back((InputButtonState){
+        std::string("edit-angle-snap"),
+        SDL_SCANCODE_LSHIFT,
         INPUT_IS_NOT_PRESSED,
         INPUT_IS_NOT_PRESSED
     });

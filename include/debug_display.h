@@ -9,5 +9,5 @@ void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidR
 void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections);
 
 void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertices *platformVerticesCollection);
-
+void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertices *PlatformVerticesCollection);
 #endif
