@@ -24,7 +24,7 @@ void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, Platform
 
 
 
-void renderRay2dCollectionsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections){
+void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections){
     // move this somewhere else
     Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f}; 
 

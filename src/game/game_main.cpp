@@ -61,7 +61,7 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<Position, Sensors, Velocity, StateCurrPrev, Angle>("collision")
         .kind(flecs::PostUpdate)
-        .iter(ray2dPvsCollisionSystem);
+        .iter(sensorsPvsCollisionSystem);
 
     ecs.system<Velocity, Position>("move")
         .kind(flecs::OnUpdate)
@@ -77,7 +77,7 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<Position, Sensors>()
         .kind(flecs::OnStore)
-        .iter(renderRay2dCollectionsSystem);
+        .iter(renderSensorsSystem);
 
     ecs.system<AnimatedSprite, Velocity, StateCurrPrev>()
         .kind(flecs::OnUpdate)

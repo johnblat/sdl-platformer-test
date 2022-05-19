@@ -56,7 +56,7 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 }
 
 
-void ray2dPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, StateCurrPrev *states, Angle *angles ){
+void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         // check against rectangular objects
