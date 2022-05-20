@@ -1,0 +1,15 @@
+[ ] Sonic can run correctly on walls and ceiling
+[ ] Sonic Can't pass thru walls
+    [x] wall sensors are seen
+    [x] wall sensors detect walls
+    [ ] wall sensors distance will be less when on flat ground, greater when on not flat ground
+    [ ] wall sensor will set ground speed to 0
+[ ] PVSs can be closed (circular)
+[ ] PVSs can move
+[ ] Entities can have an X patrol
+    - They patrol along the X axis from a start to finish on loop
+[ ] Can set Line Segments in PVSs to be one-way collision
+    - Can set collision from TOP, BOTTOM, RIGHT, LEFT
+[ ] Can make a loop that has invisible gates that will change the collisions on loop so sonic can pass thru    
+[ ] Add spring
+[ ] Add horizontal lock on sonic

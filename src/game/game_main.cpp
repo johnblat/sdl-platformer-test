@@ -296,10 +296,17 @@ int main(){
     pinkGuyEntity.set<MouseState>(mouseState);
 
     Sensors pinkGuySensors;
+
     pinkGuySensors.rays[LF_SENSOR].startingPosition = (Position){-8.0f, 0.0f};
     pinkGuySensors.rays[LF_SENSOR].distance = 16.0f;
     pinkGuySensors.rays[RF_SENSOR].startingPosition = (Position){8.0f, 0.0f};
     pinkGuySensors.rays[RF_SENSOR].distance = 16.0f;
+
+    pinkGuySensors.rays[LW_SENSOR].startingPosition = (Position){0.0f, 8.0f};
+    pinkGuySensors.rays[LW_SENSOR].distance = 8.0f;
+    pinkGuySensors.rays[RW_SENSOR].startingPosition = (Position){0.0f, 8.0f};
+    pinkGuySensors.rays[RW_SENSOR].distance = 8.0f;
+
 
 
 

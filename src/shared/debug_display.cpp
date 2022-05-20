@@ -44,26 +44,95 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
 
     for(u64 i : it){
 
-        for(int j = 0; j < 2; j++){
+        {
             float scale;
             SDL_RenderGetScale(gRenderer,&scale, nullptr );
             Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
 
             Position actualPosition;
-            actualPosition.x = positions[i].x + sensorCollections[i].rays[j].startingPosition.x;
-            actualPosition.y = positions[i].y + sensorCollections[i].rays[j].startingPosition.y;
+            actualPosition.x = positions[i].x + sensorCollections[i].rays[LF_SENSOR].startingPosition.x;
+            actualPosition.y = positions[i].y + sensorCollections[i].rays[LF_SENSOR].startingPosition.y;
             actualPosition.x = actualPosition.x - gCameraPosition.x + scaledCenterScreen.x;
             actualPosition.y = actualPosition.y - gCameraPosition.y + scaledCenterScreen.y;
 
 
-            SDL_SetRenderDrawColor(gRenderer, 255,0,0,255);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x, actualPosition.y , actualPosition.x, actualPosition.y  + sensorCollections[i].rays[j].distance);
+            SDL_SetRenderDrawColor(gRenderer,  167, 236, 29 ,255);
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x, actualPosition.y , actualPosition.x, actualPosition.y  + sensorCollections[i].rays[LF_SENSOR].distance);
 
             SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x - 1, actualPosition.y , actualPosition.x - 1, actualPosition.y  + sensorCollections[i].rays[j].distance);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x + 1, actualPosition.y , actualPosition.x + 1, actualPosition.y  + sensorCollections[i].rays[j].distance);
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x - 1, actualPosition.y , actualPosition.x - 1, actualPosition.y  + sensorCollections[i].rays[LF_SENSOR].distance);
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x + 1, actualPosition.y , actualPosition.x + 1, actualPosition.y  + sensorCollections[i].rays[LF_SENSOR].distance);
 
 
         }
+
+        {
+            float scale;
+            SDL_RenderGetScale(gRenderer,&scale, nullptr );
+            Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+
+            Position actualPosition;
+            actualPosition.x = positions[i].x + sensorCollections[i].rays[RF_SENSOR].startingPosition.x;
+            actualPosition.y = positions[i].y + sensorCollections[i].rays[RF_SENSOR].startingPosition.y;
+            actualPosition.x = actualPosition.x - gCameraPosition.x + scaledCenterScreen.x;
+            actualPosition.y = actualPosition.y - gCameraPosition.y + scaledCenterScreen.y;
+
+
+            SDL_SetRenderDrawColor(gRenderer, 29, 236, 158,255);
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x, actualPosition.y , actualPosition.x, actualPosition.y  + sensorCollections[i].rays[RF_SENSOR].distance);
+
+            SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x - 1, actualPosition.y , actualPosition.x - 1, actualPosition.y  + sensorCollections[i].rays[RF_SENSOR].distance);
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x + 1, actualPosition.y , actualPosition.x + 1, actualPosition.y  + sensorCollections[i].rays[RF_SENSOR].distance);
+
+
+        }
+
+
+        {
+            float scale;
+            SDL_RenderGetScale(gRenderer,&scale, nullptr );
+            Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+
+            Position actualPosition;
+            actualPosition.x = positions[i].x + sensorCollections[i].rays[LW_SENSOR].startingPosition.x;
+            actualPosition.y = positions[i].y + sensorCollections[i].rays[LW_SENSOR].startingPosition.y;
+            actualPosition.x = actualPosition.x - gCameraPosition.x + scaledCenterScreen.x;
+            actualPosition.y = actualPosition.y - gCameraPosition.y + scaledCenterScreen.y;
+
+
+            SDL_SetRenderDrawColor(gRenderer,  255, 151, 241 ,255);
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x, actualPosition.y , actualPosition.x - sensorCollections[i].rays[LW_SENSOR].distance, actualPosition.y  );
+
+            SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x , actualPosition.y+1 , actualPosition.x  - sensorCollections[i].rays[LW_SENSOR].distance, actualPosition.y+1  );
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x , actualPosition.y-1 , actualPosition.x  - sensorCollections[i].rays[LW_SENSOR].distance, actualPosition.y -1 );
+        }
+
+        {
+            float scale;
+            SDL_RenderGetScale(gRenderer,&scale, nullptr );
+            Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+
+            Position actualPosition;
+            actualPosition.x = positions[i].x + sensorCollections[i].rays[RW_SENSOR].startingPosition.x;
+            actualPosition.y = positions[i].y + sensorCollections[i].rays[RW_SENSOR].startingPosition.y;
+            actualPosition.x = actualPosition.x - gCameraPosition.x + scaledCenterScreen.x;
+            actualPosition.y = actualPosition.y - gCameraPosition.y + scaledCenterScreen.y;
+
+
+            SDL_SetRenderDrawColor(gRenderer,  244, 0, 50 ,255);
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x, actualPosition.y , actualPosition.x + sensorCollections[i].rays[RW_SENSOR].distance, actualPosition.y  );
+
+            SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x , actualPosition.y+1 , actualPosition.x  + sensorCollections[i].rays[RW_SENSOR].distance, actualPosition.y+1  );
+            SDL_RenderDrawLineF(gRenderer, actualPosition.x , actualPosition.y-1 , actualPosition.x  + sensorCollections[i].rays[RW_SENSOR].distance, actualPosition.y -1 );
+        }
+            // SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
+            // SDL_RenderDrawLineF(gRenderer, actualPosition.x - 1, actualPosition.y , actualPosition.x - 1 + sensorCollections[i].rays[j].distance, actualPosition.y  );
+            // SDL_RenderDrawLineF(gRenderer, actualPosition.x + 1, actualPosition.y , actualPosition.x + 1 + sensorCollections[i].rays[j].distance, actualPosition.y  );
+
+
+        
     }
 }
