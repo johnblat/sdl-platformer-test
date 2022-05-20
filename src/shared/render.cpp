@@ -13,6 +13,34 @@ void renderFrameStartSystem(flecs::iter &it){
 }
 
 
+void renderLineInCamera(Position p1, Position p2, SDL_Color color){
+
+    SDL_SetRenderDrawColor(
+        gRenderer, 
+        color.r,
+        color.g,
+        color.b,
+        255
+    ); 
+
+    Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f};
+
+
+    float scale;
+    SDL_RenderGetScale(gRenderer,&scale, nullptr );
+    Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+
+    p1.x = p1.x - gCameraPosition.x + scaledCenterScreen.x;
+    p1.y = p1.y - gCameraPosition.y + scaledCenterScreen.y;
+
+    p2.x = p2.x - gCameraPosition.x + scaledCenterScreen.x;
+    p2.y = p2.y - gCameraPosition.y + scaledCenterScreen.y;
+
+    SDL_RenderDrawLineF(gRenderer, p1.x, p1.y, p2.x, p2.y);
+
+}
+
+
 void renderPolyLineInCamera(Position offsetPosition, std::vector<Position> points, SDL_Color color){
    SDL_SetRenderDrawColor(
         gRenderer, 
@@ -32,7 +60,7 @@ void renderPolyLineInCamera(Position offsetPosition, std::vector<Position> point
     std::vector<Position> cameraPlatformVertices;
     for(int j = 0; j < points.size(); j++){
         Position pv;
-        pv.x = offsetPosition.x + points[j].x - gCameraPosition.x + scaledCenterScreen.x;
+        pv.x =  offsetPosition.x + points[j].x - gCameraPosition.x + scaledCenterScreen.x;
         pv.y = offsetPosition.y + points[j].y - gCameraPosition.y + scaledCenterScreen.y;
 
         cameraPlatformVertices.push_back(pv);
@@ -48,9 +76,8 @@ void renderPolyLineInCamera(Position offsetPosition, std::vector<Position> point
     }
 }
 
-void renderDiamond(Position centerPoint){
+void renderDiamondInCamera(Position centerPoint, SDL_Color color){
     const int DIAMOND_RADIUS = 5;
-    const SDL_Color DIAMOND_COLOR = (SDL_Color){0,255,255,255};
 
     Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f};
 
@@ -58,7 +85,7 @@ void renderDiamond(Position centerPoint){
     SDL_RenderGetScale(gRenderer,&scale, nullptr );
     Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
 
-    SDL_SetRenderDrawColor(gRenderer, DIAMOND_COLOR.r, DIAMOND_COLOR.g, DIAMOND_COLOR.b, DIAMOND_COLOR.a);
+    SDL_SetRenderDrawColor(gRenderer, color.r, color.g, color.b, color.a);
 
     for(int y = -DIAMOND_RADIUS; y < DIAMOND_RADIUS+1; y++){
         float y1 = centerPoint.y + y   - gCameraPosition.y + scaledCenterScreen.y;

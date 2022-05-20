@@ -103,6 +103,10 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnStore)
         .iter(zoomRenderSetupSystem);
 
+    ecs.system<Input, MouseState>()
+        .kind(flecs::OnStore)
+        .iter(renderUncommitedLinesToPlaceSystem);
+
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
         .iter(inputZoomSystem);

@@ -30,7 +30,7 @@ void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, Pla
             vertexPositionGlobal.x = positions[i].x + PlatformVerticesCollection[i].vals[j].x;
             vertexPositionGlobal.y = positions[i].y + PlatformVerticesCollection[i].vals[j].y;
 
-            renderDiamond(vertexPositionGlobal);
+            renderDiamondInCamera(vertexPositionGlobal, (SDL_Color){0,255,255,255});
         }
     }
 }
