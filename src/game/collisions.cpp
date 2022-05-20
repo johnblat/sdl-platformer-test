@@ -34,7 +34,7 @@ float getYForXOnLine(Position p1, Position p2, float x){
         assert("getYForXOnLine: X passed must be in the range p1.x to p2.x" && 0);
     }
     if(p1.x == p2.x){
-        printf("p1.x == p2.x");
+        //printf("p1.x == p2.x");
         return p1.y;
     }
     float m = (p2.y - p1.y)/(p2.x - p1.x);
@@ -51,7 +51,7 @@ float getXForYOnLine(Position p1, Position p2, float y){
         assert("getYForyOnLine: y passed must be in the range p1.y to p2.y" && 0);
     }
     if(p1.y == p2.y){
-        printf("p1.y == p2.y");
+        //printf("p1.y == p2.y");
         return p1.x;
     }
     float m = (p2.x - p1.x)/(p2.y - p1.y);
@@ -104,7 +104,7 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 }
 
 
-void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, StateCurrPrev *states, Angle *angles ){
+void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         
@@ -136,17 +136,7 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
 
         }
 
-        Ray2d lfSesnorRayLocal = sensorCollections[i].rays[LF_SENSOR];
-        Ray2d lfRayGlobal;
-        lfRayGlobal.startingPosition.x = positions[i].x + lfSesnorRayLocal.startingPosition.x;
-        lfRayGlobal.startingPosition.y = positions[i].y + lfSesnorRayLocal.startingPosition.y;
-        lfRayGlobal.distance = lfSesnorRayLocal.distance;
-
-        Ray2d rfRayLocal = sensorCollections[i].rays[RF_SENSOR];
-        Ray2d rfRayGlobal;
-        rfRayGlobal.startingPosition.x = positions[i].x + rfRayLocal.startingPosition.x;
-        rfRayGlobal.startingPosition.y = positions[i].y + rfRayLocal.startingPosition.y;
-        rfRayGlobal.distance = rfRayLocal.distance;
+        
 
         Ray2d lwRayLocal = sensorCollections[i].rays[LW_SENSOR];
         Ray2d lwRayGlobal;
@@ -181,6 +171,7 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
                         if(ray2dIntersectLineSegment(rwRayGlobal, v1, v2, distanceFromPoint, RW_SENSOR)){
                             positions[i].x = v1.x - rwRayGlobal.distance;
                             velocities[i].x = 0;
+                            groundSpeeds[i].val = 0.0f;
                         }
                     }
                     // moving left
@@ -188,12 +179,25 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
                         if(ray2dIntersectLineSegment(lwRayGlobal, v1, v2, distanceFromPoint, LW_SENSOR)){
                             positions[i].x = v1.x + lwRayGlobal.distance;
                             velocities[i].x = 0;
+                            groundSpeeds[i].val = 0.0f;
                         }
                     }
                 }
                 
             }
         });
+
+        Ray2d lfSesnorRayLocal = sensorCollections[i].rays[LF_SENSOR];
+        Ray2d lfRayGlobal;
+        lfRayGlobal.startingPosition.x = positions[i].x + lfSesnorRayLocal.startingPosition.x;
+        lfRayGlobal.startingPosition.y = positions[i].y + lfSesnorRayLocal.startingPosition.y;
+        lfRayGlobal.distance = lfSesnorRayLocal.distance;
+
+        Ray2d rfRayLocal = sensorCollections[i].rays[RF_SENSOR];
+        Ray2d rfRayGlobal;
+        rfRayGlobal.startingPosition.x = positions[i].x + rfRayLocal.startingPosition.x;
+        rfRayGlobal.startingPosition.y = positions[i].y + rfRayLocal.startingPosition.y;
+        rfRayGlobal.distance = rfRayLocal.distance;
 
         f.each([&](flecs::entity e, Position &position, PlatformVertices &platformVertices){
             for(int i = 0; i < platformVertices.vals.size() - 1; i++){
