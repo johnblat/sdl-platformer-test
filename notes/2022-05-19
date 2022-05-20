@@ -1,9 +1,14 @@
-[ ] Sonic can run correctly on walls and ceiling
-[ ] Sonic Can't pass thru walls
+DONE:
+[x] Sonic Can't pass thru walls
     [x] wall sensors are seen
     [x] wall sensors detect walls
-    [ ] wall sensors distance will be less when on flat ground, greater when on not flat ground
-    [ ] wall sensor will set ground speed to 0
+    [x] wall sensors position will be less when on flat ground, greater when on not flat ground
+    [x] wall sensor will set ground speed to 0
+
+TODO:
+[ ] Sonic can run correctly on walls and ceiling
+
+[ ] Sensors will be on/off dependeing on which direction sonic is traveling
 [ ] PVSs can be closed (circular)
 [ ] PVSs can move
 [ ] Entities can have an X patrol
