@@ -53,11 +53,11 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(KeyboardStateAnimationSetterSystem);
 
-    ecs.system<Velocity, Input, StateCurrPrev, Angle>("keyStateVelocitySetter")
+    ecs.system<Velocity, GroundSpeed, Input, StateCurrPrev, Angle>("keyStateVelocitySetter")
         .kind(flecs::PreUpdate)
         .iter(InputVelocitySetterSystem);
 
-    ecs.system<Position, Sensors, Velocity, StateCurrPrev, Angle>("collision")
+    ecs.system<Position, Sensors, Velocity, GroundSpeed, StateCurrPrev, Angle>("collision")
         .kind(flecs::PostUpdate)
         .iter(sensorsPvsCollisionSystem);
 
@@ -114,6 +114,10 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Input>()
         .kind(flecs::OnStore)
         .iter(loadInputSystem);
+
+    ecs.system<Input>()
+        .kind(flecs::OnStore)
+        .iter(saveSystem);
 
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
@@ -320,6 +324,7 @@ int main(){
     pinkGuyEntity.set<Angle>((Angle){0.0f});
     pinkGuyEntity.set<StateCurrPrev>(state);
     pinkGuyEntity.set<Sensors>(pinkGuySensors);
+    pinkGuyEntity.set<GroundSpeed>((GroundSpeed){0.0f});
 
 
     

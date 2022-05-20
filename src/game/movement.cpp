@@ -23,9 +23,8 @@ void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
 
 
 
-static float groundSpeed = 0.0f;
 
-void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inputs, StateCurrPrev *states, Angle *angles){
+void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, GroundSpeed *groundSpeeds, Input *inputs, StateCurrPrev *states, Angle *angles){
 
     const float acc = 0.046875;// * 600;
     const float frc = 0.046875;// * 600;
@@ -47,7 +46,7 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
             // shallow
             if((angles[i].rads >= degToRads(0.0f) && angles[i].rads <= degToRads(23.0f))
             || (angles[i].rads >= degToRads(339.0f) && angles[i].rads <= degToRads(360.0f))){
-                groundSpeed = velocities[i].x;
+                groundSpeeds[i].val = velocities[i].x;
             }
             // half steep
             else if((angles[i].rads > degToRads(23.0f) && angles[i].rads <= degToRads(45.0f))
@@ -55,10 +54,10 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
                 float xSpeedAbs = fabs(velocities[i].x);
                 float ySpeedAbs = fabs(velocities[i].y);
                 if(xSpeedAbs > ySpeedAbs){
-                    groundSpeed = velocities[i].x;
+                    groundSpeeds[i].val = velocities[i].x;
                 }
                 else{
-                    groundSpeed = velocities[i].y * 0.5f * -sign(sin(angles[i].rads));
+                    groundSpeeds[i].val = velocities[i].y * 0.5f * -sign(sin(angles[i].rads));
                 }
 
             }
@@ -68,59 +67,59 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, Input *inp
                 float xSpeedAbs = fabs(velocities[i].x);
                 float ySpeedAbs = fabs(velocities[i].y);
                 if(xSpeedAbs > ySpeedAbs){
-                    groundSpeed = velocities[i].x;
+                    groundSpeeds[i].val = velocities[i].x;
                 }
                 else{
-                    groundSpeed = velocities[i].y * -sign(sin(angles[i].rads));
+                    groundSpeeds[i].val = velocities[i].y * -sign(sin(angles[i].rads));
                 }
             }
         }
 
         if(states[i].currentState == STATE_ON_GROUND){
-            groundSpeed -= slp * sin(angles[i].rads);
+            groundSpeeds[i].val -= slp * sin(angles[i].rads);
 
             // side
             if(inputIsPressed(inputs[i], "left")){
-                if(groundSpeed > 0){ // moving right
-                    groundSpeed -= dec;
+                if(groundSpeeds[i].val > 0){ // moving right
+                    groundSpeeds[i].val -= dec;
                 }
                 else { // moving left
-                    groundSpeed -= acc;
-                    groundSpeed = MAX(groundSpeed, -topSpeed);
+                    groundSpeeds[i].val -= acc;
+                    groundSpeeds[i].val = MAX(groundSpeeds[i].val, -topSpeed);
                 }
             }
             else if(inputIsPressed(inputs[i], "right")){
-                if(groundSpeed < 0){ // moving left
-                    groundSpeed += dec;
+                if(groundSpeeds[i].val < 0){ // moving left
+                    groundSpeeds[i].val += dec;
                 }
                 else { //moving right
-                    groundSpeed += acc;
-                    groundSpeed = MIN(groundSpeed, topSpeed);
+                    groundSpeeds[i].val += acc;
+                    groundSpeeds[i].val = MIN(groundSpeeds[i].val, topSpeed);
                 }
             }
             else {
-                if(groundSpeed == 0){
+                if(groundSpeeds[i].val == 0){
 
                 }
-                else if(groundSpeed > 0){
-                    groundSpeed -= frc;
-                    if(groundSpeed < 0){
-                        groundSpeed = 0;
+                else if(groundSpeeds[i].val > 0){
+                    groundSpeeds[i].val -= frc;
+                    if(groundSpeeds[i].val < 0){
+                        groundSpeeds[i].val = 0;
                     }
                 }
-                else if(groundSpeed < 0){
-                    groundSpeed += frc;
-                    if(groundSpeed > 0){
-                        groundSpeed = 0;
+                else if(groundSpeeds[i].val < 0){
+                    groundSpeeds[i].val += frc;
+                    if(groundSpeeds[i].val > 0){
+                        groundSpeeds[i].val = 0;
                     }
                 }
                 else {
-                    groundSpeed = 0;
+                    groundSpeeds[i].val = 0;
                 }
             }
 
-            velocities[i].x = groundSpeed * cos(angles[i].rads);
-            velocities[i].y = groundSpeed * -sin(angles[i].rads);
+            velocities[i].x = groundSpeeds[i].val * cos(angles[i].rads);
+            velocities[i].y = groundSpeeds[i].val * -sin(angles[i].rads);
 
 
             if(inputIsJustPressed(inputs[i], "jump")){
