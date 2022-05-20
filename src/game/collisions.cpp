@@ -107,10 +107,16 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
-        // check against rectangular objects
-        // if(velocities[i].y <= 0){
-        //     continue;
-        // }
+        
+        // set wall sensor height
+        if( rads2deg(angles[i].rads) < 5.0 && rads2deg(angles[i].rads) > -5.0){
+            sensorCollections[i].rays[RW_SENSOR].startingPosition.y = 8.0f;
+            sensorCollections[i].rays[LW_SENSOR].startingPosition.y = 8.0f;
+        }
+        else {
+            sensorCollections[i].rays[RW_SENSOR].startingPosition.y = 0.0f;
+            sensorCollections[i].rays[LW_SENSOR].startingPosition.y = 0.0f;
+        }
         
         State state = STATE_IN_AIR;
 
