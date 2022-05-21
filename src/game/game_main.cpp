@@ -333,24 +333,6 @@ int main(){
     
  
 
-    PlatformVertices platformVertices;
-    platformVertices.color.r = 255;
-    platformVertices.color.g = 255;
-    platformVertices.color.b = 255;
-
-    platformVertices.vals.push_back((Position){-200.0f, -50.0f});
-    platformVertices.vals.push_back((Position){200.0f, -50.0f});
-    platformVertices.vals.push_back((Position){210.0f, -48.0f});
-    platformVertices.vals.push_back((Position){220.0f, -46.0f});
-    platformVertices.vals.push_back((Position){320.0f, -30.0f});
-    platformVertices.vals.push_back((Position){640.0f, -40.0f});
-    platformVertices.vals.push_back((Position){800.0f, -40.0f});
-    platformVertices.vals.push_back((Position){1000.0f, -40.0f});
-
-
-    flecs::entity platform = world.entity("platform");
-    platform.set<Position>((Position){640.0f/2.0f, 480.0f/2.0f});
-    platform.set<PlatformVertices>(platformVertices);
 
     loadPlatformVertices(world);
 

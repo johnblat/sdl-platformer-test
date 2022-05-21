@@ -40,9 +40,9 @@ void loadPlatformVertices(flecs::world &ecs){
     //ecs.defer_begin();
 
     SDL_RWops *loadContext = SDL_RWFromFile("platformVertices", "rb");
-    i32 numEntities = 0;
+    size_t numEntities = 0;
 
-    SDL_RWread(loadContext, &numEntities, sizeof(i32), 1);
+    SDL_RWread(loadContext, &numEntities, sizeof(size_t), 1);
     Position *positions = (Position *)malloc(sizeof(Position)*numEntities);
     PlatformVertices *platformVerticesCollection = (PlatformVertices *)calloc(numEntities, sizeof(PlatformVertices)); 
     SDL_RWread(loadContext, positions, sizeof(Position), numEntities);
