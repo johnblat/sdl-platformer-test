@@ -67,6 +67,11 @@ InputButtonState createbuttonState(std::string name, SDL_Scancode scanCode){
 
     return ibs;
 }
+
+void addButtonToInput(Input &input, std::string buttonName, SDL_Scancode scancode){
+    input.buttonStates.push_back(createbuttonState(buttonName, scancode));
+}
+
 /**
  * SYSTEMS
  */

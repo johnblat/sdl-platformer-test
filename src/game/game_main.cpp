@@ -231,70 +231,16 @@ int main(){
 
     
     Input pinkGuyInput;
-    pinkGuyInput.buttonStates.push_back((InputButtonState){
-        std::string("left"),
-        SDL_SCANCODE_A,
-        INPUT_IS_NOT_PRESSED,
-        INPUT_IS_NOT_PRESSED
-    });
-    pinkGuyInput.buttonStates.push_back((InputButtonState){
-        std::string("right"),
-        SDL_SCANCODE_D,
-        INPUT_IS_NOT_PRESSED,
-        INPUT_IS_NOT_PRESSED
-    });
-    pinkGuyInput.buttonStates.push_back((InputButtonState){
-        std::string("jump"),
-        SDL_SCANCODE_SPACE,
-        INPUT_IS_NOT_PRESSED,
-        INPUT_IS_NOT_PRESSED
-    });
-    pinkGuyInput.buttonStates.push_back((InputButtonState){
-        std::string("zoom-in"),
-        SDL_SCANCODE_UP,
-        INPUT_IS_NOT_PRESSED,
-        INPUT_IS_NOT_PRESSED
-    });
-    pinkGuyInput.buttonStates.push_back((InputButtonState){
-        std::string("zoom-out"),
-        SDL_SCANCODE_DOWN,
-        INPUT_IS_NOT_PRESSED,
-        INPUT_IS_NOT_PRESSED
-    });
-    pinkGuyInput.buttonStates.push_back((InputButtonState){
-        std::string("zoom-reset"),
-        SDL_SCANCODE_R,
-        INPUT_IS_NOT_PRESSED,
-        INPUT_IS_NOT_PRESSED
-    });
-
-    pinkGuyInput.buttonStates.push_back((InputButtonState){
-        std::string("save"),
-        SDL_SCANCODE_1,
-        INPUT_IS_NOT_PRESSED,
-        INPUT_IS_NOT_PRESSED
-    });
-
-    pinkGuyInput.buttonStates.push_back((InputButtonState){
-        std::string("load"),
-        SDL_SCANCODE_2,
-        INPUT_IS_NOT_PRESSED,
-        INPUT_IS_NOT_PRESSED
-    });
-
-    pinkGuyInput.buttonStates.push_back((InputButtonState){
-        std::string("deselect"),
-        SDL_SCANCODE_SEMICOLON,
-        INPUT_IS_NOT_PRESSED,
-        INPUT_IS_NOT_PRESSED
-    });
-
-    pinkGuyInput.buttonStates.push_back((InputButtonState){
-        std::string("edit-angle-snap"),
-        SDL_SCANCODE_LSHIFT,
-        INPUT_IS_NOT_PRESSED,
-        INPUT_IS_NOT_PRESSED
-    });
+    addButtonToInput(pinkGuyInput, "left", SDL_SCANCODE_A);
+    addButtonToInput(pinkGuyInput, "right", SDL_SCANCODE_D);
+    addButtonToInput(pinkGuyInput, "jump", SDL_SCANCODE_SPACE);
+    addButtonToInput(pinkGuyInput, "zoom-in", SDL_SCANCODE_UP);
+    addButtonToInput(pinkGuyInput, "zoom-out", SDL_SCANCODE_DOWN);
+    addButtonToInput(pinkGuyInput, "zoom-reset", SDL_SCANCODE_R);
+    addButtonToInput(pinkGuyInput, "save", SDL_SCANCODE_1);
+    addButtonToInput(pinkGuyInput, "load", SDL_SCANCODE_2);
+    addButtonToInput(pinkGuyInput, "deselect", SDL_SCANCODE_LCTRL);
+    addButtonToInput(pinkGuyInput, "edit-angle-snap", SDL_SCANCODE_LSHIFT);
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
     pinkGuyEntity.set<MouseState>(mouseState);
@@ -325,17 +271,10 @@ int main(){
     pinkGuyEntity.set<StateCurrPrev>(state);
     pinkGuyEntity.set<Sensors>(pinkGuySensors);
     pinkGuyEntity.set<GroundSpeed>((GroundSpeed){0.0f});
-
-
     
     registerSystems(world);
     
-    
- 
-
-
     loadPlatformVertices(world);
-
 
     gTimeStep = TimeStepInit(60.0f);
 

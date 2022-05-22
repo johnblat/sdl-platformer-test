@@ -49,7 +49,7 @@ bool inputIsJustPressed(Input input, std::string buttonName);
 bool inputIsPressed(Input input, std::string buttonName);
 bool inputIsJustReleased(Input input, std::string buttonName);
 InputButtonState createbuttonState(std::string name, SDL_Scancode scanCode);
-
+void addButtonToInput(Input &input, std::string buttonName, SDL_Scancode scancode);
 
 /**
  * SYSTEMS
