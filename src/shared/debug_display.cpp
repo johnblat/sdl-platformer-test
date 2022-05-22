@@ -11,18 +11,18 @@
 
 
 
-void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertices *platformVerticesCollection){
+void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *platformVertexCollections){
     for(auto i : it){
         renderPolyLineInCamera(
             positions[i], 
-            platformVerticesCollection[i].vals, 
-            platformVerticesCollection[i].color
+            platformVertexCollections[i].vals, 
+            platformVertexCollections[i].color
         );
     }
 }
 
 
-void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertices *PlatformVerticesCollection){
+void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *PlatformVerticesCollection){
     for(auto i : it){
         int size = PlatformVerticesCollection[i].vals.size();
         for(int j = 0; j < size; j++){

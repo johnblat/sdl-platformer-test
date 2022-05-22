@@ -1,5 +1,5 @@
-#ifndef utilh
-#define utilh
+#pragma once
+#include "velocity.h"
 
 #define swapValues(a, b, T){ \
     T temp = a; \
@@ -10,9 +10,9 @@
 
 #define MAX(a, b)(a > b ? a : b)
 #define MIN(a, b)(a < b ? a : b)
-
-#define rads2deg(rads)(rads * 180 / 3.14)
-
 #define sign(x)(x >= 0 ? 1 : -1)
 
-#endif
+
+float rads2deg(float rads);
+GroundMode whichGroundMode(float angleInRads);
+bool inRange(float val, float start, float end);

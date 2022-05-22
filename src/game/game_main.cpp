@@ -271,6 +271,7 @@ int main(){
     pinkGuyEntity.set<StateCurrPrev>(state);
     pinkGuyEntity.set<Sensors>(pinkGuySensors);
     pinkGuyEntity.set<GroundSpeed>((GroundSpeed){0.0f});
+    pinkGuyEntity.set<GroundMode>(FLOOR_GM);
     
     registerSystems(world);
     

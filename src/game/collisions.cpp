@@ -104,7 +104,7 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 }
 
 
-void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, StateCurrPrev *states, Angle *angles ){
+void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         
@@ -117,6 +117,9 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
             sensorCollections[i].rays[RW_SENSOR].startingPosition.y = 0.0f;
             sensorCollections[i].rays[LW_SENSOR].startingPosition.y = 0.0f;
         }
+
+        groundModes[i] = whichGroundMode(angles[i].rads);
+        
         
         State state = STATE_IN_AIR;
 
