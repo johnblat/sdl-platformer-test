@@ -109,7 +109,7 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(loadInputSystem);
     
-    ecs.system<Position, PlatformVertices>()
+    ecs.system<Position, PlatformVertexCollection>()
         .kind(flecs::OnStore)
         .iter(renderPlatformVerticesSystem);
     
@@ -253,15 +253,15 @@ int main(){
     flecs::entity editorUser = ecs.entity();
     editorUser.set<Input>(userInput);
 
-    PlatformVertices pvs;
-    pvs.color.r = 255;
-    pvs.color.g = 255;
-    pvs.color.b = 255;
-    pvs.color.a = 255;
+    PlatformVertexCollection pvc;
+    pvc.color.r = 255;
+    pvc.color.g = 255;
+    pvc.color.b = 255;
+    pvc.color.a = 255;
 
-    flecs::entity pvsetity = ecs.entity();
-    pvsetity.set<PlatformVertices>(pvs);
-    pvsetity.set<Position>((Position){0,0});
+    flecs::entity pvcetity = ecs.entity();
+    pvcetity.set<PlatformVertexCollection>(pvc);
+    pvcetity.set<Position>((Position){0,0});
 
     gTimeStep = TimeStepInit(60.0f);
 

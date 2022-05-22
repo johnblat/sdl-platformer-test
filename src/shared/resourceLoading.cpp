@@ -11,28 +11,6 @@ void copyDynamicArrayToVector(T *arr, size_t size, std::vector<T> &vec){
     }
 }
 
-// struct PVsDynamicArray {
-//     size_t count;
-//     Position *pvs;
-// };
-
-// template <typename T> struct DynamicArray{
-//     size_t count;
-//     T *arr;
-// };
-
-// template<typename T>DynamicArray<T> *createDynamicArray(size_t count){
-//     DynamicArray<T> *da = malloc(sizeof(DynamicArray) + sizeof(T)*count);
-//     da->arr = da + sizeof(DynamicArray);
-// }
-
-
-// struct PlatformVerticesFileDefintion {
-//     size_t numEntities;
-//     Position *positions;
-//     PVsDynamicArray *PVsDynamicArrays;
-// };
-
 
 
 void loadPlatformVertices(flecs::world &ecs){
@@ -44,7 +22,7 @@ void loadPlatformVertices(flecs::world &ecs){
 
     SDL_RWread(loadContext, &numEntities, sizeof(size_t), 1);
     Position *positions = (Position *)malloc(sizeof(Position)*numEntities);
-    PlatformVertices *platformVerticesCollection = (PlatformVertices *)calloc(numEntities, sizeof(PlatformVertices)); 
+    PlatformVertexCollection *platformVertexCollections = (PlatformVertexCollection *)calloc(numEntities, sizeof(PlatformVertexCollection)); 
     SDL_RWread(loadContext, positions, sizeof(Position), numEntities);
 
 
@@ -56,14 +34,14 @@ void loadPlatformVertices(flecs::world &ecs){
         Position *platformVertices = (Position *)malloc(sizeof(Position) * count);
         SDL_RWread(loadContext, platformVertices, sizeof(Position), count);
 
-        PlatformVertices pvs;
-        pvs.color = (SDL_Color){255,255,255,255};
+        PlatformVertexCollection pvc;
+        pvc.color = (SDL_Color){255,255,255,255};
     
-        copyDynamicArrayToVector<Position>(platformVertices, count, pvs.vals);
+        copyDynamicArrayToVector<Position>(platformVertices, count, pvc.vals);
 
 
-        platformVerticesCollection[i].color = pvs.color;
-        platformVerticesCollection[i].vals = pvs.vals;
+        platformVertexCollections[i].color = pvc.color;
+        platformVertexCollections[i].vals = pvc.vals;
 
 
         free(platformVertices);
@@ -75,10 +53,10 @@ void loadPlatformVertices(flecs::world &ecs){
     for(int i = 0; i < numEntities; i++){
         flecs::entity e = ecs.entity();
         e.set<Position>(positions[i]);
-        e.set<PlatformVertices>(platformVerticesCollection[i]);
+        e.set<PlatformVertexCollection>(platformVertexCollections[i]);
     }
 
-    free(platformVerticesCollection);
+    free(platformVertexCollections);
     free(positions);
 
    //ecs.defer_end();

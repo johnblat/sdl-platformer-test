@@ -8,13 +8,13 @@
 void savePlatformVertices(flecs::world &ecs){    
     ecs.defer_begin();
 
-    auto f = ecs.filter<Position, PlatformVertices>();
+    auto f = ecs.filter<Position, PlatformVertexCollection>();
 
     size_t totalNumEntities = 0;
     std::vector<Position> allPositions;
-    std::vector<PlatformVertices> allPvss;
+    std::vector<PlatformVertexCollection> allpvcs;
 
-    f.iter([&totalNumEntities, &allPositions, &allPvss](flecs::iter &it,const Position *positions,const PlatformVertices *pvs){ 
+    f.iter([&totalNumEntities, &allPositions, &allpvcs](flecs::iter &it,const Position *positions,const PlatformVertexCollection *pvc){ 
         
         
         size_t numEntities = it.count();
@@ -22,7 +22,7 @@ void savePlatformVertices(flecs::world &ecs){
 
         for(i32 i : it){
             allPositions.push_back(positions[i]);
-            allPvss.push_back(pvs[i]);
+            allpvcs.push_back(pvc[i]);
         }
 
     });
@@ -32,9 +32,9 @@ void savePlatformVertices(flecs::world &ecs){
     SDL_RWwrite(saveContext, allPositions.data(), sizeof(Position), totalNumEntities);
 
     for(int i = 0; i < totalNumEntities; i++){    
-        size_t vectorSize = allPvss[i].vals.size();
+        size_t vectorSize = allpvcs[i].vals.size();
         SDL_RWwrite(saveContext, &vectorSize, sizeof(size_t), 1);
-        const Position *vectorData = allPvss[i].vals.data();
+        const Position *vectorData = allpvcs[i].vals.data();
         SDL_RWwrite(saveContext, vectorData, sizeof(Position), vectorSize);
     }
 

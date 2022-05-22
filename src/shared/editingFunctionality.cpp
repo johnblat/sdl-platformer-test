@@ -8,10 +8,10 @@
 #include "render.h"
 
 void EndEditingSelectedPlatformVertices(flecs::world &ecs){
-    auto f = ecs.filter<PlatformVertices, SelectedForEditing>();
+    auto f = ecs.filter<PlatformVertexCollection, SelectedForEditing>();
     ecs.defer_begin();
 
-    f.each([&](flecs::entity e, PlatformVertices pvs, SelectedForEditing selected){
+    f.each([&](flecs::entity e, PlatformVertexCollection pvc, SelectedForEditing selected){
         e.remove<SelectedForEditing>();
     });
 
@@ -19,15 +19,15 @@ void EndEditingSelectedPlatformVertices(flecs::world &ecs){
 }
 
 
-void createAndSelectPlatformVerticesEntity(flecs::world &ecs, PlatformVertices pvs){
+void createAndSelectPlatformVerticesEntity(flecs::world &ecs, PlatformVertexCollection pvc){
 
    // ecs.defer_begin();
 
-    flecs::entity pvsEntity = ecs.entity();
+    flecs::entity pvcEntity = ecs.entity();
 
-    pvsEntity.set<Position>((Position){0,0});
-    pvsEntity.set<PlatformVertices>(pvs);
-    pvsEntity.add<SelectedForEditing>();
+    pvcEntity.set<Position>((Position){0,0});
+    pvcEntity.set<PlatformVertexCollection>(pvc);
+    pvcEntity.add<SelectedForEditing>();
 
    // ecs.defer_end();
 }
@@ -43,30 +43,30 @@ void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &i
             flecs::world ecs = it.world();
         
             bool NoneSelected = true;
-            auto f = ecs.filter<PlatformVertices, SelectedForEditing>();
-            f.iter([&](flecs::iter &it, PlatformVertices *pvs, SelectedForEditing *selected){
-                Position tailVertex = pvs[i].vals.at(pvs[i].vals.size()-1);
+            auto f = ecs.filter<PlatformVertexCollection, SelectedForEditing>();
+            f.iter([&](flecs::iter &it, PlatformVertexCollection *pvc, SelectedForEditing *selected){
+                Position tailVertex = pvc[i].vals.at(pvc[i].vals.size()-1);
                 Position a = v2d_sub(pv, tailVertex);
                 //Position a = pv - tailVertex;
                 if(inputIsPressed(inputs[i], "edit-angle-snap")){
                     if(abs(a.x) < abs(a.y)){
-                        pv.x = pvs[i].vals.at(pvs[i].vals.size()-1).x;
+                        pv.x = pvc[i].vals.at(pvc[i].vals.size()-1).x;
                     }
                     else {
-                        pv.y = pvs[i].vals.at(pvs[i].vals.size()-1).y;
+                        pv.y = pvc[i].vals.at(pvc[i].vals.size()-1).y;
                     }
                 }
                 for(int i : it){
-                    pvs[i].vals.push_back(pv);
+                    pvc[i].vals.push_back(pv);
                 }
                 NoneSelected = false;
             });
 
             if(NoneSelected){
-                PlatformVertices pvs;
-                pvs.color = (SDL_Color){255,255,255,255};
-                pvs.vals.push_back((pv));
-                createAndSelectPlatformVerticesEntity(ecs, pvs);
+                PlatformVertexCollection pvc;
+                pvc.color = (SDL_Color){255,255,255,255};
+                pvc.vals.push_back((pv));
+                createAndSelectPlatformVerticesEntity(ecs, pvc);
             }
         }
     }
@@ -85,18 +85,18 @@ void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseSta
 
             Position tailVertex;
             bool NoneSelected = true;
-            auto f = ecs.filter<PlatformVertices, SelectedForEditing>();
-            f.iter([&](flecs::iter &it, PlatformVertices *pvs, SelectedForEditing *selected){
-                tailVertex = pvs[i].vals[pvs[i].vals.size()-1];
+            auto f = ecs.filter<PlatformVertexCollection, SelectedForEditing>();
+            f.iter([&](flecs::iter &it, PlatformVertexCollection *pvc, SelectedForEditing *selected){
+                tailVertex = pvc[i].vals[pvc[i].vals.size()-1];
                 if(inputIsPressed(inputs[i], "edit-angle-snap")){
                     
                     Position a = v2d_sub(pv, tailVertex);
                     if(inputIsPressed(inputs[i], "edit-angle-snap")){
                         if(abs(a.x) < abs(a.y)){
-                            pv.x = pvs[i].vals.at(pvs[i].vals.size()-1).x;
+                            pv.x = pvc[i].vals.at(pvc[i].vals.size()-1).x;
                         }
                         else {
-                            pv.y = pvs[i].vals.at(pvs[i].vals.size()-1).y;
+                            pv.y = pvc[i].vals.at(pvc[i].vals.size()-1).y;
                         }
                     }
                 }

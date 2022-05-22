@@ -91,11 +91,11 @@ void registerSystems(flecs::world &ecs){
 
 
 
-    ecs.system<Position, PlatformVertices>()
+    ecs.system<Position, PlatformVertexCollection>()
         .kind(flecs::OnStore)
         .iter(renderPlatformVerticesSystem);
 
-    ecs.system<Position, PlatformVertices>()
+    ecs.system<Position, PlatformVertexCollection>()
         .kind(flecs::OnStore)
         .iter(renderPlatformVerticesNodesSystem);
 

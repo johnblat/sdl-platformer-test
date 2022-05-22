@@ -153,13 +153,13 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
 
         
 
-        auto f = it.world().filter<Position, PlatformVertices>();
+        auto f = it.world().filter<Position, PlatformVertexCollection>();
 
-        f.each([&](flecs::entity e, Position &position, PlatformVertices &platformVertices){
+        f.each([&](flecs::entity e, Position &position, PlatformVertexCollection &platformVertexCollection){
                 //walls
-            for(int j = 0; j < platformVertices.vals.size() - 1; j++){
-                Position p1 = platformVertices.vals.at(j);
-                Position p2 = platformVertices.vals.at(j+1);
+            for(int j = 0; j < platformVertexCollection.vals.size() - 1; j++){
+                Position p1 = platformVertexCollection.vals.at(j);
+                Position p2 = platformVertexCollection.vals.at(j+1);
                 v2d v1(p1.x + position.x, p1.y + position.y);
                 v2d v2(p2.x + position.x, p2.y + position.y);
                 float distanceFromPoint;
@@ -199,10 +199,10 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
         rfRayGlobal.startingPosition.y = positions[i].y + rfRayLocal.startingPosition.y;
         rfRayGlobal.distance = rfRayLocal.distance;
 
-        f.each([&](flecs::entity e, Position &position, PlatformVertices &platformVertices){
-            for(int i = 0; i < platformVertices.vals.size() - 1; i++){
-                Position p1 = platformVertices.vals.at(i);
-                Position p2 = platformVertices.vals.at(i+1);
+        f.each([&](flecs::entity e, Position &position, PlatformVertexCollection &platformVertexCollection){
+            for(int i = 0; i < platformVertexCollection.vals.size() - 1; i++){
+                Position p1 = platformVertexCollection.vals.at(i);
+                Position p2 = platformVertexCollection.vals.at(i+1);
                 v2d v1(p1.x + position.x, p1.y + position.y);
                 v2d v2(p2.x + position.x, p2.y + position.y);
                 float distanceFromPoint;

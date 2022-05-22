@@ -8,6 +8,6 @@
 void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidRect *rectObjects);
 void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections);
 
-void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertices *platformVerticesCollection);
-void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertices *PlatformVerticesCollection);
+void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *platformVertexCollections);
+void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *PlatformVerticesCollection);
 #endif

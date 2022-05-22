@@ -18,7 +18,7 @@ struct Angle {
 
 struct SelectedForEditing {};
 
-struct PlatformVertices {
+struct PlatformVertexCollection {
     std::vector<Position> vals;
     SDL_Color color;
 };
