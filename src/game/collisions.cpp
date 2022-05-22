@@ -118,7 +118,7 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
             sensorCollections[i].rays[LW_SENSOR].startingPosition.y = 0.0f;
         }
 
-        groundModes[i] = whichGroundMode(angles[i].rads);
+        groundModes[i] = whichGroundMode(angles[i].rads);                          
         
         
         State state = STATE_IN_AIR;
