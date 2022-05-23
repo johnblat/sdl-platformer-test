@@ -18,6 +18,10 @@ void loadPlatformVertices(flecs::world &ecs){
     //ecs.defer_begin();
 
     SDL_RWops *loadContext = SDL_RWFromFile("platformVertices", "rb");
+    if(loadContext == NULL){
+        printf("No file!\n");
+        return;
+    }
     size_t numEntities = 0;
 
     SDL_RWread(loadContext, &numEntities, sizeof(size_t), 1);

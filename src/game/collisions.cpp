@@ -104,7 +104,7 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 }
 
 
-void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
+void sensorsPVCsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         
@@ -160,7 +160,8 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
 
         f.each([&](flecs::entity e, Position &position, PlatformVertexCollection &platformVertexCollection){
                 //walls
-            for(int j = 0; j < platformVertexCollection.vals.size() - 1; j++){
+            size_t lenCollection = platformVertexCollection.vals.size();
+            for(int j = 0; j < lenCollection - 1; j++){
                 Position p1 = platformVertexCollection.vals.at(j);
                 Position p2 = platformVertexCollection.vals.at(j+1);
                 v2d v1(p1.x + position.x, p1.y + position.y);

@@ -263,15 +263,6 @@ int main(){
     editorUser.set<Input>(userInput);
     editorUser.set<MouseState>(mouseState);
 
-    PlatformVertexCollection pvc;
-    pvc.color.r = 255;
-    pvc.color.g = 255;
-    pvc.color.b = 255;
-    pvc.color.a = 255;
-
-    flecs::entity pvcetity = ecs.entity();
-    pvcetity.set<PlatformVertexCollection>(pvc);
-    pvcetity.set<Position>((Position){0,0});
 
     gTimeStep = TimeStepInit(60.0f);
 

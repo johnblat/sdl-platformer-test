@@ -57,9 +57,9 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::PreUpdate)
         .iter(InputVelocitySetterSystem);
 
-    ecs.system<Position, Sensors, Velocity, GroundSpeed, StateCurrPrev, Angle>("collision")
+    ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision")
         .kind(flecs::PostUpdate)
-        .iter(sensorsPvsCollisionSystem);
+        .iter(sensorsPVCsCollisionSystem);
 
     ecs.system<Velocity, Position>("move")
         .kind(flecs::OnUpdate)

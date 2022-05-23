@@ -45,6 +45,7 @@ void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &i
             bool NoneSelected = true;
             auto f = ecs.filter<PlatformVertexCollection, SelectedForEditing>();
             f.iter([&](flecs::iter &it, PlatformVertexCollection *pvc, SelectedForEditing *selected){
+                
                 Position tailVertex = pvc[i].vals.at(pvc[i].vals.size()-1);
                 Position a = v2d_sub(pv, tailVertex);
                 //Position a = pv - tailVertex;
