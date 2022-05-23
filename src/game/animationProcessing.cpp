@@ -161,6 +161,7 @@ void animatedSpritePlay(AnimatedSprite *as, std::string animationName){
             return;
         }
     }
+    printf("animation name: %s\n", animationName.c_str());
     assert(0 && "Animation name was not found in list of animations");
 }
 
@@ -184,6 +185,10 @@ void addNewAnimationToAnimatedSprite(AnimatedSprite *animatedSprite){
     animatedSprite->numAnimations++;
 }
 
+void addAnimationToAnimatedSprite(AnimatedSprite &animatedSprite, Animation animation){
+    animatedSprite.animations[animatedSprite.numAnimations] = animation;
+    animatedSprite.numAnimations++;
+}
 
 void overwriteAnimationOnAnimatedSprite(AnimatedSprite *animatedSprite, u32 animationIndex, Animation animation){
     animatedSprite->animations[animationIndex] = animation;

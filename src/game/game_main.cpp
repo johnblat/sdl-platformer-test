@@ -89,8 +89,6 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(gravitySystem);
 
-
-
     ecs.system<Position, PlatformVertexCollection>()
         .kind(flecs::OnStore)
         .iter(renderPlatformVerticesSystem);
@@ -203,30 +201,17 @@ int main(){
     AnimatedSprite animatedSprite = createAnimatedSprite(spriteSheetId);
 
     Animation walkAnimation = createAnimation({15,16,17,18,19,20}, 12.0f, true, "walk");
-
     Animation runAnimation = createAnimation({30,31,32,33,34,35}, 12.0f, true, "run");
-
     Animation standingAttackAnimation = createAnimation({45,46,47,48}, 12.0f, false, "stand-attack");
-
     Animation idleAnimation = createAnimation({75,76,77,78,77,76}, 12.0f, true, "idle");
-
     Animation jumpAnimation = createAnimation({120,121,122,123,124,125}, 12.0f, true, "jump");
     
 
-    addNewAnimationToAnimatedSprite(&animatedSprite);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite, 0, walkAnimation);
-
-    addNewAnimationToAnimatedSprite(&animatedSprite);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite, 1, runAnimation);
-
-    addNewAnimationToAnimatedSprite(&animatedSprite);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite, 2, standingAttackAnimation);
-
-    addNewAnimationToAnimatedSprite(&animatedSprite);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite, 3, idleAnimation);
-    
-    addNewAnimationToAnimatedSprite(&animatedSprite);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite, 4, jumpAnimation);
+    addAnimationToAnimatedSprite(animatedSprite, walkAnimation);
+    addAnimationToAnimatedSprite(animatedSprite, runAnimation);
+    addAnimationToAnimatedSprite(animatedSprite, idleAnimation);
+    addAnimationToAnimatedSprite(animatedSprite, standingAttackAnimation);
+    addAnimationToAnimatedSprite(animatedSprite, jumpAnimation);
 
 
     
