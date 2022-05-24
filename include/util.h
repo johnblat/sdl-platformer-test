@@ -16,3 +16,4 @@
 float rads2deg(float rads);
 GroundMode whichGroundMode(float angleInRads);
 bool inRange(float val, float start, float end);
+void breakOnCondition(bool condition);

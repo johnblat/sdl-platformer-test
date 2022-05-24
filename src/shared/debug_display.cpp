@@ -8,6 +8,7 @@
 #include "ints.h"
 #include "window.h"
 #include "shapes.h"
+#include "v2d.h"
 
 
 
@@ -35,104 +36,134 @@ void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, Pla
     }
 }
 
+v2d rotateSensorPositionBasedOnGroundMode(v2d v, v2d o, GroundMode groundMode){
+    v2d rotated = v;
+    if(groundMode == LEFT_WALL_GM){
+        rotated = v2dRotate90DegreesCounterClockWise(rotated, o);
+    }
+    else if(groundMode == RIGHT_WALL_GM){
+        rotated = v2dRotate90DegreesClockWise(rotated, o);
+    }
+    return rotated;
+}
 
 
+void renderBorderedHorizontalLine(float startX, float endX, float y, SDL_Color fillColor, SDL_Color borderColor){
+    SDL_SetRenderDrawColor(gRenderer,  fillColor.r, fillColor.g, fillColor.b ,fillColor.a);
+    SDL_RenderDrawLineF(gRenderer, startX, y , endX, y);
 
-void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections){
+    SDL_SetRenderDrawColor(gRenderer, borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    SDL_RenderDrawLineF(gRenderer, startX , y - 1 , endX, y - 1);
+    SDL_RenderDrawLineF(gRenderer, startX, y  + 1, endX , y + 1);
+}
+
+
+void renderBorderedVerticalLine(float startY, float endY, float x, SDL_Color fillColor, SDL_Color borderColor){
+    SDL_SetRenderDrawColor(gRenderer,  fillColor.r, fillColor.g, fillColor.b ,fillColor.a);
+    SDL_RenderDrawLineF(gRenderer, x, startY , x, endY);
+
+    SDL_SetRenderDrawColor(gRenderer, borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    SDL_RenderDrawLineF(gRenderer, x - 1, startY , x - 1, endY);
+    SDL_RenderDrawLineF(gRenderer, x + 1, startY , x + 1, endY);
+}
+
+v2d localToGlobal(v2d l, v2d o){
+    v2d g = l + o;
+    return g;
+}
+
+
+void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, GroundMode *groundModes){
     // move this somewhere else
     Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f}; 
 
     for(u64 i : it){
 
         {
-            float scale;
-            SDL_RenderGetScale(gRenderer,&scale, nullptr );
-            Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+            v2d lfRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LF_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            Position actualPosition;
-            actualPosition.x = positions[i].x + sensorCollections[i].rays[LF_SENSOR].startingPosition.x;
-            actualPosition.y = positions[i].y + sensorCollections[i].rays[LF_SENSOR].startingPosition.y;
-            actualPosition.x = actualPosition.x - gCameraPosition.x + scaledCenterScreen.x;
-            actualPosition.y = actualPosition.y - gCameraPosition.y + scaledCenterScreen.y;
+            v2d globalPosition = localToGlobal(lfRotatedPos, positions[i]);
 
+            v2d positionInCamera = worldPositionToCamPosition(globalPosition);
 
-            SDL_SetRenderDrawColor(gRenderer,  167, 236, 29 ,255);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x, actualPosition.y , actualPosition.x, actualPosition.y  + sensorCollections[i].rays[LF_SENSOR].distance);
+            SDL_Color fillColor = {167, 236, 29 ,255};
+            SDL_Color borderColor = {0,0,0,255};
 
-            SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x - 1, actualPosition.y , actualPosition.x - 1, actualPosition.y  + sensorCollections[i].rays[LF_SENSOR].distance);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x + 1, actualPosition.y , actualPosition.x + 1, actualPosition.y  + sensorCollections[i].rays[LF_SENSOR].distance);
-
-
+            if(groundModes[i] == LEFT_WALL_GM){
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x - sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            }
+            else if(groundModes[i] == RIGHT_WALL_GM){
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            }
+            else {
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            }
+            
         }
 
         {
-            float scale;
-            SDL_RenderGetScale(gRenderer,&scale, nullptr );
-            Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+            v2d rfRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[RF_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            Position actualPosition;
-            actualPosition.x = positions[i].x + sensorCollections[i].rays[RF_SENSOR].startingPosition.x;
-            actualPosition.y = positions[i].y + sensorCollections[i].rays[RF_SENSOR].startingPosition.y;
-            actualPosition.x = actualPosition.x - gCameraPosition.x + scaledCenterScreen.x;
-            actualPosition.y = actualPosition.y - gCameraPosition.y + scaledCenterScreen.y;
+            v2d globalPosition = localToGlobal(rfRotatedPos, positions[i]);
 
+            v2d positionInCamera = worldPositionToCamPosition(globalPosition);
 
-            SDL_SetRenderDrawColor(gRenderer, 29, 236, 158,255);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x, actualPosition.y , actualPosition.x, actualPosition.y  + sensorCollections[i].rays[RF_SENSOR].distance);
+            SDL_Color fillColor = {29, 236, 158,255};
+            SDL_Color borderColor = {0,0,0,255};
 
-            SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x - 1, actualPosition.y , actualPosition.x - 1, actualPosition.y  + sensorCollections[i].rays[RF_SENSOR].distance);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x + 1, actualPosition.y , actualPosition.x + 1, actualPosition.y  + sensorCollections[i].rays[RF_SENSOR].distance);
-
-
+            if(groundModes[i] == LEFT_WALL_GM){
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x - sensorCollections[i].rays[RF_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            }
+            else if(groundModes[i] == RIGHT_WALL_GM){
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[RF_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            }
+            else {
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[RF_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            }
         }
 
 
         {
-            float scale;
-            SDL_RenderGetScale(gRenderer,&scale, nullptr );
-            Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+            v2d lwRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LW_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            Position actualPosition;
-            actualPosition.x = positions[i].x + sensorCollections[i].rays[LW_SENSOR].startingPosition.x;
-            actualPosition.y = positions[i].y + sensorCollections[i].rays[LW_SENSOR].startingPosition.y;
-            actualPosition.x = actualPosition.x - gCameraPosition.x + scaledCenterScreen.x;
-            actualPosition.y = actualPosition.y - gCameraPosition.y + scaledCenterScreen.y;
+            v2d globalPosition = localToGlobal(lwRotatedPos, positions[i]);
 
+            v2d positionInCamera = worldPositionToCamPosition(globalPosition);
 
-            SDL_SetRenderDrawColor(gRenderer,  255, 151, 241 ,255);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x, actualPosition.y , actualPosition.x - sensorCollections[i].rays[LW_SENSOR].distance, actualPosition.y  );
+            SDL_Color fillColor = {255, 151, 241 ,255};
+            SDL_Color borderColor = {0,0,0,255};
 
-            SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x , actualPosition.y+1 , actualPosition.x  - sensorCollections[i].rays[LW_SENSOR].distance, actualPosition.y+1  );
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x , actualPosition.y-1 , actualPosition.x  - sensorCollections[i].rays[LW_SENSOR].distance, actualPosition.y -1 );
+            if(groundModes[i] == LEFT_WALL_GM){
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y - sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            }
+            else if(groundModes[i] == RIGHT_WALL_GM){
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            }
+            else {
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x - sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            }
         }
 
         {
-            float scale;
-            SDL_RenderGetScale(gRenderer,&scale, nullptr );
-            Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+            v2d lwRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LW_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            Position actualPosition;
-            actualPosition.x = positions[i].x + sensorCollections[i].rays[RW_SENSOR].startingPosition.x;
-            actualPosition.y = positions[i].y + sensorCollections[i].rays[RW_SENSOR].startingPosition.y;
-            actualPosition.x = actualPosition.x - gCameraPosition.x + scaledCenterScreen.x;
-            actualPosition.y = actualPosition.y - gCameraPosition.y + scaledCenterScreen.y;
+            v2d globalPosition = localToGlobal(lwRotatedPos, positions[i]);
 
+            v2d positionInCamera = worldPositionToCamPosition(globalPosition);
 
-            SDL_SetRenderDrawColor(gRenderer,  244, 0, 50 ,255);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x, actualPosition.y , actualPosition.x + sensorCollections[i].rays[RW_SENSOR].distance, actualPosition.y  );
+            SDL_Color fillColor = {244, 0, 50 ,255};
+            SDL_Color borderColor = {0,0,0,255};
 
-            SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x , actualPosition.y+1 , actualPosition.x  + sensorCollections[i].rays[RW_SENSOR].distance, actualPosition.y+1  );
-            SDL_RenderDrawLineF(gRenderer, actualPosition.x , actualPosition.y-1 , actualPosition.x  + sensorCollections[i].rays[RW_SENSOR].distance, actualPosition.y -1 );
+            if(groundModes[i] == LEFT_WALL_GM){
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            }
+            else if(groundModes[i] == RIGHT_WALL_GM){
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y - sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            }
+            else {
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            }
+
         }
-            // SDL_SetRenderDrawColor(gRenderer, 0,0,0,255);
-            // SDL_RenderDrawLineF(gRenderer, actualPosition.x - 1, actualPosition.y , actualPosition.x - 1 + sensorCollections[i].rays[j].distance, actualPosition.y  );
-            // SDL_RenderDrawLineF(gRenderer, actualPosition.x + 1, actualPosition.y , actualPosition.x + 1 + sensorCollections[i].rays[j].distance, actualPosition.y  );
-
-
-        
     }
 }

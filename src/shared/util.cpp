@@ -24,7 +24,7 @@ GroundMode whichGroundMode(float angleInRads){
 
 
 bool inRange(float val, float start, float end){
-    if(end > start){
+    if(end < start){
         swapValues(end, start, float);
     }
 
@@ -34,4 +34,11 @@ bool inRange(float val, float start, float end){
 
     return false;
 
+}
+
+
+void breakOnCondition(bool condition){
+    if(condition == true){
+        int x = 0;
+    }
 }

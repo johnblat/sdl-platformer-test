@@ -26,6 +26,8 @@
 #include "mouseStateProcessing.h"
 #include "loadSave.h"
 #include "editingFunctionality.h"
+#define V2D_IMPLEMENTATION
+#include "v2d.h"
 
 
 SDL_Renderer *gRenderer;
@@ -77,7 +79,7 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::PreUpdate)
         .iter(mouseStateSetterSystem);
 
-    ecs.system<Position, Sensors>()
+    ecs.system<Position, Sensors, GroundMode>()
         .kind(flecs::OnStore)
         .iter(renderSensorsSystem);
 
