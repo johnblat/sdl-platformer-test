@@ -174,8 +174,8 @@ void sensorsPVCsCollisionSystem(flecs::iter &it, Position *positions, Sensors *s
 
 
 
-        // is jumping
-        if(velocities[i].y < 0){
+        // is in air
+        if(states[i].currentState == STATE_IN_AIR){
             sensorCollections[i].rays[LF_SENSOR].distance = 16;
             sensorCollections[i].rays[RF_SENSOR].distance = 16;
 
@@ -260,18 +260,22 @@ void sensorsPVCsCollisionSystem(flecs::iter &it, Position *positions, Sensors *s
                 v2d r1 = v1;
                 v2d r2 = v2;
                 if(groundModes[i] == RIGHT_WALL_GM && states[i].currentState == STATE_ON_GROUND){
-                    r1 = v2dRotate90DegreesCounterClockWise(v1, positions[i]);
-                    r2 = v2dRotate90DegreesCounterClockWise(v2, positions[i]);
+                    r1 = v2dRotate90DegreesCW(v1, positions[i]);
+                    r2 = v2dRotate90DegreesCW(v2, positions[i]);
                 }
                 else if(groundModes[i] == LEFT_WALL_GM && states[i].currentState == STATE_ON_GROUND){
-                    r1 = v2dRotate90DegreesClockWise(v1, positions[i]);
-                    r2 = v2dRotate90DegreesClockWise(v2, positions[i]);
+                    r1 = v2dRotate90DegreesCCW(v1, positions[i]);
+                    r2 = v2dRotate90DegreesCCW(v2, positions[i]);
+                }
+                else if(groundModes[i] == CEILING_GM && states[i].currentState == STATE_ON_GROUND){
+                    r1 = v2dRotate180Degrees(v1, positions[i]);
+                    r2 = v2dRotate180Degrees(v2, positions[i]);
                 }
 
                 float distanceFromPoint;
 
                 if(ray2dIntersectLineSegment(lfRayGlobal, r1, r2, distanceFromPoint, LF_SENSOR)){
-                   // breakOnCondition(groundModes[i] == LEFT_WALL_GM);
+                   //breakOnCondition(groundModes[i] == CEILING_GM);
                     state = STATE_ON_GROUND;
                     v2d intersectionPoint(
                             lfRayGlobal.startingPosition.x,
@@ -285,6 +289,7 @@ void sensorsPVCsCollisionSystem(flecs::iter &it, Position *positions, Sensors *s
                 }
 
                 if(ray2dIntersectLineSegment(rfRayGlobal, r1, r2, distanceFromPoint, RF_SENSOR)){
+                    //breakOnCondition(groundModes[i] == CEILING_GM);
                     state = STATE_ON_GROUND;
                     v2d intersectionPoint(
                             rfRayGlobal.startingPosition.x,
@@ -308,14 +313,19 @@ void sensorsPVCsCollisionSystem(flecs::iter &it, Position *positions, Sensors *s
 
 
         if(groundModes[i] == RIGHT_WALL_GM && states[i].currentState == STATE_ON_GROUND){
-            highestIntersectingPoint = v2dRotate90DegreesClockWise(highestIntersectingPoint, positions[i]);
-            highestIntersectingLineP1 = v2dRotate90DegreesClockWise(highestIntersectingLineP1, positions[i]);
-            highestIntersectingLineP2 = v2dRotate90DegreesClockWise(highestIntersectingLineP2, positions[i]);
+            highestIntersectingPoint = v2dRotate90DegreesCCW(highestIntersectingPoint, positions[i]);
+            highestIntersectingLineP1 = v2dRotate90DegreesCCW(highestIntersectingLineP1, positions[i]);
+            highestIntersectingLineP2 = v2dRotate90DegreesCCW(highestIntersectingLineP2, positions[i]);
         }
         else if(groundModes[i] == LEFT_WALL_GM && states[i].currentState == STATE_ON_GROUND){
-            highestIntersectingPoint = v2dRotate90DegreesCounterClockWise(highestIntersectingPoint, positions[i]);
-            highestIntersectingLineP1 = v2dRotate90DegreesCounterClockWise(highestIntersectingLineP1, positions[i]);
-            highestIntersectingLineP2 = v2dRotate90DegreesCounterClockWise(highestIntersectingLineP2, positions[i]);
+            highestIntersectingPoint = v2dRotate90DegreesCW(highestIntersectingPoint, positions[i]);
+            highestIntersectingLineP1 = v2dRotate90DegreesCW(highestIntersectingLineP1, positions[i]);
+            highestIntersectingLineP2 = v2dRotate90DegreesCW(highestIntersectingLineP2, positions[i]);
+        }
+        else if(groundModes[i] == CEILING_GM && states[i].currentState == STATE_ON_GROUND){
+            highestIntersectingPoint = v2dRotate180Degrees(highestIntersectingPoint, positions[i]);
+            highestIntersectingLineP1 = v2dRotate180Degrees(highestIntersectingLineP1, positions[i]);
+            highestIntersectingLineP2 = v2dRotate180Degrees(highestIntersectingLineP2, positions[i]);
         }
         
         setState(states[i], state);
@@ -329,17 +339,24 @@ void sensorsPVCsCollisionSystem(flecs::iter &it, Position *positions, Sensors *s
                     swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
                 }
             }
+            else if(groundModes[i] == CEILING_GM){
+                positions[i].y = 
+                    highestIntersectingPoint.y +sensorCollections[i].rays[LF_SENSOR].distance/2;
+                if(highestIntersectingLineP2.x > highestIntersectingLineP1.x){
+                    swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
+                }
+            }
             else if(groundModes[i] == LEFT_WALL_GM){
                 positions[i].x = 
                     highestIntersectingPoint.x + sensorCollections[i].rays[LF_SENSOR].distance/2;
-                if(highestIntersectingLineP2.x < highestIntersectingLineP1.x){
+                if(highestIntersectingLineP2.y < highestIntersectingLineP1.y){
                     swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
                 }
             }
             else if(groundModes[i] == RIGHT_WALL_GM){
                 positions[i].x = 
                     highestIntersectingPoint.x - sensorCollections[i].rays[LF_SENSOR].distance/2;
-                if(highestIntersectingLineP2.x < highestIntersectingLineP1.x){
+                if(highestIntersectingLineP2.y > highestIntersectingLineP1.y){
                     swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
                 }
             }

@@ -63,7 +63,7 @@ v2d v2d_rotate(v2d v, v2d o, float rads){
 
 
 
-v2d v2dRotate90DegreesClockWise(v2d v, v2d o){
+v2d v2dRotate90DegreesCCW(v2d v, v2d o){
     // v2d t = v - o;
     // v2d result = {t.y, -t.x};
     // return result;
@@ -74,7 +74,7 @@ v2d v2dRotate90DegreesClockWise(v2d v, v2d o){
     return result;
 }
 
-v2d v2dRotate90DegreesCounterClockWise(v2d v, v2d o){
+v2d v2dRotate90DegreesCW(v2d v, v2d o){
     // v2d t = v - o;
     // v2d result = {-t.y, t.x};
     // result = result + o;
@@ -84,6 +84,16 @@ v2d v2dRotate90DegreesCounterClockWise(v2d v, v2d o){
         o.y + (v.x - o.x)
     };
     return result;
+}
+
+v2d v2dRotate180Degrees(v2d v, v2d o){
+    // v2d t = v - o;
+    // v2d result = {-t.y, t.x};
+    // result = result + o;
+    // return result;
+    v2d r90 = v2dRotate90DegreesCW(v, o);
+    v2d r180 = v2dRotate90DegreesCW(r90, o);
+    return r180;
 }
 
     

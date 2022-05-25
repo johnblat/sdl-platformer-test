@@ -35,8 +35,9 @@ v2d v2d_unit( v2d v );
 v2d v2d_perp(v2d v);
 float v2d_angle_between(v2d v, v2d u);
 v2d v2d_rotate(v2d v, v2d o, float rads);
-v2d v2dRotate90DegreesClockWise(v2d v, v2d o);
-v2d v2dRotate90DegreesCounterClockWise(v2d v, v2d o);
+v2d v2dRotate90DegreesCCW(v2d v, v2d o);
+v2d v2dRotate90DegreesCW(v2d v, v2d o);
+v2d v2dRotate180Degrees(v2d v, v2d o);
 
 
 

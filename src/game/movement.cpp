@@ -156,10 +156,10 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, GroundSpee
 void gravitySystem(flecs::iter &it, Velocity *velocities, StateCurrPrev *states){
     const float grv = 0.21875f;
     for(int i : it){
-        if(states[i].currentState == STATE_ON_GROUND){
-            velocities[i].y = 0;
-            continue;
-        }
+        // if(states[i].currentState == STATE_ON_GROUND){
+        //     velocities[i].y = 0;
+        //     continue;
+        // }
         if(states[i].currentState == STATE_IN_AIR){
             if(velocities[i].y < 0.0f && velocities[i].y > -4.0f){
                 velocities[i].x -= ((velocities[i].x / 0.125f) / 256);
