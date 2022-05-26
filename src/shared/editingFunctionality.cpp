@@ -65,7 +65,8 @@ void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &i
 
             if(NoneSelected){
                 PlatformVertexCollection pvc;
-                pvc.color = (SDL_Color){255,255,255,255};
+                pvc.edgeColor = (SDL_Color){255,255,255,255};
+                pvc.nodeColor = (SDL_Color){0,255,255,255};
                 pvc.vals.push_back((pv));
                 createAndSelectPlatformVerticesEntity(ecs, pvc);
             }

@@ -11,4 +11,9 @@ void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidR
 void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *platformVertexCollections);
 void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *PlatformVerticesCollection);
 void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, GroundMode *groundModes);
+
+void setColorOnPVCSelect(flecs::iter &it, PlatformVertexCollection *pvcs);
+
+void setColorOnPVCDeselect(flecs::iter &it, PlatformVertexCollection *pvcs);
+
 #endif

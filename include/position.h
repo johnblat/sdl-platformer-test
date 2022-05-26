@@ -20,7 +20,8 @@ struct SelectedForEditing {};
 
 struct PlatformVertexCollection {
     std::vector<Position> vals;
-    SDL_Color color;
+    SDL_Color edgeColor;
+    SDL_Color nodeColor;
 };
 
 

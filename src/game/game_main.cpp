@@ -140,6 +140,18 @@ void registerSystems(flecs::world &ecs){
         .iter(renderEndFrameSystem);
 }
 
+void registerObservers(flecs::world &ecs){
+    ecs.observer<PlatformVertexCollection>("OnSelect")
+        .event(flecs::OnAdd)
+        .term<SelectedForEditing>()
+        .iter(setColorOnPVCSelect);
+
+    ecs.observer<PlatformVertexCollection>("OnDeselect")
+        .event(flecs::OnRemove)
+        .term<SelectedForEditing>()
+        .iter(setColorOnPVCDeselect);
+
+}
 
 
 
@@ -261,6 +273,8 @@ int main(){
     pinkGuyEntity.set<GroundMode>(FLOOR_GM);
     
     registerSystems(world);
+    registerObservers(world);
+
     
     loadPlatformVertices(world);
 

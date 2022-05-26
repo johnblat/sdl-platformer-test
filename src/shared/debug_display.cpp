@@ -11,13 +11,28 @@
 #include "v2d.h"
 
 
+void setColorOnPVCSelect(flecs::iter &it, PlatformVertexCollection *pvcs){
+    for(u32 i : it){
+        SDL_Color selectedColor = {20,250,20,255};
+        pvcs[i].edgeColor = selectedColor;
+        pvcs[i].nodeColor = (SDL_Color){0,200,0,255};
+    }
+}
+
+void setColorOnPVCDeselect(flecs::iter &it, PlatformVertexCollection *pvcs){
+    for(u32 i : it){
+        SDL_Color defaultColor = {255,255,255,255};
+        pvcs[i].edgeColor = defaultColor;
+        pvcs[i].nodeColor = (SDL_Color){0,255,255,255};
+    }
+}
 
 void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *platformVertexCollections){
     for(auto i : it){
         renderPolyLineInCamera(
             positions[i], 
             platformVertexCollections[i].vals, 
-            platformVertexCollections[i].color
+            platformVertexCollections[i].edgeColor
         );
     }
 }
@@ -31,7 +46,7 @@ void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, Pla
             vertexPositionGlobal.x = positions[i].x + PlatformVerticesCollection[i].vals[j].x;
             vertexPositionGlobal.y = positions[i].y + PlatformVerticesCollection[i].vals[j].y;
 
-            renderDiamondInCamera(vertexPositionGlobal, (SDL_Color){0,255,255,255});
+            renderDiamondInCamera(vertexPositionGlobal, PlatformVerticesCollection[i].nodeColor);
         }
     }
 }
