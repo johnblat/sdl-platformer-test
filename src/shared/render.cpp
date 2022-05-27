@@ -77,7 +77,7 @@ void renderPolyLineInCamera(Position offsetPosition, std::vector<Position> point
 }
 
 void renderDiamondInCamera(Position centerPoint, SDL_Color color){
-    const int DIAMOND_RADIUS = 5;
+    const int DIAMOND_RADIUS = 3;
 
     Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f};
 
