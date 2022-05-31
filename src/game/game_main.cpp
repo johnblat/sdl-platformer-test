@@ -126,6 +126,10 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Input, MouseState>()
         .kind(flecs::OnUpdate)
         .iter(EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem);
+        
+    ecs.system<Position, PlatformVertexCollection, SelectedForEditing>()
+        .kind(flecs::OnUpdate)
+        .iter(SelectedPlatformVertexCollectionDeletionSystem);
 
     ecs.system<>()
         .kind(flecs::PreFrame)
@@ -240,6 +244,8 @@ int main(){
     addButtonToInput(pinkGuyInput, "load", SDL_SCANCODE_2);
     addButtonToInput(pinkGuyInput, "deselect", SDL_SCANCODE_LCTRL);
     addButtonToInput(pinkGuyInput, "edit-angle-snap", SDL_SCANCODE_LSHIFT);
+    addButtonToInput(pinkGuyInput, "delete", SDL_SCANCODE_DELETE);
+
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
     pinkGuyEntity.set<MouseState>(mouseState);

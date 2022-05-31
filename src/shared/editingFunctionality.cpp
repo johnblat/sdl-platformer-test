@@ -171,6 +171,25 @@ void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &i
     
 }
 
+void SelectedPlatformVertexCollectionDeletionSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *pvcs, SelectedForEditing *s){
+    flecs::world world = it.world();
+    auto f = world.filter<Input>();
+    bool shouldDelete = false;
+    f.each([&](flecs::entity e, Input input){
+        if(inputIsJustReleased(input, "delete")){
+            shouldDelete = true;
+        }
+    });
+    if(shouldDelete){
+        world.defer_begin();
+        for(u32 i : it){
+            it.entity(i).destruct();
+        }
+        world.defer_end();
+    }
+
+}
+
 // UNUSED
 void SelectPlatformVertexCollectionOnMouseClick(flecs::iter &it, Position *positions, PlatformVertexCollection *pvcs){
     float distanceForSelectionTolerance = 5.0f; // how far away can user click
