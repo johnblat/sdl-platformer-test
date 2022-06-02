@@ -190,6 +190,26 @@ void SelectedPlatformVertexCollectionDeletionSystem(flecs::iter &it, Position *p
 
 }
 
+void SelectPlatformVertexOnMouseClick(flecs::iter &it, Position *positions, PlatformVertexCollection *pvcs, SelectedForEditing *ss){
+    float distanceForSelectionTolerance = 5.0f;
+    auto f = it.world().filter<MouseState>();
+
+    f.each([&](flecs::entity e, MouseState ms){
+        if(ms.lmbCurrentState == INPUT_IS_JUST_RELEASED){
+            v2d mousePosition = ms.cameraAdjustedPosition;
+            for(u32 i : it){
+                for(int j = 0; j < pvcs[i].vals.size(); j++){
+                    if(PointIntersectPointWithTolerance(mousePosition, pvcs[i].vals[j], distanceForSelectionTolerance)){
+                        SelectedForEditingNode sn;
+                        sn.idx = j;
+                    }
+                }
+            }
+        }
+    });
+}
+
+
 // UNUSED
 void SelectPlatformVertexCollectionOnMouseClick(flecs::iter &it, Position *positions, PlatformVertexCollection *pvcs){
     float distanceForSelectionTolerance = 5.0f; // how far away can user click
