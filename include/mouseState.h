@@ -14,7 +14,7 @@ enum MouseWheelState {
 struct MouseState {
     Position windowPosition;
     Position logicalPosition;
-    Position cameraAdjustedPosition;
+    Position worldPosition;
     InputState lmbCurrentState;
     InputState lmbPreviousState;
     InputState rmbCurrentState;

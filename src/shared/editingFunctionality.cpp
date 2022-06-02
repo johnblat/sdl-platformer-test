@@ -81,6 +81,7 @@ bool VerticalRayIntersectLineSegment(Ray2d ray, v2d linePoint1, v2d linePoint2){
     return true;
 }
 
+// Maybe instead of tolerance, I can give the line a "thickness"
 bool PointIntersectLineWithTolerance(v2d linePoint1, v2d linePoint2, v2d p, float tolerance ){
     Ray2d ray;
     ray.startingPosition = p;
@@ -101,13 +102,13 @@ void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &i
     for(int i : it){
 
         if(mouseStates[i].lmbCurrentState == INPUT_IS_JUST_RELEASED){
-            Position mousePosition = {mouseStates[i].cameraAdjustedPosition.x, mouseStates[i].cameraAdjustedPosition.y};
+            Position mousePosition = {mouseStates[i].worldPosition.x, mouseStates[i].worldPosition.y};
 
             flecs::world ecs = it.world();
 
             bool selectedExistingPVC = false;
-            auto f1 = ecs.filter<PlatformVertexCollection>();
-            f1.iter([&](flecs::iter &it, PlatformVertexCollection *pvcs){
+            auto f1 = ecs.filter<Position, PlatformVertexCollection>();
+            f1.iter([&](flecs::iter &it, Position *ps, PlatformVertexCollection *pvcs){
                 float distanceForSelectionTolerance = 8.0f; // how far away can user click
 
                 for(u32 j : it){
@@ -115,8 +116,8 @@ void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &i
                         continue;
                     }
                     for(int k = 0; k < pvcs[j].vals.size()- 1; k++){
-                        v2d nodePosition = pvcs[j].vals[k];
-                        v2d nodePosition2 = pvcs[j].vals[k+1];
+                        v2d nodePosition = v2d_add(ps[j], pvcs[j].vals[k]);
+                        v2d nodePosition2 = v2d_add(ps[j], pvcs[j].vals[k+1]);
                         // v2d v = nodePosition - mousePosition;
                         // float distance = v2d_magnitude(v);
                         if(PointIntersectLineWithTolerance(nodePosition, nodePosition2, mousePosition, distanceForSelectionTolerance)){
@@ -138,21 +139,22 @@ void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &i
             }
 
             bool NoneSelected = true;
-            auto f = ecs.filter<PlatformVertexCollection, SelectedForEditing>();
-            f.iter([&](flecs::iter &it, PlatformVertexCollection *pvc, SelectedForEditing *selected){
+            auto f = ecs.filter<Position, PlatformVertexCollection, SelectedForEditing>();
+            f.iter([&](flecs::iter &it, Position *ps,PlatformVertexCollection *pvc, SelectedForEditing *selected){
                 for(u32 j : it){
                     Position tailVertex = pvc[j].vals.at(pvc[j].vals.size()-1);
-                    Position a = v2d_sub(mousePosition, tailVertex);
+                    Position localPosition = v2d_sub(mousePosition, ps[j]);
+                    Position tailToMousePosition = v2d_sub(localPosition, tailVertex);
 
                     if(inputIsPressed(inputs[i], "edit-angle-snap")){
-                        if(abs(a.x) < abs(a.y)){
-                            mousePosition.x = pvc[j].vals.at(pvc[j].vals.size()-1).x;
+                        if(abs(tailToMousePosition.x) < abs(tailToMousePosition.y)){
+                            localPosition.x = pvc[j].vals.at(pvc[j].vals.size()-1).x;
                         }
                         else {
-                            mousePosition.y = pvc[j].vals.at(pvc[j].vals.size()-1).y;
+                            localPosition.y = pvc[j].vals.at(pvc[j].vals.size()-1).y;
                         }
                     }
-                    pvc[j].vals.push_back(mousePosition);
+                    pvc[j].vals.push_back(localPosition);
                     
                     NoneSelected = false;
                 }
@@ -196,7 +198,7 @@ void SelectPlatformVertexOnMouseClick(flecs::iter &it, Position *positions, Plat
 
     f.each([&](flecs::entity e, MouseState ms){
         if(ms.lmbCurrentState == INPUT_IS_JUST_RELEASED){
-            v2d mousePosition = ms.cameraAdjustedPosition;
+            v2d mousePosition = ms.worldPosition;
             for(u32 i : it){
                 for(int j = 0; j < pvcs[i].vals.size(); j++){
                     if(PointIntersectPointWithTolerance(mousePosition, pvcs[i].vals[j], distanceForSelectionTolerance)){
@@ -216,7 +218,7 @@ void SelectPlatformVertexCollectionOnMouseClick(flecs::iter &it, Position *posit
     auto f = it.world().filter<MouseState>();
     f.each([&](flecs::entity e, MouseState ms){
         if(ms.lmbCurrentState == INPUT_IS_JUST_RELEASED){
-            v2d mousePosition = ms.cameraAdjustedPosition;
+            v2d mousePosition = ms.worldPosition;
             for(u32 i : it){
                 if(it.entity(i).has<SelectedForEditing>()){
                     continue;
@@ -247,24 +249,26 @@ void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseSta
 
         if(mouseStates[i].lmbCurrentState == INPUT_IS_PRESSED){
 
-            Position pv = {mouseStates[i].cameraAdjustedPosition.x, mouseStates[i].cameraAdjustedPosition.y};
+            Position mousePosition = {mouseStates[i].worldPosition.x, mouseStates[i].worldPosition.y};
 
             flecs::world ecs = it.world();
 
             Position tailVertex;
             bool NoneSelected = true;
-            auto f = ecs.filter<PlatformVertexCollection, SelectedForEditing>();
-            f.iter([&](flecs::iter &it, PlatformVertexCollection *pvc, SelectedForEditing *selected){
-                tailVertex = pvc[i].vals[pvc[i].vals.size()-1];
+            auto f = ecs.filter<Position, PlatformVertexCollection, SelectedForEditing>();
+            f.iter([&](flecs::iter &it, Position *ps, PlatformVertexCollection *pvc, SelectedForEditing *selected){
+                tailVertex = pvc[0].vals[pvc[0].vals.size()-1];
+                Position localPosition = v2d_sub(mousePosition, ps[0]);
+
                 if(inputIsPressed(inputs[i], "edit-angle-snap")){
                     
-                    Position a = v2d_sub(pv, tailVertex);
+                    Position a = v2d_sub(localPosition, tailVertex);
                     if(inputIsPressed(inputs[i], "edit-angle-snap")){
                         if(abs(a.x) < abs(a.y)){
-                            pv.x = pvc[i].vals.at(pvc[i].vals.size()-1).x;
+                            localPosition.x = pvc[0].vals.at(pvc[0].vals.size()-1).x;
                         }
                         else {
-                            pv.y = pvc[i].vals.at(pvc[i].vals.size()-1).y;
+                            localPosition.y = pvc[i].vals.at(pvc[0].vals.size()-1).y;
                         }
                     }
                 }
@@ -272,18 +276,23 @@ void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseSta
 
                 
                 NoneSelected = false;
+
+                Position mouseAdjustedPos = v2d_add(localPosition, ps[0]);
+                Position tailVertexAdjustedPos = v2d_add(tailVertex, ps[0]);
+
+                if(NoneSelected){
+                    SDL_SetRenderDrawColor(gRenderer, 255,150,255,255);
+                    renderDiamondInCamera(mouseAdjustedPos, (SDL_Color){255,150,255,255});
+                }
+                else{
+                    renderLineInCamera(tailVertexAdjustedPos, mouseAdjustedPos, (SDL_Color){255,150,255,255});
+                    SDL_SetRenderDrawColor(gRenderer, 255,150,255,255);
+                    renderDiamondInCamera(mouseAdjustedPos, (SDL_Color){255,150,255,255});
+
+                }
             });
 
-            if(NoneSelected){
-                SDL_SetRenderDrawColor(gRenderer, 255,150,255,255);
-                renderDiamondInCamera(pv, (SDL_Color){255,150,255,255});
-            }
-            else{
-                renderLineInCamera(tailVertex, pv, (SDL_Color){255,150,255,255});
-                SDL_SetRenderDrawColor(gRenderer, 255,150,255,255);
-                renderDiamondInCamera(pv, (SDL_Color){255,150,255,255});
-
-            }
+            
 
             
         }

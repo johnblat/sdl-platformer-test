@@ -44,8 +44,8 @@ void mouseStateSetterSystem(flecs::iter &it, MouseState *mouseStates){
         mouseStates[i].windowPosition.y = (float)y;
         mouseStates[i].logicalPosition.x = lx;
         mouseStates[i].logicalPosition.y = ly;
-        mouseStates[i].cameraAdjustedPosition.x = caX;
-        mouseStates[i].cameraAdjustedPosition.y = caY;
+        mouseStates[i].worldPosition.x = caX;
+        mouseStates[i].worldPosition.y = caY;
 
         mouseStates[i].lmbPreviousState = mouseStates[i].lmbCurrentState;
         mouseStates[i].rmbPreviousState = mouseStates[i].rmbCurrentState;
