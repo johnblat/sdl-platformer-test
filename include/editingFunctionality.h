@@ -9,3 +9,7 @@ void createAndSelectPlatformVerticesEntity(flecs::world &ecs, PlatformVertexColl
 void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates);
 void DeselectInputSystem(flecs::iter &it, Input *inputs);
 void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates);
+void SelectPlatformVertexCollectionOnMouseClick(flecs::iter &it, Position *positions, PlatformVertexCollection *pvcs);
+
+void SelectedPlatformVertexCollectionDeletionSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *pvcs, SelectedForEditing *s);
+

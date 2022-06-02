@@ -11,7 +11,7 @@
 
 
 
-void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles );
+void sensorsPVCsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode* groundModes, StateCurrPrev *states, Angle *angles );
 
 bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &distanceFromRayOrigin);
 

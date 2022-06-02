@@ -7,7 +7,6 @@
 #include "ray2d.h"
 #include "solid_rect.h"
 #include "ints.h"
-#define V2D_IMPLEMENTATION
 #include "v2d.h"
 #include "util.h"
 #include <cassert>
@@ -15,50 +14,9 @@
 #include "stateProcessing.h"
 
 
-bool isInRange(float begin, float end, float x){
-    if(begin > end){
-        swapValues(begin, end, float);
-    }
-    if(x < begin || x > end){
-        return false;
-    }
-    return true;
-}
 
 
-float getYForXOnLine(Position p1, Position p2, float x){
-    if(p2.x < p1.x){
-        swapValues(p2, p1, Position);
-    }
-    if(x < p1.x || x > p2.x){
-        assert("getYForXOnLine: X passed must be in the range p1.x to p2.x" && 0);
-    }
-    if(p1.x == p2.x){
-        //printf("p1.x == p2.x");
-        return p1.y;
-    }
-    float m = (p2.y - p1.y)/(p2.x - p1.x);
-    float b = p1.y - m * p1.x;
-    float y = m * x + b;
-    return y;
-}
 
-float getXForYOnLine(Position p1, Position p2, float y){
-    if(p2.y < p1.y){
-        swapValues(p2, p1, Position);
-    }
-    if(y < p1.y || y > p2.y){
-        assert("getYForyOnLine: y passed must be in the range p1.y to p2.y" && 0);
-    }
-    if(p1.y == p2.y){
-        //printf("p1.y == p2.y");
-        return p1.x;
-    }
-    float m = (p2.x - p1.x)/(p2.y - p1.y);
-    float b = p1.x - m * p1.y;
-    float x = m * y + b;
-    return x;
-}
 
 
 
@@ -104,7 +62,14 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 }
 
 
-void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
+
+
+
+
+
+
+
+void sensorsPVCsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         
@@ -118,7 +83,8 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
             sensorCollections[i].rays[LW_SENSOR].startingPosition.y = 0.0f;
         }
 
-        groundModes[i] = whichGroundMode(angles[i].rads);                          
+        groundModes[i] = whichGroundMode(angles[i].rads);
+
         
         
         State state = STATE_IN_AIR;
@@ -127,13 +93,14 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
             FLT_MAX,
             FLT_MAX
         );
-        v2d p1HighestIntersectingLine;
-        v2d p2HighestIntersectingLine;
+
+        v2d highestIntersectingLineP1;
+        v2d highestIntersectingLineP2;
 
 
 
-
-        if(velocities[i].y < 0){
+        // is in air
+        if(states[i].currentState == STATE_IN_AIR){
             sensorCollections[i].rays[LF_SENSOR].distance = 16;
             sensorCollections[i].rays[RF_SENSOR].distance = 16;
 
@@ -158,37 +125,41 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
 
         auto f = it.world().filter<Position, PlatformVertexCollection>();
 
-        f.each([&](flecs::entity e, Position &position, PlatformVertexCollection &platformVertexCollection){
-                //walls
-            for(int j = 0; j < platformVertexCollection.vals.size() - 1; j++){
-                Position p1 = platformVertexCollection.vals.at(j);
-                Position p2 = platformVertexCollection.vals.at(j+1);
-                v2d v1(p1.x + position.x, p1.y + position.y);
-                v2d v2(p2.x + position.x, p2.y + position.y);
-                float distanceFromPoint;
+        // NOTE!!!
+        // COMMENTED OUT TO IGNORE WALL SENSORS FOR NOW
+
+        // f.each([&](flecs::entity e, Position &position, PlatformVertexCollection &platformVertexCollection){
+        //         //walls
+        //     size_t lenCollection = platformVertexCollection.vals.size();
+        //     for(int j = 0; j < lenCollection - 1; j++){
+        //         Position p1 = platformVertexCollection.vals.at(j);
+        //         Position p2 = platformVertexCollection.vals.at(j+1);
+        //         v2d v1(p1.x + position.x, p1.y + position.y);
+        //         v2d v2(p2.x + position.x, p2.y + position.y);
+        //         float distanceFromPoint;
                 
-                // is wall?
-                if(p1.x == p2.x){
-                    // moving right
-                    if(velocities[i].x > 0){
-                        if(ray2dIntersectLineSegment(rwRayGlobal, v1, v2, distanceFromPoint, RW_SENSOR)){
-                            positions[i].x = v1.x - rwRayGlobal.distance;
-                            velocities[i].x = 0;
-                            groundSpeeds[i].val = 0.0f;
-                        }
-                    }
-                    // moving left
-                    else {
-                        if(ray2dIntersectLineSegment(lwRayGlobal, v1, v2, distanceFromPoint, LW_SENSOR)){
-                            positions[i].x = v1.x + lwRayGlobal.distance;
-                            velocities[i].x = 0;
-                            groundSpeeds[i].val = 0.0f;
-                        }
-                    }
-                }
+        //         // is wall?
+        //         if(p1.x == p2.x){
+        //             // moving right
+        //             if(velocities[i].x > 0){
+        //                 if(ray2dIntersectLineSegment(rwRayGlobal, v1, v2, distanceFromPoint, RW_SENSOR)){
+        //                     positions[i].x = v1.x - rwRayGlobal.distance;
+        //                     velocities[i].x = 0;
+        //                     groundSpeeds[i].val = 0.0f;
+        //                 }
+        //             }
+        //             // moving left
+        //             else {
+        //                 if(ray2dIntersectLineSegment(lwRayGlobal, v1, v2, distanceFromPoint, LW_SENSOR)){
+        //                     positions[i].x = v1.x + lwRayGlobal.distance;
+        //                     velocities[i].x = 0;
+        //                     groundSpeeds[i].val = 0.0f;
+        //                 }
+        //             }
+        //         }
                 
-            }
-        });
+        //     }
+        // });
 
         Ray2d lfSesnorRayLocal = sensorCollections[i].rays[LF_SENSOR];
         Ray2d lfRayGlobal;
@@ -203,14 +174,33 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
         rfRayGlobal.distance = rfRayLocal.distance;
 
         f.each([&](flecs::entity e, Position &position, PlatformVertexCollection &platformVertexCollection){
-            for(int i = 0; i < platformVertexCollection.vals.size() - 1; i++){
-                Position p1 = platformVertexCollection.vals.at(i);
-                Position p2 = platformVertexCollection.vals.at(i+1);
+            size_t len = platformVertexCollection.vals.size();
+            for(int v = 0; v < len - 1; v++){
+                //breakOnCondition(groundModes[i] == RIGHT_WALL_GM || groundModes[i] == LEFT_WALL_GM);
+                
+                Position p1 = platformVertexCollection.vals.at(v);
+                Position p2 = platformVertexCollection.vals.at(v+1);
                 v2d v1(p1.x + position.x, p1.y + position.y);
                 v2d v2(p2.x + position.x, p2.y + position.y);
+                v2d r1 = v1;
+                v2d r2 = v2;
+                if(groundModes[i] == RIGHT_WALL_GM && states[i].currentState == STATE_ON_GROUND){
+                    r1 = v2dRotate90DegreesCW(v1, positions[i]);
+                    r2 = v2dRotate90DegreesCW(v2, positions[i]);
+                }
+                else if(groundModes[i] == LEFT_WALL_GM && states[i].currentState == STATE_ON_GROUND){
+                    r1 = v2dRotate90DegreesCCW(v1, positions[i]);
+                    r2 = v2dRotate90DegreesCCW(v2, positions[i]);
+                }
+                else if(groundModes[i] == CEILING_GM && states[i].currentState == STATE_ON_GROUND){
+                    r1 = v2dRotate180Degrees(v1, positions[i]);
+                    r2 = v2dRotate180Degrees(v2, positions[i]);
+                }
+
                 float distanceFromPoint;
 
-                if(ray2dIntersectLineSegment(lfRayGlobal, v1, v2, distanceFromPoint, LF_SENSOR)){
+                if(ray2dIntersectLineSegment(lfRayGlobal, r1, r2, distanceFromPoint, LF_SENSOR)){
+                   //breakOnCondition(groundModes[i] == CEILING_GM);
                     state = STATE_ON_GROUND;
                     v2d intersectionPoint(
                             lfRayGlobal.startingPosition.x,
@@ -218,16 +208,13 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
                     );
                     if(intersectionPoint.y < highestIntersectingPoint.y){
                         highestIntersectingPoint = intersectionPoint;
-                        // Depending on ground mode
-                        // this will have to change
-                        // for example, when normal
-                        // needs tp ensure p1.x < p2.x
-                        p1HighestIntersectingLine = v1;
-                        p2HighestIntersectingLine = v2;
+                        highestIntersectingLineP1 = r1;
+                        highestIntersectingLineP2 = r2;
                     }
                 }
 
-                if(ray2dIntersectLineSegment(rfRayGlobal, v1, v2, distanceFromPoint, RF_SENSOR)){
+                if(ray2dIntersectLineSegment(rfRayGlobal, r1, r2, distanceFromPoint, RF_SENSOR)){
+                    //breakOnCondition(groundModes[i] == CEILING_GM);
                     state = STATE_ON_GROUND;
                     v2d intersectionPoint(
                             rfRayGlobal.startingPosition.x,
@@ -235,29 +222,72 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
                     );
                     if(intersectionPoint.y < highestIntersectingPoint.y){
                         highestIntersectingPoint = intersectionPoint;
-                        // Depending on ground mode
-                        // this will have to change
-                        // for example, when normal
-                        // needs tp ensure p1.x < p2.x
-                        p1HighestIntersectingLine = v1;
-                        p2HighestIntersectingLine = v2;
+                        highestIntersectingLineP1 = r1;
+                        highestIntersectingLineP2 = r2;
                     }
                 }
-            }
+
+                
+                
+                
+            } 
             
         });
+
+        // rotate highest points back to their normal state
+
+
+        if(groundModes[i] == RIGHT_WALL_GM && states[i].currentState == STATE_ON_GROUND){
+            highestIntersectingPoint = v2dRotate90DegreesCCW(highestIntersectingPoint, positions[i]);
+            highestIntersectingLineP1 = v2dRotate90DegreesCCW(highestIntersectingLineP1, positions[i]);
+            highestIntersectingLineP2 = v2dRotate90DegreesCCW(highestIntersectingLineP2, positions[i]);
+        }
+        else if(groundModes[i] == LEFT_WALL_GM && states[i].currentState == STATE_ON_GROUND){
+            highestIntersectingPoint = v2dRotate90DegreesCW(highestIntersectingPoint, positions[i]);
+            highestIntersectingLineP1 = v2dRotate90DegreesCW(highestIntersectingLineP1, positions[i]);
+            highestIntersectingLineP2 = v2dRotate90DegreesCW(highestIntersectingLineP2, positions[i]);
+        }
+        else if(groundModes[i] == CEILING_GM && states[i].currentState == STATE_ON_GROUND){
+            highestIntersectingPoint = v2dRotate180Degrees(highestIntersectingPoint, positions[i]);
+            highestIntersectingLineP1 = v2dRotate180Degrees(highestIntersectingLineP1, positions[i]);
+            highestIntersectingLineP2 = v2dRotate180Degrees(highestIntersectingLineP2, positions[i]);
+        }
         
         setState(states[i], state);
         if(state == STATE_ON_GROUND){
             sensorCollections[i].rays[LF_SENSOR].distance = 32;
             sensorCollections[i].rays[RF_SENSOR].distance = 32;
-            positions[i].y = 
-                highestIntersectingPoint.y - sensorCollections[i].rays[LF_SENSOR].distance/2;
-            if(p2HighestIntersectingLine.x < p1HighestIntersectingLine.x){
-                swapValues(p2HighestIntersectingLine, p1HighestIntersectingLine, Position);
+            if(groundModes[i] == FLOOR_GM){
+                positions[i].y = 
+                    highestIntersectingPoint.y - sensorCollections[i].rays[LF_SENSOR].distance/2;
+                if(highestIntersectingLineP2.x < highestIntersectingLineP1.x){
+                    swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
+                }
             }
+            else if(groundModes[i] == CEILING_GM){
+                positions[i].y = 
+                    highestIntersectingPoint.y +sensorCollections[i].rays[LF_SENSOR].distance/2;
+                if(highestIntersectingLineP2.x > highestIntersectingLineP1.x){
+                    swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
+                }
+            }
+            else if(groundModes[i] == LEFT_WALL_GM){
+                positions[i].x = 
+                    highestIntersectingPoint.x + sensorCollections[i].rays[LF_SENSOR].distance/2;
+                if(highestIntersectingLineP2.y < highestIntersectingLineP1.y){
+                    swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
+                }
+            }
+            else if(groundModes[i] == RIGHT_WALL_GM){
+                positions[i].x = 
+                    highestIntersectingPoint.x - sensorCollections[i].rays[LF_SENSOR].distance/2;
+                if(highestIntersectingLineP2.y > highestIntersectingLineP1.y){
+                    swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
+                }
+            }
+            
             v2d intersectingLineVector = 
-                p2HighestIntersectingLine - p1HighestIntersectingLine;
+                highestIntersectingLineP2 - highestIntersectingLineP1;
 
             angles[i].rads = atan2(-intersectingLineVector.y, intersectingLineVector.x);
             if(angles[i].rads < 0){
@@ -269,6 +299,8 @@ void sensorsPvsCollisionSystem(flecs::iter &it, Position *positions, Sensors *se
         else {
             sensorCollections[i].rays[LF_SENSOR].distance = 16;
             sensorCollections[i].rays[RF_SENSOR].distance = 16;
+            groundModes[i] = FLOOR_GM;
+            angles[i].rads = 0.0f;
         }
     }
 }

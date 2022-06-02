@@ -72,6 +72,7 @@ void addNewAnimationToAnimatedSprite(AnimatedSprite *animatedSprite);
  * @param animationIndex the index in the animated sprite's animation list to overwrite
  * @param Animation the animation that will overwrite the animation at the animation index
  */
+void addAnimationToAnimatedSprite(AnimatedSprite &animatedSprite, Animation animation);
 void overwriteAnimationOnAnimatedSprite(AnimatedSprite *animatedSprite, u32 animationIndex, Animation animation);
 
 

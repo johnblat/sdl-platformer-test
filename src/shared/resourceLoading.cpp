@@ -18,6 +18,10 @@ void loadPlatformVertices(flecs::world &ecs){
     //ecs.defer_begin();
 
     SDL_RWops *loadContext = SDL_RWFromFile("platformVertices", "rb");
+    if(loadContext == NULL){
+        printf("No file!\n");
+        return;
+    }
     size_t numEntities = 0;
 
     SDL_RWread(loadContext, &numEntities, sizeof(size_t), 1);
@@ -35,12 +39,13 @@ void loadPlatformVertices(flecs::world &ecs){
         SDL_RWread(loadContext, platformVertices, sizeof(Position), count);
 
         PlatformVertexCollection pvc;
-        pvc.color = (SDL_Color){255,255,255,255};
+        pvc.edgeColor = (SDL_Color){255,255,255,255};
     
         copyDynamicArrayToVector<Position>(platformVertices, count, pvc.vals);
 
 
-        platformVertexCollections[i].color = pvc.color;
+        platformVertexCollections[i].edgeColor = pvc.edgeColor;
+        platformVertexCollections[i].nodeColor = (SDL_Color){0,255,255,255};
         platformVertexCollections[i].vals = pvc.vals;
 
 

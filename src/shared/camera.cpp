@@ -47,3 +47,14 @@ void zoomRenderSetupSystem(flecs::iter &it){
     SDL_RenderSetScale(gRenderer, gZoomAmount, gZoomAmount);
 }
 
+v2d worldPositionToCamPosition(v2d w){
+    Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f}; 
+    float scale;
+    SDL_RenderGetScale(gRenderer,&scale, nullptr );
+    Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
+    v2d c = {
+        w.x - gCameraPosition.x + scaledCenterScreen.x, 
+        w.y - gCameraPosition.y + scaledCenterScreen.y
+    };
+    return c;
+}

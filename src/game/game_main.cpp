@@ -26,6 +26,8 @@
 #include "mouseStateProcessing.h"
 #include "loadSave.h"
 #include "editingFunctionality.h"
+#define V2D_IMPLEMENTATION
+#include "v2d.h"
 
 
 SDL_Renderer *gRenderer;
@@ -57,9 +59,9 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::PreUpdate)
         .iter(InputVelocitySetterSystem);
 
-    ecs.system<Position, Sensors, Velocity, GroundSpeed, StateCurrPrev, Angle>("collision")
+    ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision")
         .kind(flecs::PostUpdate)
-        .iter(sensorsPvsCollisionSystem);
+        .iter(sensorsPVCsCollisionSystem);
 
     ecs.system<Velocity, Position>("move")
         .kind(flecs::OnUpdate)
@@ -77,7 +79,7 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::PreUpdate)
         .iter(mouseStateSetterSystem);
 
-    ecs.system<Position, Sensors>()
+    ecs.system<Position, Sensors, GroundMode>()
         .kind(flecs::OnStore)
         .iter(renderSensorsSystem);
 
@@ -88,8 +90,6 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Velocity, StateCurrPrev>("gravity system")
         .kind(flecs::OnUpdate)
         .iter(gravitySystem);
-
-
 
     ecs.system<Position, PlatformVertexCollection>()
         .kind(flecs::OnStore)
@@ -126,6 +126,10 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Input, MouseState>()
         .kind(flecs::OnUpdate)
         .iter(EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem);
+        
+    ecs.system<Position, PlatformVertexCollection, SelectedForEditing>()
+        .kind(flecs::OnUpdate)
+        .iter(SelectedPlatformVertexCollectionDeletionSystem);
 
     ecs.system<>()
         .kind(flecs::PreFrame)
@@ -140,6 +144,18 @@ void registerSystems(flecs::world &ecs){
         .iter(renderEndFrameSystem);
 }
 
+void registerObservers(flecs::world &ecs){
+    ecs.observer<PlatformVertexCollection>("OnSelect")
+        .event(flecs::OnAdd)
+        .term<SelectedForEditing>()
+        .iter(setColorOnPVCSelect);
+
+    ecs.observer<PlatformVertexCollection>("OnDeselect")
+        .event(flecs::OnRemove)
+        .term<SelectedForEditing>()
+        .iter(setColorOnPVCDeselect);
+
+}
 
 
 
@@ -203,30 +219,17 @@ int main(){
     AnimatedSprite animatedSprite = createAnimatedSprite(spriteSheetId);
 
     Animation walkAnimation = createAnimation({15,16,17,18,19,20}, 12.0f, true, "walk");
-
     Animation runAnimation = createAnimation({30,31,32,33,34,35}, 12.0f, true, "run");
-
     Animation standingAttackAnimation = createAnimation({45,46,47,48}, 12.0f, false, "stand-attack");
-
     Animation idleAnimation = createAnimation({75,76,77,78,77,76}, 12.0f, true, "idle");
-
     Animation jumpAnimation = createAnimation({120,121,122,123,124,125}, 12.0f, true, "jump");
     
 
-    addNewAnimationToAnimatedSprite(&animatedSprite);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite, 0, walkAnimation);
-
-    addNewAnimationToAnimatedSprite(&animatedSprite);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite, 1, runAnimation);
-
-    addNewAnimationToAnimatedSprite(&animatedSprite);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite, 2, standingAttackAnimation);
-
-    addNewAnimationToAnimatedSprite(&animatedSprite);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite, 3, idleAnimation);
-    
-    addNewAnimationToAnimatedSprite(&animatedSprite);
-    overwriteAnimationOnAnimatedSprite(&animatedSprite, 4, jumpAnimation);
+    addAnimationToAnimatedSprite(animatedSprite, walkAnimation);
+    addAnimationToAnimatedSprite(animatedSprite, runAnimation);
+    addAnimationToAnimatedSprite(animatedSprite, idleAnimation);
+    addAnimationToAnimatedSprite(animatedSprite, standingAttackAnimation);
+    addAnimationToAnimatedSprite(animatedSprite, jumpAnimation);
 
 
     
@@ -241,6 +244,8 @@ int main(){
     addButtonToInput(pinkGuyInput, "load", SDL_SCANCODE_2);
     addButtonToInput(pinkGuyInput, "deselect", SDL_SCANCODE_LCTRL);
     addButtonToInput(pinkGuyInput, "edit-angle-snap", SDL_SCANCODE_LSHIFT);
+    addButtonToInput(pinkGuyInput, "delete", SDL_SCANCODE_DELETE);
+
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
     pinkGuyEntity.set<MouseState>(mouseState);
@@ -274,6 +279,8 @@ int main(){
     pinkGuyEntity.set<GroundMode>(FLOOR_GM);
     
     registerSystems(world);
+    registerObservers(world);
+
     
     loadPlatformVertices(world);
 

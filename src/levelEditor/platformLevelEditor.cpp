@@ -13,6 +13,7 @@
 #include "eventHandling.h"
 #include "timestep.h"
 #include "loadSave.h"
+#include "editingFunctionality.h"
 
 SDL_Renderer *gRenderer;
 SDL_Window *gWindow;
@@ -100,6 +101,10 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Input>()
         .kind(flecs::PreUpdate)
         .iter(inputUpdateSystem);
+    
+    ecs.system<MouseState>()
+        .kind(flecs::PreUpdate)
+        .iter(mouseStateSetterSystem);
 
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
@@ -116,6 +121,10 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
         .iter(inputZoomSystem);
+    
+    ecs.system<Input, MouseState>()
+        .kind(flecs::OnUpdate)
+        .iter(EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem);
     
     ecs.system<>()
         .kind(flecs::OnUpdate)
@@ -252,16 +261,8 @@ int main(){
 
     flecs::entity editorUser = ecs.entity();
     editorUser.set<Input>(userInput);
+    editorUser.set<MouseState>(mouseState);
 
-    PlatformVertexCollection pvc;
-    pvc.color.r = 255;
-    pvc.color.g = 255;
-    pvc.color.b = 255;
-    pvc.color.a = 255;
-
-    flecs::entity pvcetity = ecs.entity();
-    pvcetity.set<PlatformVertexCollection>(pvc);
-    pvcetity.set<Position>((Position){0,0});
 
     gTimeStep = TimeStepInit(60.0f);
 
@@ -277,10 +278,8 @@ int main(){
         
         gKeyStates = (u8 *)SDL_GetKeyboardState(NULL);
 
-        mouseStateSetterSystem(mouseState);
         mouseScrollWheelZoomSetter(mouseState);
-        EditPlatformVerticesAddVertexAtMousePositionOnSelected(ecs, mouseState);
-
+        
         ecs.progress();
 
     }
