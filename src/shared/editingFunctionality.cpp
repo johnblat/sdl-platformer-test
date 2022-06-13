@@ -244,62 +244,6 @@ void SelectPlatformVertexCollectionOnMouseClick(flecs::iter &it, Position *posit
 }
 
 
-void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates){
-    for(int i : it){
-
-        if(mouseStates[i].lmbCurrentState == INPUT_IS_PRESSED){
-
-            Position mousePosition = {mouseStates[i].worldPosition.x, mouseStates[i].worldPosition.y};
-
-            flecs::world ecs = it.world();
-
-            Position tailVertex;
-            bool NoneSelected = true;
-            auto f = ecs.filter<Position, PlatformVertexCollection, SelectedForEditing>();
-            f.iter([&](flecs::iter &it, Position *ps, PlatformVertexCollection *pvc, SelectedForEditing *selected){
-                tailVertex = pvc[0].vals[pvc[0].vals.size()-1];
-                Position localPosition = v2d_sub(mousePosition, ps[0]);
-
-                if(inputIsPressed(inputs[i], "edit-angle-snap")){
-                    
-                    Position a = v2d_sub(localPosition, tailVertex);
-                    if(inputIsPressed(inputs[i], "edit-angle-snap")){
-                        if(abs(a.x) < abs(a.y)){
-                            localPosition.x = pvc[0].vals.at(pvc[0].vals.size()-1).x;
-                        }
-                        else {
-                            localPosition.y = pvc[i].vals.at(pvc[0].vals.size()-1).y;
-                        }
-                    }
-                }
-                
-
-                
-                NoneSelected = false;
-
-                Position mouseAdjustedPos = v2d_add(localPosition, ps[0]);
-                Position tailVertexAdjustedPos = v2d_add(tailVertex, ps[0]);
-
-                if(NoneSelected){
-                    SDL_SetRenderDrawColor(gRenderer, 255,150,255,255);
-                    renderDiamondInCamera(mouseAdjustedPos, (SDL_Color){255,150,255,255});
-                }
-                else{
-                    renderLineInCamera(tailVertexAdjustedPos, mouseAdjustedPos, (SDL_Color){255,150,255,255});
-                    SDL_SetRenderDrawColor(gRenderer, 255,150,255,255);
-                    renderDiamondInCamera(mouseAdjustedPos, (SDL_Color){255,150,255,255});
-
-                }
-            });
-
-            
-
-            
-        }
-    }
-}
-
-
 
 
 void DeselectInputSystem(flecs::iter &it, Input *inputs){

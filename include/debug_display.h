@@ -5,6 +5,8 @@
 #include <vector>
 #include "solid_rect.h"
 #include "velocity.h"
+#include "mouseState.h"
+
 
 void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidRect *rectObjects);
 
@@ -15,5 +17,8 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
 void setColorOnPVCSelect(flecs::iter &it, PlatformVertexCollection *pvcs);
 
 void setColorOnPVCDeselect(flecs::iter &it, PlatformVertexCollection *pvcs);
+
+void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates);
+
 
 #endif
