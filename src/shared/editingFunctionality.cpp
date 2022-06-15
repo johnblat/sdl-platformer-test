@@ -9,6 +9,17 @@
 #include "ray2d.h"
 #include "util.h"
 
+namespace EditMode {
+    enum EditModeType {
+        SELECT_PVC_MODE,
+        EDIT_PVC_MODE,
+        SELECT_NODE_MODE
+    };
+}
+
+
+EditMode::EditModeType gCurrentEditMode = EditMode::SELECT_PVC_MODE;
+
 void deselectAll(flecs::world &ecs){
     ecs.defer_begin();
 
@@ -99,6 +110,7 @@ bool PointIntersectLineWithTolerance(v2d linePoint1, v2d linePoint2, v2d p, floa
 
 
 void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates){
+    if(gCurrentEditMode != EditMode::SELECT_PVC_MODE)
     for(int i : it){
 
         if(mouseStates[i].lmbCurrentState == INPUT_IS_JUST_RELEASED){
@@ -163,8 +175,6 @@ void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &i
 
             if(NoneSelected){
                 PlatformVertexCollection pvc;
-                pvc.edgeColor = (SDL_Color){255,255,255,255};
-                pvc.nodeColor = (SDL_Color){0,255,255,255};
                 pvc.vals.push_back((mousePosition));
                 createAndSelectPlatformVerticesEntity(ecs, pvc);
             }
@@ -192,10 +202,11 @@ void SelectedPlatformVertexCollectionDeletionSystem(flecs::iter &it, Position *p
 
 }
 
-void SelectPlatformVertexOnMouseClick(flecs::iter &it, Position *positions, PlatformVertexCollection *pvcs, SelectedForEditing *ss){
+void SelectPlatformVertexOnMouseClick(flecs::iter &it, SelectedForEditing *s, Position *positions, PlatformVertexCollection *pvcs){
     float distanceForSelectionTolerance = 5.0f;
     auto f = it.world().filter<MouseState>();
 
+    
     f.each([&](flecs::entity e, MouseState ms){
         if(ms.lmbCurrentState == INPUT_IS_JUST_RELEASED){
             v2d mousePosition = ms.worldPosition;
@@ -204,12 +215,19 @@ void SelectPlatformVertexOnMouseClick(flecs::iter &it, Position *positions, Plat
                     if(PointIntersectPointWithTolerance(mousePosition, pvcs[i].vals[j], distanceForSelectionTolerance)){
                         SelectedForEditingNode sn;
                         sn.idx = j;
+                        it.world().defer_begin();
+                        it.entity(i).set<SelectedForEditingNode>(sn);
+                        it.world().defer_end();
                     }
                 }
             }
         }
     });
+
+    
 }
+
+
 
 
 // UNUSED

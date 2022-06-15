@@ -39,13 +39,9 @@ void loadPlatformVertices(flecs::world &ecs){
         SDL_RWread(loadContext, platformVertices, sizeof(Position), count);
 
         PlatformVertexCollection pvc;
-        pvc.edgeColor = (SDL_Color){255,255,255,255};
     
         copyDynamicArrayToVector<Position>(platformVertices, count, pvc.vals);
 
-
-        platformVertexCollections[i].edgeColor = pvc.edgeColor;
-        platformVertexCollections[i].nodeColor = (SDL_Color){0,255,255,255};
         platformVertexCollections[i].vals = pvc.vals;
 
 

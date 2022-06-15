@@ -11,36 +11,36 @@
 #include "v2d.h"
 #include "mouseState.h"
 
+const SDL_Color SELECTED_PVC_EDGE_COLOR = {20, 250, 20, 255};
+const SDL_Color DEFAULT_PVC_EDGE_COLOR = {255,255,255,255};
+const SDL_Color DEFAULT_NODE_COLOR = {220,220,220,255};
+const SDL_Color SELECTED_NODE_COLOR = {0, 255, 255, 255};
 
 
-void setColorOnPVCSelect(flecs::iter &it, PlatformVertexCollection *pvcs){
-    for(u32 i : it){
-        SDL_Color selectedColor = {20,250,20,255};
-        pvcs[i].edgeColor = selectedColor;
-        pvcs[i].nodeColor = (SDL_Color){0,200,0,255};
-    }
-}
 
-void setColorOnPVCDeselect(flecs::iter &it, PlatformVertexCollection *pvcs){
-    for(u32 i : it){
-        SDL_Color defaultColor = {255,255,255,255};
-        pvcs[i].edgeColor = defaultColor;
-        pvcs[i].nodeColor = (SDL_Color){0,255,255,255};
-    }
-}
-
-void renderPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *platformVertexCollections){
+void renderSelectedPlatformVerticesSystem(flecs::iter &it, SelectedForEditing *ss, Position *positions, PlatformVertexCollection *platformVertexCollections){
     for(auto i : it){
         renderPolyLineInCamera(
             positions[i], 
             platformVertexCollections[i].vals, 
-            platformVertexCollections[i].edgeColor
+            SELECTED_PVC_EDGE_COLOR
         );
     }
 }
 
+// without SelectedForEditing Component
+void renderUnselectedPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *platformVertexCollections){
+    for(auto i : it){
+        renderPolyLineInCamera(
+            positions[i], 
+            platformVertexCollections[i].vals, 
+            DEFAULT_PVC_EDGE_COLOR
+        );
+    }
+}
 
-void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *PlatformVerticesCollection){
+// without SelectedForEditingNode Component
+void renderUnselectedPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *PlatformVerticesCollection){
     for(auto i : it){
         int size = PlatformVerticesCollection[i].vals.size();
         for(int j = 0; j < size; j++){
@@ -48,10 +48,31 @@ void renderPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, Pla
             vertexPositionGlobal.x = positions[i].x + PlatformVerticesCollection[i].vals[j].x;
             vertexPositionGlobal.y = positions[i].y + PlatformVerticesCollection[i].vals[j].y;
 
-            renderDiamondInCamera(vertexPositionGlobal, PlatformVerticesCollection[i].nodeColor);
+            renderDiamondInCamera(vertexPositionGlobal, DEFAULT_NODE_COLOR);
         }
     }
 }
+
+
+void renderSelectedPlatformVerticesNodesSystem(flecs::iter &it, SelectedForEditingNode *sns, Position *positions, PlatformVertexCollection *platformVertexCollections){
+    for(auto i : it){
+        size_t size = platformVertexCollections[i].vals.size();
+
+        for(int j = 0; j < size; j++){
+            Position vertexPositionGlobal;
+            vertexPositionGlobal.x = positions[i].x + platformVertexCollections[i].vals[j].x;
+            vertexPositionGlobal.y = positions[i].y + platformVertexCollections[i].vals[j].y;
+
+            if(sns[i].idx == j){
+                renderDiamondInCamera(vertexPositionGlobal, SELECTED_NODE_COLOR);
+            }
+            else {
+                renderDiamondInCamera(vertexPositionGlobal, DEFAULT_NODE_COLOR);
+            }
+        }
+    }
+}
+
 
 v2d rotateSensorPositionBasedOnGroundMode(v2d v, v2d o, GroundMode groundMode){
     v2d rotated = v;

@@ -39,7 +39,14 @@ int gScreenHeight = 480 * 2;
 SpriteSheet gSpriteSheets[MAX_SPRITE_SHEETS]; 
 size_t gNumSpriteSheets = 0;
 
+flecs::entity gEditorEntity;
 
+/**
+ecs.system<ComponentA>()
+     .term<ComponentB>().oper(flecs::Not)
+     .kind(flecs::OnUpdate)
+     .iter(someSystem);
+*/
 
 void registerSystems(flecs::world &ecs){
 // Set up the animation playing and rendering systems
@@ -91,13 +98,23 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(gravitySystem);
 
-    ecs.system<Position, PlatformVertexCollection>()
+    ecs.system<SelectedForEditing, Position, PlatformVertexCollection>()
         .kind(flecs::OnStore)
-        .iter(renderPlatformVerticesSystem);
+        .iter(renderSelectedPlatformVerticesSystem);
+    
+    ecs.system<Position, PlatformVertexCollection>()
+        .term<SelectedForEditing>().oper(flecs::Not)
+        .kind(flecs::OnStore)
+        .iter(renderUnselectedPlatformVerticesSystem);
+
+    ecs.system<SelectedForEditingNode, Position, PlatformVertexCollection>()
+        .kind(flecs::OnStore)
+        .iter(renderSelectedPlatformVerticesNodesSystem);
 
     ecs.system<Position, PlatformVertexCollection>()
+        .term<SelectedForEditingNode>().oper(flecs::Not)
         .kind(flecs::OnStore)
-        .iter(renderPlatformVerticesNodesSystem);
+        .iter(renderUnselectedPlatformVerticesNodesSystem);
 
     ecs.system<>()
         .kind(flecs::OnStore)
@@ -130,6 +147,10 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Position, PlatformVertexCollection, SelectedForEditing>()
         .kind(flecs::OnUpdate)
         .iter(SelectedPlatformVertexCollectionDeletionSystem);
+    
+    ecs.system<SelectedForEditing, Position, PlatformVertexCollection>()
+        .kind(flecs::OnUpdate)
+        .iter(SelectPlatformVertexOnMouseClick);
 
     ecs.system<>()
         .kind(flecs::PreFrame)
@@ -145,15 +166,15 @@ void registerSystems(flecs::world &ecs){
 }
 
 void registerObservers(flecs::world &ecs){
-    ecs.observer<PlatformVertexCollection>("OnSelect")
-        .event(flecs::OnAdd)
-        .term<SelectedForEditing>()
-        .iter(setColorOnPVCSelect);
+    // ecs.observer<PlatformVertexCollection>("OnSelect")
+    //     .event(flecs::OnAdd)
+    //     .term<SelectedForEditing>()
+    //     .iter(setColorOnPVCSelect);
 
-    ecs.observer<PlatformVertexCollection>("OnDeselect")
-        .event(flecs::OnRemove)
-        .term<SelectedForEditing>()
-        .iter(setColorOnPVCDeselect);
+    // ecs.observer<PlatformVertexCollection>("OnDeselect")
+    //     .event(flecs::OnRemove)
+    //     .term<SelectedForEditing>()
+    //     .iter(setColorOnPVCDeselect);
 
 }
 

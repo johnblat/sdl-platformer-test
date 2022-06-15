@@ -116,7 +116,7 @@ void registerSystems(flecs::world &ecs){
     
     ecs.system<Position, PlatformVertexCollection>()
         .kind(flecs::OnStore)
-        .iter(renderPlatformVerticesSystem);
+        .iter(renderSelectedPlatformVerticesSystem);
     
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
