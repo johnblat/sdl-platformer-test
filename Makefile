@@ -44,7 +44,7 @@ $(info =============)
 LFLAGS = -Llib
 IFLAGS = -Iinclude -Iinclude/SDL2 -Iinclude/flecs 
 
-LIBS = -lSDL2 -lSDL2main -lSDL2_image -Wl,-rpath,lib
+LIBS = -lpthread -lSDL2 -lSDL2main -lSDL2_image -Wl,-rpath,lib
 
 
 
@@ -59,7 +59,7 @@ ed: $(ED_CXX_OBJ_FILES) $(SHARED_C_OBJ_FILES) $(SHARED_CXX_OBJ_FILES)
 
 
 $(BUILD_DIR)/%.c.o: src/%.c 
-	$(CC) $(CFLAGS) $(IFLAGS) -c -g $^ -o $@
+	$(CC) $(CFLAGS) $(IFLAGS) -c -g $^ -o $@ 
 
 $(BUILD_DIR)/%.cpp.o: src/%.cpp 
 $(BUILD_DIR)/%.cpp.o: src/%.cpp $(DEPDIR)/%.cpp.d | $(DEPDIR) $(BUILD_DIR)
