@@ -85,7 +85,7 @@ void ComponentLifecycle_move_on_add() {
     test_int(Pod::ctor_invoked, 1);
     test_int(Pod::dtor_invoked, 1);
     test_int(Pod::copy_invoked, 0);
-    test_int(Pod::move_invoked, 1);
+    test_int(Pod::move_invoked, 0);
     test_int(Pod::copy_ctor_invoked, 0);
     test_int(Pod::move_ctor_invoked, 1);
 
@@ -115,7 +115,7 @@ void ComponentLifecycle_move_on_remove() {
     test_int(Pod::ctor_invoked, 1);
     test_int(Pod::dtor_invoked, 1);
     test_int(Pod::copy_invoked, 0);
-    test_int(Pod::move_invoked, 1);
+    test_int(Pod::move_invoked, 0);
     test_int(Pod::copy_ctor_invoked, 0);
     test_int(Pod::move_ctor_invoked, 1);
 
@@ -286,56 +286,6 @@ void ComponentLifecycle_get_mut_existing() {
     Pod::move_invoked = 0;
 }
 
-void ComponentLifecycle_pod_component() {
-    flecs::world world;
-
-    flecs::pod_component<Pod>(world, "Pod");
-
-    auto e = flecs::entity(world).add<Pod>();
-    test_assert(e.id() != 0);
-    test_assert(e.has<Pod>());
-
-    const Pod *pod = e.get<Pod>();
-    test_assert(pod != NULL);
-
-    e.remove<Pod>();
-    test_assert(!e.has<Pod>());
-
-    /* Component is registered as pod, no lifecycle actions should be invoked */
-    test_int(Pod::ctor_invoked, 0);
-    test_int(Pod::dtor_invoked, 0);
-    test_int(Pod::copy_invoked, 0);
-    test_int(Pod::move_invoked, 0);
-}
-
-void ComponentLifecycle_relocatable_component() {
-    flecs::world world;
-
-    flecs::relocatable_component<Pod>(world, "Pod");
-
-    auto e = flecs::entity(world).add<Pod>();
-    test_assert(e.id() != 0);
-    test_assert(e.has<Pod>());
-
-    const Pod *pod = e.get<Pod>();
-    test_assert(pod != NULL);
-
-    test_int(pod->value, 10);
-
-    /* Component is registered as relocatable, ctor/dtor/copy are registered,
-     * but move is not. */
-    test_int(Pod::ctor_invoked, 1);
-    test_int(Pod::dtor_invoked, 0);
-    test_int(Pod::copy_invoked, 0);
-    test_int(Pod::move_invoked, 0);
-
-    /* Add another entity, this moves the existing component, but should not
-     * invoke move assignment */
-    flecs::entity(world).add<Pod>();
-    test_int(Pod::ctor_invoked, 2);
-    test_int(Pod::move_invoked, 0);     
-}
-
 void ComponentLifecycle_implicit_component() {
     flecs::world world;
 
@@ -354,10 +304,17 @@ void ComponentLifecycle_implicit_component() {
     test_int(Pod::copy_invoked, 0);
     test_int(Pod::move_invoked, 0);
 
+    world.entity().add<Pod>();
+
+    test_int(Pod::ctor_invoked, 2);
+    test_int(Pod::move_ctor_invoked, 0);
+    test_int(Pod::move_invoked, 0);
+
     flecs::entity(world).add<Pod>();
-    flecs::entity(world).add<Pod>();
-    test_int(Pod::ctor_invoked, 5);
-    test_int(Pod::move_invoked, 2); 
+
+    test_int(Pod::ctor_invoked, 3);
+    test_int(Pod::move_ctor_invoked, 2);
+    test_int(Pod::move_invoked, 0);
 }
 
 void ComponentLifecycle_implicit_after_query() {
@@ -380,14 +337,20 @@ void ComponentLifecycle_implicit_after_query() {
     test_int(Pod::copy_invoked, 0);
     test_int(Pod::move_invoked, 0);
 
-    flecs::entity(world).add<Pod>();
-    flecs::entity(world).add<Pod>();
-    test_int(Pod::ctor_invoked, 5);
-    test_int(Pod::move_invoked, 2); 
+    world.entity().add<Pod>();
+
+    test_int(Pod::ctor_invoked, 2);
+    test_int(Pod::move_ctor_invoked, 0);
+    test_int(Pod::move_invoked, 0); 
+
+    world.entity().add<Pod>();
+
+    test_int(Pod::ctor_invoked, 3);
+    test_int(Pod::move_ctor_invoked, 2);
+    test_int(Pod::move_invoked, 0); 
 }
 
-template <typename T, typename std::enable_if<
-    !flecs::has_flecs_ctor<T>::value, void>::type* = nullptr>
+template <typename T>
 static void try_add(flecs::world& ecs) {
     flecs::entity e = ecs.entity().add<T>();
     
@@ -395,20 +358,6 @@ static void try_add(flecs::world& ecs) {
 
     const T *ptr = e.get<T>();
     test_int(ptr->x_, 99);
-
-    e.remove<T>();
-    test_assert(!e.has<T>());
-}
-
-template <typename T, typename std::enable_if<
-    flecs::has_flecs_ctor<T>::value, void>::type* = nullptr>
-static void try_add(flecs::world& ecs) {
-    flecs::entity e = ecs.entity().add<T>();
-    test_assert(e.has<T>());
-
-    const T *ptr = e.get<T>();
-    test_int(ptr->x_, 89);
-    test_int(ptr->e_, e);
 
     e.remove<T>();
     test_assert(!e.has<T>());
@@ -442,25 +391,12 @@ static void try_add_w_object(flecs::world& ecs) {
     test_assert(!e.has<T>());
 }
 
-template <typename T, typename std::enable_if<
-    !flecs::has_flecs_ctor<T>::value, void>::type* = nullptr>
+template <typename T>
 static void try_set(flecs::world& ecs) {
     flecs::entity e = ecs.entity().set<T>({10});
 
     const T *ptr = e.get<T>();
     test_int(ptr->x_, 10);
-}
-
-template <typename T, typename std::enable_if<
-    flecs::has_flecs_ctor<T>::value, void>::type* = nullptr>
-static void try_set(flecs::world& ecs) {
-    flecs::entity e = ecs.entity().set<T>({10});
-
-    const T *ptr = e.get<T>();
-    test_int(ptr->x_, 10);
-    test_int(ptr->e_, 0);
-
-    e.remove<T>();
 }
 
 template <typename T>
@@ -471,25 +407,12 @@ static void try_emplace(flecs::world& ecs) {
     test_int(ptr->x_, 10);
 }
 
-template <typename T, typename std::enable_if<
-    !flecs::has_flecs_ctor<T>::value, void>::type* = nullptr>
+template <typename T>
 static void try_set_default(flecs::world& ecs) {
     flecs::entity e = ecs.entity().set(T());
 
     const T *ptr = e.get<T>();
     test_int(ptr->x_, 99);
-
-    e.remove<T>();
-}
-
-template <typename T, typename std::enable_if<
-    flecs::has_flecs_ctor<T>::value, void>::type* = nullptr>
-static void try_set_default(flecs::world& ecs) {
-    flecs::entity e = ecs.entity().set(T());
-
-    const T *ptr = e.get<T>();
-    test_int(ptr->x_, 99);
-    test_int(ptr->e_, 0);
 
     e.remove<T>();
 }
@@ -640,24 +563,6 @@ void ComponentLifecycle_no_dtor() {
     ecs.component<NoDtor>();
 }
 
-void ComponentLifecycle_flecs_ctor() {
-    flecs::world ecs;
-
-    ecs.component<FlecsCtor>();
-
-    try_add<FlecsCtor>(ecs);
-}
-
-void ComponentLifecycle_flecs_ctor_w_default_ctor() {
-    flecs::world ecs;
-
-    ecs.component<FlecsCtorDefaultCtor>();
-
-    try_add<FlecsCtorDefaultCtor>(ecs);
-
-    try_set_default<FlecsCtorDefaultCtor>(ecs);
-}
-
 void ComponentLifecycle_default_ctor_w_value_ctor() {
     flecs::world ecs;
 
@@ -668,16 +573,6 @@ void ComponentLifecycle_default_ctor_w_value_ctor() {
     try_set<DefaultCtorValueCtor>(ecs);
 
     try_set_default<FlecsCtorDefaultCtor>(ecs);
-}
-
-void ComponentLifecycle_flecs_ctor_w_value_ctor() {
-    flecs::world ecs;
-
-    ecs.component<FlecsCtorValueCtor>();
-
-    try_add<FlecsCtorValueCtor>(ecs);
-
-    try_set<FlecsCtorValueCtor>(ecs);
 }
 
 void ComponentLifecycle_no_default_ctor_move_ctor_on_set() {
@@ -901,4 +796,434 @@ void ComponentLifecycle_dtor_w_non_trivial_explicit_move() {
 
     test_int(CtorDtor_w_MoveAssign::move_value, 10);
     test_int(CtorDtor_w_MoveAssign::dtor_value, 0);
+}
+
+void ComponentLifecycle_grow_no_default_ctor() {
+	{
+        flecs::world world;
+
+        world.component<CountNoDefaultCtor>();
+
+        auto e1 = world.entity().emplace<CountNoDefaultCtor>(1);
+        auto e2 = world.entity().emplace<CountNoDefaultCtor>(2);
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 2);
+        test_int(CountNoDefaultCtor::dtor_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 0);
+
+        auto e3 = world.entity().emplace<CountNoDefaultCtor>(3);
+        
+        test_int(CountNoDefaultCtor::ctor_invoked, 3);
+        test_int(CountNoDefaultCtor::dtor_invoked, 2);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 2);
+
+        test_assert(e1.has<CountNoDefaultCtor>());
+        test_assert(e2.has<CountNoDefaultCtor>());
+        test_assert(e3.has<CountNoDefaultCtor>());
+
+        test_int(e1.get<CountNoDefaultCtor>()->value, 1);
+        test_int(e2.get<CountNoDefaultCtor>()->value, 2);
+        test_int(e3.get<CountNoDefaultCtor>()->value, 3);
+    }
+
+    test_int(CountNoDefaultCtor::ctor_invoked, 3);
+    test_int(CountNoDefaultCtor::dtor_invoked, 5);
+    test_int(CountNoDefaultCtor::copy_invoked, 0);
+    test_int(CountNoDefaultCtor::move_invoked, 0);
+    test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+    test_int(CountNoDefaultCtor::move_ctor_invoked, 2);
+}
+
+void ComponentLifecycle_grow_no_default_ctor_move() {
+    {
+        flecs::world world;
+
+        world.component<CountNoDefaultCtor>();
+        world.component<Tag>();
+
+        auto e1 = world.entity().emplace<CountNoDefaultCtor>(1);
+        auto e2 = world.entity().emplace<CountNoDefaultCtor>(2);
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 2);
+        test_int(CountNoDefaultCtor::dtor_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 0);
+
+        auto e3 = world.entity().emplace<CountNoDefaultCtor>(3);
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 3);
+        test_int(CountNoDefaultCtor::dtor_invoked, 2);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 2);
+
+        test_assert(e1.has<CountNoDefaultCtor>());
+        test_assert(e2.has<CountNoDefaultCtor>());
+        test_assert(e3.has<CountNoDefaultCtor>());
+
+        test_int(e1.get<CountNoDefaultCtor>()->value, 1);
+        test_int(e2.get<CountNoDefaultCtor>()->value, 2);
+        test_int(e3.get<CountNoDefaultCtor>()->value, 3);
+
+        e1.add<Tag>();
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 3);
+        test_int(CountNoDefaultCtor::dtor_invoked, 3);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 3);
+
+        e2.add<Tag>();
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 3);
+        test_int(CountNoDefaultCtor::dtor_invoked, 4);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 4);
+
+        e3.add<Tag>();
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 3);
+        test_int(CountNoDefaultCtor::dtor_invoked, 7);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 7); /* resize */
+    }
+
+    test_int(CountNoDefaultCtor::ctor_invoked, 3);
+    test_int(CountNoDefaultCtor::dtor_invoked, 10);
+    test_int(CountNoDefaultCtor::copy_invoked, 0);
+    test_int(CountNoDefaultCtor::move_invoked, 0);
+    test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+    test_int(CountNoDefaultCtor::move_ctor_invoked, 7);
+}
+
+void ComponentLifecycle_grow_no_default_ctor_move_w_component() {
+    {
+        flecs::world world;
+
+        world.component<CountNoDefaultCtor>();
+        world.component<Position>();
+
+        auto e1 = world.entity().emplace<CountNoDefaultCtor>(1);
+        auto e2 = world.entity().emplace<CountNoDefaultCtor>(2);
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 2);
+        test_int(CountNoDefaultCtor::dtor_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 0);
+
+        auto e3 = world.entity().emplace<CountNoDefaultCtor>(3);
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 3);
+        test_int(CountNoDefaultCtor::dtor_invoked, 2);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 2);
+
+        test_assert(e1.has<CountNoDefaultCtor>());
+        test_assert(e2.has<CountNoDefaultCtor>());
+        test_assert(e3.has<CountNoDefaultCtor>());
+
+        test_int(e1.get<CountNoDefaultCtor>()->value, 1);
+        test_int(e2.get<CountNoDefaultCtor>()->value, 2);
+        test_int(e3.get<CountNoDefaultCtor>()->value, 3);
+
+        e1.add<Position>();
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 3);
+        test_int(CountNoDefaultCtor::dtor_invoked, 3);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 3);
+
+        e2.add<Position>();
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 3);
+        test_int(CountNoDefaultCtor::dtor_invoked, 4);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 4);
+
+        e3.add<Position>();
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 3);
+        test_int(CountNoDefaultCtor::dtor_invoked, 7);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 7); /* resize */
+    }
+
+    test_int(CountNoDefaultCtor::ctor_invoked, 3);
+    test_int(CountNoDefaultCtor::dtor_invoked, 10);
+    test_int(CountNoDefaultCtor::copy_invoked, 0);
+    test_int(CountNoDefaultCtor::move_invoked, 0);
+    test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+    test_int(CountNoDefaultCtor::move_ctor_invoked, 7);
+}
+
+void ComponentLifecycle_delete_no_default_ctor() {
+	{
+        flecs::world world;
+
+        world.component<CountNoDefaultCtor>();
+
+        auto e1 = world.entity().emplace<CountNoDefaultCtor>(1);
+        auto e2 = world.entity().emplace<CountNoDefaultCtor>(2);
+        auto e3 = world.entity().emplace<CountNoDefaultCtor>(3);
+        
+        test_int(CountNoDefaultCtor::ctor_invoked, 3);
+        test_int(CountNoDefaultCtor::dtor_invoked, 2);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 0);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 2);
+
+        test_assert(e1.has<CountNoDefaultCtor>());
+        test_assert(e2.has<CountNoDefaultCtor>());
+        test_assert(e3.has<CountNoDefaultCtor>());
+
+        test_int(e1.get<CountNoDefaultCtor>()->value, 1);
+        test_int(e2.get<CountNoDefaultCtor>()->value, 2);
+        test_int(e3.get<CountNoDefaultCtor>()->value, 3);
+
+        e2.destruct();
+
+        test_int(CountNoDefaultCtor::ctor_invoked, 3);
+        test_int(CountNoDefaultCtor::dtor_invoked, 3);
+        test_int(CountNoDefaultCtor::copy_invoked, 0);
+        test_int(CountNoDefaultCtor::move_invoked, 1);
+        test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+        test_int(CountNoDefaultCtor::move_ctor_invoked, 2);
+    }
+
+    test_int(CountNoDefaultCtor::ctor_invoked, 3);
+    test_int(CountNoDefaultCtor::dtor_invoked, 5);
+    test_int(CountNoDefaultCtor::copy_invoked, 0);
+    test_int(CountNoDefaultCtor::move_invoked, 1);
+    test_int(CountNoDefaultCtor::copy_ctor_invoked, 0);
+    test_int(CountNoDefaultCtor::move_ctor_invoked, 2);
+}
+
+void ComponentLifecycle_on_add_hook() {
+    int count = 0;
+
+    {
+        flecs::world ecs;
+
+        ecs.component<Position>().on_add([&](Position& p) {
+            count ++;
+        });
+
+        test_int(0, count);
+
+        auto e = ecs.entity().add<Position>();
+        test_int(1, count);
+
+        e.add<Position>();
+        test_int(1, count);
+    }
+
+    test_int(1, count);
+}
+
+void ComponentLifecycle_on_remove_hook() {
+    int count = 0;
+    
+    {
+        flecs::world ecs;
+
+        ecs.component<Position>().on_remove([&](Position& p) {
+            count ++;
+        });
+
+        test_int(0, count);
+
+        auto e1 = ecs.entity().add<Position>();
+        ecs.entity().add<Position>();
+        test_int(0, count);
+
+        e1.remove<Position>();
+        test_int(1, count);
+    }
+
+    test_int(2, count);
+}
+
+void ComponentLifecycle_on_set_hook() {
+    int count = 0;
+    Position v = {0};
+
+    {
+        flecs::world ecs;
+
+        ecs.component<Position>().on_set([&](Position& p) {
+            count ++;
+            v = p;
+        });
+
+        test_int(0, count);
+
+        auto e1 = ecs.entity().add<Position>();
+        test_int(0, count);
+
+        e1.set<Position>({10, 20});
+        test_int(1, count);
+        test_int(10, v.x);
+        test_int(20, v.y);
+
+        ecs.entity().set<Position>({30, 40});
+        test_int(2, count);
+        test_int(30, v.x);
+        test_int(40, v.y);
+    }
+
+    test_int(2, count);
+}
+
+void ComponentLifecycle_on_add_hook_w_entity() {
+    int count = 0;
+    flecs::entity e_arg;
+
+    {
+        flecs::world ecs;
+
+        ecs.component<Position>().on_add([&](flecs::entity arg, Position& p) {
+            e_arg = arg;
+            count ++;
+        });
+
+        test_int(0, count);
+        test_assert(e_arg == 0);
+
+        auto e = ecs.entity().add<Position>();
+        test_int(1, count);
+        test_assert(e_arg == e);
+
+        e.add<Position>();
+        test_int(1, count);
+    }
+
+    test_int(1, count);
+}
+
+void ComponentLifecycle_on_remove_hook_w_entity() {
+    int count = 0;
+    flecs::entity e_arg;
+    flecs::entity e2;
+    
+    {
+        flecs::world ecs;
+
+        ecs.component<Position>().on_remove([&](flecs::entity arg, Position& p){
+            e_arg = arg;
+            count ++;
+        });
+
+        test_int(0, count);
+        test_assert(e_arg == 0);
+
+        auto e1 = ecs.entity().add<Position>();
+        e2 = ecs.entity().add<Position>();
+        test_int(0, count);
+
+        e1.remove<Position>();
+        test_int(1, count);
+        test_assert(e_arg == e1);
+    }
+
+    test_int(2, count);
+    test_assert(e_arg == e2);
+}
+
+void ComponentLifecycle_on_set_hook_w_entity() {
+    int count = 0;
+    Position v = {0};
+    flecs::entity e_arg;
+
+    {
+        flecs::world ecs;
+
+        ecs.component<Position>().on_set([&](flecs::entity arg, Position& p) {
+            count ++;
+            v = p;
+            e_arg = arg;
+        });
+
+        test_int(0, count);
+
+        auto e1 = ecs.entity().add<Position>();
+        test_int(0, count);
+
+        e1.set<Position>({10, 20});
+        test_int(1, count);
+        test_assert(e_arg == e1);
+        test_int(10, v.x);
+        test_int(20, v.y);
+
+        auto e2 = ecs.entity().set<Position>({30, 40});
+        test_int(2, count);
+        test_assert(e_arg == e2);
+        test_int(30, v.x);
+        test_int(40, v.y);
+    }
+
+    test_int(2, count);
+}
+
+void ComponentLifecycle_chained_hooks() {
+    flecs::world ecs;
+
+    int32_t add_count = 0;
+    int32_t remove_count = 0;
+    int32_t set_count = 0;
+
+    ecs.component<Position>()
+        .on_add([&](Position& p){
+            add_count ++;
+        })
+        .on_set([&](Position& p){
+            set_count ++;
+        })
+        .on_remove([&](Position& p){
+            remove_count ++;
+        });
+
+    auto e = ecs.entity();
+    test_int(0, add_count);
+    test_int(0, set_count);
+    test_int(0, remove_count);
+
+    e.add<Position>();
+    test_int(1, add_count);
+    test_int(0, set_count);
+    test_int(0, remove_count);
+
+    e.set<Position>({10, 20});
+    test_int(1, add_count);
+    test_int(1, set_count);
+    test_int(0, remove_count);
+
+    e.remove<Position>();
+    test_int(1, add_count);
+    test_int(1, set_count);
+    test_int(1, remove_count);
 }

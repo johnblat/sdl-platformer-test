@@ -1,8 +1,8 @@
 #include <api.h>
+#include <stdlib.h>
 
 void Stresstests_setup() {
-    bake_set_os_api();
-    ecs_tracing_enable(-3);
+    ecs_log_set_level(-3);
 }
 
 static
@@ -13,7 +13,7 @@ void add_random(
 {
     if (rand() % 2) {
         if (!entity) {
-            entity = ecs_new_w_entity(world, component);
+            entity = ecs_new_w_id(world, component);
         } else {
             ecs_add_id(world, entity, component);
         }
@@ -59,7 +59,7 @@ void Add_random(ecs_iter_t *it) {
 
 static
 void Set_velocity_callback(ecs_iter_t *it) {
-    ECS_COLUMN(it, Velocity, v, 1);
+    Velocity *v = ecs_term(it, Velocity, 1);
 
     int i;
     for (i = 0; i < it->count; i ++) {
@@ -97,16 +97,26 @@ void create_delete_entity_random_components_staged(
     ECS_COMPONENT(world, Position);
     ECS_COMPONENT(world, Velocity);
     ECS_COMPONENT(world, Rotation);
-    ECS_TYPE(world, Type, Position, Velocity);
+    ECS_PREFAB(world, Type, Position, Velocity);
 
     ECS_SYSTEM(world, Add_random, EcsOnUpdate, Position);
     ECS_SYSTEM(world, Delete_above_1000, EcsPostUpdate, Position);
+
+    ecs_system_init(world, &(ecs_system_desc_t){
+        .entity.entity = Add_random,
+        .multi_threaded = true
+    });
+
+    ecs_system_init(world, &(ecs_system_desc_t){
+        .entity.entity = Delete_above_1000,
+        .multi_threaded = true
+    });
 
     IterData ctx = {.component = ecs_id(Position), .component_2 = ecs_id(Velocity), .component_3 = ecs_id(Rotation)};
     ecs_set_context(world, &ctx);
 
     ecs_bulk_new(world, Position, 500);
-    ecs_bulk_new(world, Type, 500);
+    bulk_new_w_type(world, Type, 500);
 
     if (threads) {
         ecs_set_threads(world, threads);
@@ -131,11 +141,21 @@ void set_entity_random_components(
     ECS_COMPONENT(world, Position);
     ECS_COMPONENT(world, Velocity);
     ECS_COMPONENT(world, Rotation);
-    ECS_TYPE(world, Type, Position, Velocity);
+    ECS_PREFAB(world, Type, Position, Velocity);
 
     ECS_SYSTEM(world, Set_random, EcsOnUpdate, Position);
     ECS_SYSTEM(world, Set_velocity_callback, EcsOnSet, Velocity);
     ECS_SYSTEM(world, Delete_above_1000, EcsPostUpdate, Position);
+
+    ecs_system_init(world, &(ecs_system_desc_t){
+        .entity.entity = Set_random,
+        .multi_threaded = true
+    });
+
+    ecs_system_init(world, &(ecs_system_desc_t){
+        .entity.entity = Delete_above_1000,
+        .multi_threaded = true
+    });
 
     IterData ctx = {.component = ecs_id(Position), .component_2 = ecs_id(Velocity), .component_3 = ecs_id(Rotation)};
     ecs_set_context(world, &ctx);
@@ -143,7 +163,7 @@ void set_entity_random_components(
     const ecs_entity_t *ids = ecs_bulk_new(world, Position, 5);
     test_assert(ids != NULL);
 
-    ids = ecs_bulk_new(world, Type, 5);
+    ids = bulk_new_w_type(world, Type, 5);
     test_assert(ids != NULL);
 
     if (threads) {
@@ -277,12 +297,12 @@ void Stresstests_add_1k_tags() {
     int i;
     for (i = 0; i < 1000; i ++) {
         ecs_add_id(world, e, i + 1000);
-        test_assert(ecs_has_entity(world, e, i + 1000));
+        test_assert(ecs_has_id(world, e, i + 1000));
     }
 
-    ecs_type_t type = ecs_get_type(world, e);
+    const ecs_type_t *type = ecs_get_type(world, e);
     test_assert(type != NULL);
-    test_int(ecs_vector_count(type), 1000);
+    test_int(type->count, 1000);
 
     ecs_fini(world);
 }

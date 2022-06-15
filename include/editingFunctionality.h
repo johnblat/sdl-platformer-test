@@ -12,3 +12,5 @@ void SelectPlatformVertexCollectionOnMouseClick(flecs::iter &it, Position *posit
 
 void SelectedPlatformVertexCollectionDeletionSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *pvcs, SelectedForEditing *s);
 
+void SelectPlatformVertexOnMouseClick(flecs::iter &it, SelectedForEditing *s, Position *positions, PlatformVertexCollection *pvcs);
+

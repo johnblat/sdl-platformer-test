@@ -263,19 +263,19 @@ static int position_ctor_invoked = 0;
 
 ECS_CTOR(Position, ptr, {
     position_ctor_invoked ++;
-});
+})
 
 void ImplicitComponents_reinit_w_lifecycle() {
     flecs::world world;
 
-    auto comp_1 = world.pod_component<Position>();
+    auto comp_1 = world.component<Position>();
 
     test_assert(flecs::type_id<Position>() == comp_1.id());
 
     // Explicitly register constructor
-    EcsComponentLifecycle cl{};
+    ecs_type_hooks_t cl{};
     cl.ctor = ecs_ctor(Position);
-    ecs_set_component_actions_w_entity(world.c_ptr(), comp_1.id(), &cl);
+    ecs_set_hooks_id(world.c_ptr(), comp_1.id(), &cl);
 
     auto e = world.entity()
         .add<Position>();
@@ -367,8 +367,6 @@ void ImplicitComponents_use_const_w_stage() {
 }
 
 void ImplicitComponents_use_const_w_threads() {
-    bake_set_os_api();
-
     flecs::world world;
 
     world.use<const Velocity>();

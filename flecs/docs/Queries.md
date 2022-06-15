@@ -1,9 +1,8 @@
-# Queries
 Queries are the mechanism that allow applications to get the entities that match with a certain set of conditions. Queries can range from simple lists of components to complex expressions that efficiently traverse an entity graph. This manual explains the ins & outs of how to use them.
 
 **NOTE**: this manual describes queries as they are intended to work. The actual implementation may not have support for certain combinations of features. When an application attempts to use a feature that is not yet supported, an `UNSUPPORTED` error will be thrown.
 
-**NOTE**: the description of filters in this manual refers to the new rule parser which has not yet merged with master.
+**NOTE**: features that rely on query variables or automatic substitution of components or objects (like when relying on component inheritance or transitive queries) require the rule query engine, included in the FLECS_RULES addon.
 
 ## Query kinds
 Flecs has two different kinds of queriers: cached and uncached. The differences are described here. Note that when "query" is mentioned in the other parts of the manual it always refers to all query kinds, unless explicitly mentioned otherwise.
@@ -102,7 +101,8 @@ auto q = qb.build();
 The builder API has support for adding terms using the DSL:
 
 ```cpp
-auto q = world.query_builder<>("Position, [in] Velocity")
+auto q = world.query_builder()
+  .expr("Position, [in] Velocity")
   .term("NPC")
   .term("(Likes, Apples)")
   .build();
@@ -114,7 +114,8 @@ The query descriptor is a C API to construct queries that follows the struct ini
 This is an example of the query descriptor API:
 
 ```c
-ecs_filter_t *f = ecs_filter_init(world, &(ecs_filter_desc_t){
+ecs_filter_t f;
+ecs_filter_init(world, &f, &(ecs_filter_desc_t){
   .terms = {
     {ecs_id(Position)},
     {ecs_id(Velocity)},
@@ -127,7 +128,8 @@ ecs_filter_t *f = ecs_filter_init(world, &(ecs_filter_desc_t){
 The descriptor API has support for using the DSL:
 
 ```c
-ecs_filter_t *f = ecs_filter_init(world, &(ecs_filter_desc_t){
+ecs_filter_t f;
+ecs_filter_init(world, &f, &(ecs_filter_desc_t){
   .terms = {
     {ecs_id(Position)},
     {ecs_id(Velocity)}
@@ -221,11 +223,11 @@ auto q = world.query_builder<>()
 
 q.iter([](flecs::iter& it) {
   // Get the type id for the first term.
-  auto likes = it.term_id(1);
+  auto likes = it.id(1);
 
   // Extract the object from the pair
   std::cout << "Entities like " 
-    << likes.object().name() 
+    << likes.second().name() 
     << std::endl;
 });
 ```
@@ -235,7 +237,7 @@ Alternatively, the `iter` call can be written in such a way that it is fully gen
 ```cpp
 q.iter([](flecs::iter& it) {
   for (int t = 0; t < it.term_count(); t++) {
-    auto id = it.term_id(t);
+    auto id = it.id(t);
     auto data = it.term(t);
 
     // Use id & data, for example for reflection
@@ -258,7 +260,7 @@ ecs_query_t *q = ecs_query_init(world, &(ecs_query_desc_t){
   }
 });
 
-ecs_iter_t it = ecs_query_iter(q);
+ecs_iter_t it = ecs_query_iter(world, q);
 while (ecs_query_next(&it)) {
   Position *p = ecs_term(&it, Position, 1);
   Velocity *v = ecs_term(&it, Velocity, 2);
@@ -281,13 +283,105 @@ ecs_query_t *q = ecs_query_init(world, &(ecs_query_desc_t){
   }
 });
 
-ecs_iter_t it = ecs_query_iter(q);
+ecs_iter_t it = ecs_query_iter(world, q);
 while (ecs_query_next(&it)) {
   ecs_id_t id = ecs_term_id(&it, 1);
-  printf("Entities like %s\n", 
-    ecs_get_name(world, ecs_get_object(world, id)));
+  ecs_entity_t obj = ecs_pair_second(it->world, id);
+  printf("Entities like %s\n", ecs_get_name(world, object));
 }
 ```
+
+## Sorting
+Applications are able to access entities in order, by using sorted queries. Sorted queries allow an application to specify a component that entities should be sorted on. Sorting is enabled by setting the order_by function:
+
+```c
+ecs_query_t q = ecs_query_init(world, &(ecs_query_desc_t) {
+    .filter.terms = {{ ecs_id(Position) }},
+    .order_by_component = ecs_id(Position),
+    .order_by = compare_position,
+});
+```
+
+This will sort the query by the `Position` component. The function also accepts a compare function, which looks like this:
+
+```c
+int compare_position(ecs_entity_t e1, Position *p1, ecs_entity_t e2, Position *p2) {
+    return p1->x - p2->x;
+}
+```
+
+Once sorting is enabled for a query, the data will remain sorted, even after the underlying data changes. The query keeps track of any changes that have happened to the data, and if changes could have invalidated the ordering, data will be resorted. Resorting does not happen when the data is modified, which means that sorting will not decrease performance of regular operations. Instead, the sort will be applied when the application obtains an iterator to the query:
+
+```c
+ecs_entity_t e = ecs_new(world, Position); // Does not reorder
+ecs_set(world, e, Position, {10, 20}); // Does not reorder
+ecs_iter_t it = ecs_query_iter(world, q); // Reordering happens here
+```
+
+The following operations mark data dirty can can trigger a reordering:
+- Creating a new entity with the ordered component
+- Deleting an entity with the ordered component
+- Adding the ordered component to an entity
+- Removing the ordered component from an entity
+- Setting the ordered component
+- Running a system that writes the ordered component (through an [out] column)
+
+Applications iterate a sorted query in the same way they would iterate a regular query:
+
+```c
+while (ecs_query_next(&it)) {
+    Position *p = ecs_term(&it, Position, 1);
+
+    for (int i = 0; i < it.count; i ++) {
+        printf("{%f, %f}\n", p[i].x, p[i].y); // Values printed will be in order
+    }
+}
+```
+
+### Sorting algorithm
+The algorithm used for the sort is a quicksort. Each table that is matched with the query will be sorted using a quicksort. As a result, sorting one query affects the order of entities in another query. However, just sorting tables is not enough, as the list of ordered entities may have to jump between tables. For example:
+
+Entitiy | Components (table) | Value used for sorting
+--------|--------------------|-----------------------
+E1      | Position           | 1
+E2      | Position           | 3
+E3      | Position           | 4
+E4      | Position, Velocity | 5
+E5      | Position, Velocity | 7
+E6      | Position, Mass     | 8
+E7      | Position           | 10
+E8      | Position           | 11
+
+To make sure a query iterates the entities in the right order, it will iterate entities in the ordered tables to determine the largest slice of ordered entities in each table, which the query will iterate in order. Slices are precomputed during the sorting step, which means that the performance of query iteration is similar to a regular iteration. For the above set of entities, these slices would look like this:
+
+Table              | Slice
+-------------------|-------
+Position           | 0..2
+Position, Velocity | 3..4
+Position, Mass     | 5
+Position           | 6..7
+
+This process is transparent for applications, except that the slicing will result in smaller contiguous arrays being iterated by the application.
+
+### Sorting by entity id
+Instead of sorting by a component value, applications can sort by entity id by not specifying order_by_component
+
+```c
+ecs_query_t q = ecs_query_init(world, &(ecs_query_desc_t) {
+    .filter.terms = {{ ecs_id(Position) }},
+    .order_by = compare_entity,
+});
+```
+
+The compare function would look like this:
+
+```c
+int compare_entity(ecs_entity_t e1, void *p1, ecs_entity_t e2, void *p2) {
+    return e1 - e2;
+}
+```
+
+When no component is provided, no reordering will happen as a result of setting components or running a system with `[out]` columns.
 
 ## Query Concepts
 Now that we have the basics under our belt, lets look a bit more in-depth at the different concepts from which queries are composed.
@@ -627,16 +721,18 @@ ecs_query_t *q = ecs_query_init(world, &(ecs_query_decs_t){
 ```
 
 ### Singleton
-A singleton in Flecs is a component or tag that has been added to itself. In the query langauge this can be written down as a term with a predicate that references itself as the subject:
+Singletons are a feature that make it easy to work with components for which there is only a single instance in the world. A typical example is a `Game` component, which could contain information that is global to a game, like simulation speed.
+
+In the query language, a singleton can be queried for by providing the `$` symbol as subject:
+
+```
+Game($)
+```
+
+In Flecs singletons are implemented as components that are added to themselves. The above query is short for:
 
 ```
 Game(Game)
-```
-
-Since this is such a common pattern, the query DSL provides a shortcut for singletons with the singleton operator (`$`). This term is an example of how it is used, and is equivalent to `Game(Game)`:
-
-```
-$Game
 ```
 
 This example shows how to add a singleton with the query builder:
@@ -653,7 +749,7 @@ This example shows how to add a singleton with the query descriptor. Note that t
 // Game(Game)
 ecs_query_t *q = ecs_query_init(world, &(ecs_query_decs_t){
   .filter.terms = {
-    {ecs_id(Game), .args[0].entity = ecs_id(Game)}
+    { ecs_id(Game), .subj.entity = ecs_id(Game) }
   }
 });
 ```
@@ -666,7 +762,7 @@ This example shows how to explicitly set identifiers with the builder API:
 ```cpp
 // Position(This), (Likes, Alice)
 auto qb = world.query_builder<>()
-  .term<Position>().subject(flecs::This)
+  .term<Position>().subj(flecs::This)
   .term(Likes).object(Alice);
 ```
 
@@ -676,8 +772,8 @@ This example shows how to explicitly set identifiers with the query descriptor:
 // Position(This), (Likes, Alice)
 ecs_query_t *q = ecs_query_init(world, &(ecs_query_decs_t){
   .filter.terms = {
-    {.predicate.entity = ecs_id(Position), .args[0].entity = EcsThis},
-    {.predicate.entity = Likes, .args[1].entity = Alice}
+    {.pred.entity = ecs_id(Position), .subj.entity = EcsThis},
+    {.pred.entity = Likes, .obj.entity = Alice}
   }
 });
 ```
@@ -701,7 +797,7 @@ which is equivalent to
 // Position(This)
 ecs_query_t *q = ecs_query_init(world, &(ecs_query_decs_t){
   .filter.terms = {
-    {.predicate = ecs_id(Position), .args[0].entity = EcsThis}
+    {.pred.entity = ecs_id(Position), .subj.entity = EcsThis}
   }
 });
 ```
@@ -724,9 +820,9 @@ which is equivalent to
 ecs_query_t *q = ecs_query_init(world, &(ecs_query_decs_t){
   .filter.terms = {
     {
-      .predicate = Likes,
-      .args[0].entity = EcsThis,
-      .args[1].entity = Alice
+      .pred.entity = Likes,
+      .subj.entity = EcsThis,
+      .obj.entity = Alice
     }
   }
 });
@@ -800,15 +896,15 @@ Now suppose we want to know whether the object matched by the wildcard (`*`) is 
 But that does not work, as this query would return all Likes relationships * all Colleague relationships. To constrain the query to only return `Likes` relationships for objects that are also colleagues, we can use a variable:
 
 ```
-(Likes, X), (Colleague, X)
+(Likes, $X), (Colleague, $X)
 ```
 
-A variable is an identifier that is local to the query. It does not need to be defined in advance. By default identifiers that are all uppercase are automatically parsed as a variable by the DSL.
+A variable is an identifier that is local to the query and does not need to be defined in advance. In the query DSL identifiers that start with a `$` are interpreted as a variable.
 
 Variables can occur in multiple places. For example, this query returns all the relationships the `This` entity has with each object it likes as `R`:
 
 ```
-(Likes, X), (R, X)
+(Likes, $X), ($R, $X)
 ```
 
 A useful application for variables is ensuring that an entity has a component referenced by a relationship. Consider an application that has an `ExpiryTimer` relationship that removes a component after a certain time has expired. This logic only needs to be executed when the entity actually has the component to remove. 
@@ -816,13 +912,13 @@ A useful application for variables is ensuring that an entity has a component re
 With variables this can be ensured:
 
 ```
-(ExpiryTimer, C), C
+(ExpiryTimer, $C), $C
 ```
 
 Variables allow queries to arbitrarily traverse the entity relationship graph. For example, the following query tests whether there exist entities that like objects that like their enemies:
 
 ```
-(Likes, FRIEND), Likes(FRIEND, ENEMY), (Enemy, ENEMY)
+(Likes, $Friend), Likes($Friend, $Enemy), (Enemy, $Enemy)
 ```
 
 This example shows how to use variables in the C++ API:
@@ -830,8 +926,8 @@ This example shows how to use variables in the C++ API:
 ```cpp
 // (Likes, X), (Colleague, X)
 auto qb = world.query_builder<>()
-  .term(Likes).object("X")
-  .term(Colleague).object("X");
+  .term(Likes).obj().var("X")
+  .term(Colleague).obj().var("X");
 ```
 
 This example shows how to use wildcards in the query descriptor:
@@ -840,8 +936,8 @@ This example shows how to use wildcards in the query descriptor:
 // (Likes, X), (Colleague, X)
 ecs_query_t *q = ecs_query_init(world, &(ecs_query_decs_t){
   .filter.terms = {
-    {.predicate.entity = Likes, .args[1].name = "X"}
-    {.predicate.entity = Colleague, .args[1].name = "X"}
+    {.pred.entity = Likes, .obj.name = "X", .var = EcsVarIsVariable }
+    {.pred.entity = Colleague, .obj.name = "X", .var = EcsVarIsVariable }
   }
 });
 ```
@@ -858,10 +954,10 @@ We also need to tell the query in which direction to follow the relationship. We
 The following term shows how to write the above example down in the DSL:
 
 ```
-Position(superset(ChildOf))
+Position(super(ChildOf))
 ```
 
-Let's unpack what is happening here. First of all the term has a regular `Position` predicate. The subject of this term is `superset(ChildOf)`. What this does is, it instructs the term to search upwards (`superset`) for the `ChildOf` relationship.
+Let's unpack what is happening here. First of all the term has a regular `Position` predicate. The subject of this term is `super(ChildOf)`. What this does is, it instructs the term to search upwards (`superset`) for the `ChildOf` relationship.
 
 As a result, this term will follow the `ChildOf` relation of the `This` subject until it has found an object with `Position`. Here is the behavior in pseudo code:
 
@@ -875,11 +971,24 @@ def find_object_w_component(This, Component):
   return 0 '// No match
 ```
 
-#### Inclusive Substitution
+### Parent components
+Queries may use the `parent` shortcut to select components from a parent entity which is short for `super(ChildOf)` /This query:
+
+```
+Position(parent)
+```
+
+is equivalent to
+
+```
+Position(super(ChildOf))
+```
+
+#### Self Substitution
 Substitution can do more than just searching supersets. It is for example possible to start the search on `This` itself, and when the component is not found on `This`, keep searching by following the `ChildOf` relation:
 
 ```c
-Position(self|superset(ChildOf))
+Position(self|super(ChildOf))
 ```
 
 A substitution that has both `self` and `superset` or `subset` is also referred to as an "inclusive" substitution.
@@ -901,14 +1010,14 @@ def find_object_w_component(This, Component):
 Queries can specify how deep the query should search. For example, the following term specifies to search the `ChildOf` relation, but no more than 3 levels deep:
 
 ```c
-Position(superset(ChildOf, 3))
+Position(super(ChildOf, 3))
 ```
 
 Additionally, it is also possible to specify a minimum search depth:
 
 ```c
 // Start at depth 2, search until at most depth 4
-Position(superset(ChildOf, 2, 4))
+Position(super(ChildOf, 2, 4))
 ```
 
 #### Cascade Ordering
@@ -917,20 +1026,20 @@ Substitution expressions may contain the `cascade` modifier, which ensures that 
 A useful application of `cascade` is transform systems, where parents need to be transformed before their children. The term in the following example finds the `Transform` component from both `This` and its parent, while ordering the results of the query breadth-first:
 
 ```
-Transform, Transform(cascade|superset(ChildOf))
+Transform, Transform(cascade|super(ChildOf))
 ```
 
 In an actual transform system we would also want to match the root, which can be achieved by making the second term optional:
 
 ```
-Transform, ?Transform(cascade|superset(ChildOf))
+Transform, ?Transform(cascade|super(ChildOf))
 ```
 
 #### Substitute for All
 The default behavior of a substitution term is to stop looking when an object with the required component has been found. The following example shows a term that specifies that the substitution needs to keep looking, so that the entire tree (upwards or downwards) for a subject is returned:
 
 ```
-Transform(all|superset(ChildOf))
+Transform(all|super(ChildOf))
 ```
 
 #### Substitution on Identifiers
@@ -938,24 +1047,24 @@ So far all the substitution terms have applied to a default (`This`) subject. Su
 
 ```c
 // Get Position for a parent of Bob
-Position(Bob[superset(ChildOf)])
+Position(Bob[super(ChildOf)])
 ```
 
 Additionally, substitution is not limited to the subject:
 
 ```c
 // Does the entity like any of the parents of Alice?
-(Likes, Alice[superset(ChildOf)])
+(Likes, Alice[super(ChildOf)])
 ```
 
 This example shows how to use substitution in the C++ API:
 
 ```cpp
-// Position(superset(ChildOf))
+// Position(super(ChildOf))
 auto qb = world.query_builder<>()
-  .term<Position>().superset(ChildOf);
+  .term<Position>().super(ChildOf);
 
-// Position(self|superset(ChildOf, 3))
+// Position(self|super(ChildOf, 3))
 auto qb = world.query_builder<>()
   .term<Position>()
     .set(flecs::Self | flecs::SuperSet, flecs::ChildOf)
@@ -965,20 +1074,20 @@ auto qb = world.query_builder<>()
 This example shows how to use wildcards in the query descriptor:
 
 ```c
-// Position(superset(ChildOf))
+// Position(super(ChildOf))
 ecs_query_t *q = ecs_query_init(world, &(ecs_query_decs_t){
   .filter.terms = {
-    {ecs_id(Position), .args[0].set = {
+    {ecs_id(Position), .subj.set = {
       .mask = EcsSuperSet,
       .relation = EcsChildOf
     }}
   }
 });
 
-// Position(self|superset(ChildOf, 3))
+// Position(self|super(ChildOf, 3))
 ecs_query_t *q = ecs_query_init(world, &(ecs_query_decs_t){
   .filter.terms = {
-    {ecs_id(Position), .args[0].set = {
+    {ecs_id(Position), .subj.set = {
       .mask = EcsSelf | EcsSuperSet,
       .relation = EcsChildOf,
       .max_depth = 3
@@ -1045,7 +1154,7 @@ To understand how transitivity is implemented, we need to look at how queries in
 To find whether the subject should match this term, it should not just consider `(LocatedIn, SanFrancisco)`, but also `(LocatedIn, Mision)` and `(LocatedIn, SOMA)`. To achieve this, a query will insert an implicit substitution on the object, when the relation is transitive:
 
 ```
-(LocatedIn, SanFrancisco[self|subset(LocatedIn)])
+(LocatedIn, SanFrancisco[self|sub(LocatedIn)])
 ```
 
 Note that the substitution includes `self`, as we also should match entities that are in `SanFrancisco` itself.
@@ -1099,7 +1208,7 @@ SelfPortrait
 To achieve this, a query implicitly substitutes terms with their `IsA` subsets. When written out in full, this looks like:
 
 ```
-Artwork[self|all|subset(IsA)]
+Artwork[self|all|sub(IsA)]
 ```
 
 The default relation for set substitution is `IsA`, so we can rewrite this as a slightly shorter term:

@@ -1,7 +1,7 @@
 #include <api.h>
 
 void Clone_empty() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ecs_entity_t e1 = ecs_new(world, 0);
     test_assert(e1 != 0);
@@ -17,7 +17,7 @@ void Clone_empty() {
 }
 
 void Clone_empty_w_value() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ecs_entity_t e1 = ecs_new(world, 0);
     test_assert(e1 != 0);
@@ -35,7 +35,7 @@ void Clone_empty_w_value() {
 void Clone_null() {
     install_test_abort();
 
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     test_expect_abort();
     ecs_clone(world, 0, 0, false);
@@ -43,14 +43,14 @@ void Clone_null() {
 
 void Clone_null_w_value() {
     install_test_abort();
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     test_expect_abort();
     ecs_clone(world, 0, 0, true);
 }
 
 void Clone_1_component() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
 
@@ -70,13 +70,12 @@ void Clone_1_component() {
 }
 
 void Clone_2_component() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
     ECS_COMPONENT(world, Velocity);
-    ECS_TYPE(world, Type, Position, Velocity);
 
-    ecs_entity_t e1 = ecs_new(world, Type);
+    ECS_ENTITY(world, e1, Position, Velocity);
     test_assert(e1 != 0);
 
     ecs_entity_t e2 = ecs_clone(world, 0, e1, false);
@@ -97,15 +96,13 @@ void Clone_2_component() {
 }
 
 void Clone_3_component() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
     ECS_COMPONENT(world, Velocity);
     ECS_COMPONENT(world, Mass);
 
-    ECS_TYPE(world, Type, Position, Velocity, Mass);
-
-    ecs_entity_t e1 = ecs_new(world, Type);
+    ECS_ENTITY(world, e1, Position, Velocity, Mass);
     test_assert(e1 != 0);
 
     ecs_entity_t e2 = ecs_clone(world, 0, e1, false);
@@ -131,7 +128,7 @@ void Clone_3_component() {
 }
 
 void Clone_1_component_w_value() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
 
@@ -162,7 +159,7 @@ void Clone_1_component_w_value() {
 }
 
 void Clone_2_component_w_value() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
     ECS_COMPONENT(world, Velocity);
@@ -208,7 +205,7 @@ void Clone_2_component_w_value() {
 }
 
 void Clone_3_component_w_value() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
     ECS_COMPONENT(world, Velocity);
@@ -267,43 +264,43 @@ void Clone_3_component_w_value() {
 }
 
 void Clone_tag() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_ENTITY(world, Tag, 0);
 
-    ecs_entity_t e1 = ecs_new_w_entity(world, Tag);
+    ecs_entity_t e1 = ecs_new_w_id(world, Tag);
     test_assert(e1 != 0);
 
     ecs_entity_t e2 = ecs_clone(world, 0, e1, false);
     test_assert(e2 != 0);
     test_assert(e1 != e2);
 
-    test_assert(ecs_has_entity(world, e1, Tag));
-    test_assert(ecs_has_entity(world, e2, Tag));
+    test_assert(ecs_has_id(world, e1, Tag));
+    test_assert(ecs_has_id(world, e2, Tag));
 
     ecs_fini(world);
 }
 
 void Clone_tag_w_value() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_ENTITY(world, Tag, 0);
 
-    ecs_entity_t e1 = ecs_new_w_entity(world, Tag);
+    ecs_entity_t e1 = ecs_new_w_id(world, Tag);
     test_assert(e1 != 0);
 
     ecs_entity_t e2 = ecs_clone(world, 0, e1, true);
     test_assert(e2 != 0);
     test_assert(e1 != e2);
 
-    test_assert(ecs_has_entity(world, e1, Tag));
-    test_assert(ecs_has_entity(world, e2, Tag));
+    test_assert(ecs_has_id(world, e1, Tag));
+    test_assert(ecs_has_id(world, e2, Tag));
 
     ecs_fini(world);
 }
 
 void Clone_1_tag_1_component() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_ENTITY(world, Tag, 0);
     ECS_COMPONENT(world, Position);
@@ -315,8 +312,8 @@ void Clone_1_tag_1_component() {
     test_assert(e2 != 0);
     test_assert(e1 != e2);
 
-    test_assert(ecs_has_entity(world, e1, Tag));
-    test_assert(ecs_has_entity(world, e2, Tag));
+    test_assert(ecs_has_id(world, e1, Tag));
+    test_assert(ecs_has_id(world, e2, Tag));
 
     test_assert(ecs_has(world, e1, Position));
     test_assert(ecs_has(world, e2, Position));
@@ -325,20 +322,21 @@ void Clone_1_tag_1_component() {
 }
 
 void Clone_1_tag_1_component_w_value() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_ENTITY(world, Tag, 0);
     ECS_COMPONENT(world, Position);
-    ECS_ENTITY(world, e1, Position, Tag);
 
+    ecs_entity_t e1 = ecs_new_id(world);
+    ecs_add(world, e1, Tag);
     ecs_set(world, e1, Position, {10, 20});
 
     ecs_entity_t e2 = ecs_clone(world, 0, e1, true);
     test_assert(e2 != 0);
     test_assert(e1 != e2);
 
-    test_assert(ecs_has_entity(world, e1, Tag));
-    test_assert(ecs_has_entity(world, e2, Tag));
+    test_assert(ecs_has_id(world, e1, Tag));
+    test_assert(ecs_has_id(world, e2, Tag));
 
     test_assert(ecs_has(world, e1, Position));
     test_assert(ecs_has(world, e2, Position));

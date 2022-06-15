@@ -1,14 +1,14 @@
 #include <api.h>
 
 void Deinit(ecs_iter_t *it) {
-    ECS_COLUMN(it, Position, p, 1);
+    Position *p = ecs_term(it, Position, 1);
 
     Velocity *v = NULL;
-    if (it->column_count >= 2) {
+    if (it->term_count >= 2) {
         v = ecs_term(it, Velocity, 2);
     }
 
-    probe_system(it);
+    probe_iter(it);
 
     /* Write to validate columns point to valid memory */
     int i;
@@ -43,8 +43,8 @@ void Remove_from_current(ecs_iter_t *it) {
     }
 }
 
-void TriggerOnRemove_remove_match_1_of_1() {
-    ecs_world_t *world = ecs_init();
+void TriggerOnRemove_remove() {
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
     ECS_TRIGGER(world, Deinit, EcsOnRemove, Position);
@@ -60,7 +60,7 @@ void TriggerOnRemove_remove_match_1_of_1() {
     ecs_remove(world, e, Position);
 
     test_int(ctx.count, 1);
-    test_int(ctx.column_count, 1);
+    test_int(ctx.term_count, 1);
     test_null(ctx.param);
 
     test_int(ctx.e[0], e);
@@ -70,37 +70,8 @@ void TriggerOnRemove_remove_match_1_of_1() {
     ecs_fini(world);
 }
 
-void TriggerOnRemove_remove_match_1_of_2() {
-    ecs_world_t *world = ecs_init();
-
-    ECS_COMPONENT(world, Position);
-    ECS_COMPONENT(world, Velocity);
-    ECS_TYPE(world, Type, Position, Velocity);
-    ECS_TRIGGER(world, Deinit, EcsOnRemove, Position);
-
-    Probe ctx = {0};
-    ecs_set_context(world, &ctx);
-
-    ecs_entity_t e = ecs_new(world, Type);
-    test_assert(e != 0);
-
-    test_int(ctx.count, 0);
-
-    ecs_remove(world, e, Type);
-
-    test_int(ctx.count, 1);
-    test_int(ctx.column_count, 1);
-    test_null(ctx.param);
-
-    test_int(ctx.e[0], e);
-    test_int(ctx.c[0][0], ecs_id(Position));
-    test_int(ctx.s[0][0], 0);
-
-    ecs_fini(world);
-}
-
-void TriggerOnRemove_remove_no_match_1() {
-    ecs_world_t *world = ecs_init();
+void TriggerOnRemove_remove_no_match() {
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
     ECS_COMPONENT(world, Velocity);
@@ -121,8 +92,8 @@ void TriggerOnRemove_remove_no_match_1() {
     ecs_fini(world);
 }
 
-void TriggerOnRemove_delete_match_1_of_1() {
-    ecs_world_t *world = ecs_init();
+void TriggerOnRemove_delete() {
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
     ECS_TRIGGER(world, Deinit, EcsOnRemove, Position);
@@ -138,7 +109,7 @@ void TriggerOnRemove_delete_match_1_of_1() {
     ecs_delete(world, e);
 
     test_int(ctx.count, 1);
-    test_int(ctx.column_count, 1);
+    test_int(ctx.term_count, 1);
     test_null(ctx.param);
 
     test_int(ctx.e[0], e);
@@ -148,37 +119,8 @@ void TriggerOnRemove_delete_match_1_of_1() {
     ecs_fini(world);
 }
 
-void TriggerOnRemove_delete_match_1_of_2() {
-    ecs_world_t *world = ecs_init();
-
-    ECS_COMPONENT(world, Position);
-    ECS_COMPONENT(world, Velocity);
-    ECS_TYPE(world, Type, Position, Velocity);
-    ECS_TRIGGER(world, Deinit, EcsOnRemove, Position);
-
-    Probe ctx = {0};
-    ecs_set_context(world, &ctx);
-
-    ecs_entity_t e = ecs_new(world, Type);
-    test_assert(e != 0);
-
-    test_int(ctx.count, 0);
-
-    ecs_delete(world, e);
-
-    test_int(ctx.count, 1);
-    test_int(ctx.column_count, 1);
-    test_null(ctx.param);
-
-    test_int(ctx.e[0], e);
-    test_int(ctx.c[0][0], ecs_id(Position));
-    test_int(ctx.s[0][0], 0);
-
-    ecs_fini(world);
-}
-
-void TriggerOnRemove_delete_no_match_1() {
-    ecs_world_t *world = ecs_init();
+void TriggerOnRemove_delete_no_match() {
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
     ECS_COMPONENT(world, Velocity);
@@ -203,7 +145,7 @@ static Position old_position = {0};
 
 static
 void RemovePosition(ecs_iter_t *it) {
-    ECS_COLUMN(it, Position, p, 1);
+    Position *p = ecs_term(it, Position, 1);
 
     test_assert(it->count == 1);
 
@@ -211,7 +153,7 @@ void RemovePosition(ecs_iter_t *it) {
 }
 
 void TriggerOnRemove_remove_watched() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
 
@@ -233,7 +175,7 @@ void TriggerOnRemove_remove_watched() {
 
 
 void TriggerOnRemove_delete_watched() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
 
@@ -261,11 +203,10 @@ void Dummy(ecs_iter_t *it) {
 }
 
 void TriggerOnRemove_on_remove_in_on_update() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
     ECS_COMPONENT(world, Velocity);
-    ECS_TYPE(world, Type, Position, Velocity);
 
     ECS_SYSTEM(world, Remove_from_current, EcsOnUpdate, Position);
     ECS_TRIGGER(world, Dummy, EcsOnRemove, Velocity);
@@ -273,9 +214,9 @@ void TriggerOnRemove_on_remove_in_on_update() {
     IterData ctx = {.component = ecs_id(Velocity)};
     ecs_set_context(world, &ctx);
 
-    ecs_entity_t e1 = ecs_new(world, Type);
-    ecs_entity_t e2 = ecs_new(world, Type);
-    ecs_entity_t e3 = ecs_new(world, Type);
+    ECS_ENTITY(world, e1, Position, Velocity);
+    ECS_ENTITY(world, e2, Position, Velocity);
+    ECS_ENTITY(world, e3, Position, Velocity);
 
     ecs_progress(world, 1);
 
@@ -310,7 +251,7 @@ void RemoveDummyComp(ecs_iter_t *it) {
 }
 
 void TriggerOnRemove_valid_entity_after_delete() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, DummyComp);
     ECS_TRIGGER(world, RemoveDummyComp, EcsOnRemove, DummyComp);
@@ -328,7 +269,7 @@ void TriggerOnRemove_valid_entity_after_delete() {
 }
 
 void TriggerOnRemove_remove_after_delete_trigger() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
 
@@ -363,7 +304,7 @@ void TriggerOnRemove_remove_after_delete_trigger() {
 }
 
 void TriggerOnRemove_remove_after_delete_wildcard_id_trigger() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_COMPONENT(world, Position);
 
@@ -418,7 +359,7 @@ void OnRemoveHasTag(ecs_iter_t *it) {
 }
 
 void TriggerOnRemove_has_removed_tag_trigger_1_tag() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_TAG(world, Tag);
 
@@ -446,7 +387,7 @@ void TriggerOnRemove_has_removed_tag_trigger_1_tag() {
 }
 
 void TriggerOnRemove_has_removed_tag_trigger_2_tags() {
-    ecs_world_t *world = ecs_init();
+    ecs_world_t *world = ecs_mini();
 
     ECS_TAG(world, TagA);
     ECS_TAG(world, TagB);

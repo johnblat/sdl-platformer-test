@@ -39,36 +39,6 @@ void WorldFactory_prefab_w_name() {
     test_str(e.name().c_str(), "MyName");
 }
 
-void WorldFactory_type() {
-    flecs::world ecs;
-
-    auto t = ecs.type()
-        .add<Position>()
-        .add<Velocity>();
-
-    auto e = ecs.entity().add(t);
-
-    test_assert(e.id() != 0);
-    test_assert(e.has<Position>());
-    test_assert(e.has<Velocity>());
-}
-
-void WorldFactory_type_w_name() {
-    flecs::world ecs;
-
-    auto t = ecs.type("MyName")
-        .add<Position>()
-        .add<Velocity>();
-
-    auto e = ecs.entity().add(t);
-
-    test_assert(e.id() != 0);
-    test_assert(e.has<Position>());
-    test_assert(e.has<Velocity>());
-
-    test_assert(ecs.lookup("MyName").id() != 0);
-}
-
 void WorldFactory_system() {
     flecs::world ecs;
 
@@ -120,7 +90,8 @@ void WorldFactory_system_w_expr() {
     ecs.component<Position>();
     ecs.component<Velocity>();
 
-    auto s = ecs.system<>("MySystem", "Position, [in] Velocity")
+    auto s = ecs.system<>("MySystem")
+        .expr("Position, [in] Velocity")
         .iter([](flecs::iter it) {
             flecs::column<Position> p(it, 1);
             flecs::column<const Velocity> v(it, 2);
@@ -170,7 +141,7 @@ void WorldFactory_query_w_expr() {
     ecs.component<Position>();
     ecs.component<Velocity>();
 
-    auto q = ecs.query<>("Position, [in] Velocity");
+    auto q = ecs.query_builder<>().expr("Position, [in] Velocity").build();
 
     auto e = ecs.entity()
         .set<Position>({10, 20})
@@ -226,22 +197,5 @@ void WorldFactory_module() {
     ecs.import<MyModule>();
 
     auto p = ecs.lookup("MyModule::Position");
-    test_assert(p.id() != 0);
-}
-
-class MyNamedModule {
-public:
-    MyNamedModule(flecs::world& ecs) {
-        ecs.module<MyNamedModule>("ModuleName");
-        ecs.component<Position>();
-    }
-};
-
-void WorldFactory_module_w_name() {
-    flecs::world ecs;
-
-    ecs.import<MyNamedModule>();
-
-    auto p = ecs.lookup("ModuleName::Position");
     test_assert(p.id() != 0);
 }

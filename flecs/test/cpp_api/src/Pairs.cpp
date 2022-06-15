@@ -144,7 +144,8 @@ void Pairs_system_1_pair_instance() {
     int entity_count = 0;
     int trait_value = 0;
 
-    ecs.system<>(nullptr, "(Pair, *)")
+    ecs.system<>()
+        .expr("(Pair, *)")
         .iter([&](flecs::iter it) {
             flecs::column<Pair> tr(it, 1);
             invoke_count ++;            
@@ -172,7 +173,8 @@ void Pairs_system_2_pair_instances() {
     int entity_count = 0;
     int trait_value = 0;
 
-    ecs.system<>(nullptr, "(Pair, *)")
+    ecs.system<>()
+        .expr("(Pair, *)")
         .iter([&](flecs::iter it) {
             flecs::column<Pair> tr(it, 1);
             invoke_count ++;            
@@ -323,145 +325,6 @@ void Pairs_get_mut_pair_tag_existing() {
     test_int(p->y, 20);
 }
 
-void Pairs_type_w_pair() {
-    flecs::world ecs;
-
-    auto Type = ecs.type()
-        .add<Pair, Position>();
-
-    auto e = ecs.entity()
-        .add(Type);
-
-    test_assert((e.has<Pair, Position>()));
-}
-
-void Pairs_type_w_pair_tag() {
-    flecs::world ecs;
-
-    auto Tag = ecs.entity();
-
-    auto Type = ecs.type()
-        .add<Pair>(Tag);
-
-    auto e = ecs.entity()
-        .add(Type);
-
-    test_assert((e.has<Pair>(Tag)));
-}
-
-void Pairs_type_w_pair_tags() {
-    flecs::world ecs;
-
-    auto Tag = ecs.entity();
-    auto Pair = ecs.entity();
-
-    auto Type = ecs.type()
-        .add(Pair, Tag);
-
-    auto e = ecs.entity()
-        .add(Type);
-
-    test_assert((e.has(Pair, Tag)));
-}
-
-void Pairs_type_w_tag_pair() {
-    flecs::world ecs;
-
-    auto Tag = ecs.entity();
-
-    auto Type = ecs.type()
-        .add<Pair>(Tag);
-
-    auto e = ecs.entity()
-        .add(Type);
-
-    test_assert((e.has<Pair>(Tag)));
-}
-
-void Pairs_override_pair_w_type() {
-    flecs::world ecs;
-
-    auto Prefab = ecs.prefab("Prefab")
-        .set<Pair, Position>({10});
-
-    auto Type = ecs.type()
-        .add(flecs::IsA, Prefab)
-        .add<Pair, Position>();
-
-    auto e = ecs.entity()
-        .add(Type);
-
-    test_assert((e.has<Pair, Position>()));
-
-    const Pair *t_1 = Prefab.get<Pair, Position>();
-    test_assert(t_1 != nullptr);
-    test_int(t_1->value, 10);
-
-    const Pair *t_2 = e.get<Pair, Position>();
-    test_assert(t_2 != nullptr);
-
-    test_assert(t_1 != t_2);
-    test_int(t_2->value, 10);
-}
-
-void Pairs_override_pair_w_type_tag() {
-    flecs::world ecs;
-
-    auto Tag = ecs.entity();
-
-    auto Prefab = ecs.prefab("Prefab")
-        .set<Pair>(Tag, {10});
-
-    auto Type = ecs.type()
-        .add(flecs::IsA, Prefab)
-        .add<Pair>(Tag);
-
-    auto e = ecs.entity()
-        .add(Type);
-
-    test_assert((e.has<Pair>(Tag)));
-
-    const Pair *t_1 = Prefab.get<Pair>(Tag);
-    test_assert(t_1 != nullptr);
-    test_int(t_1->value, 10);
-
-    const Pair *t_2 = e.get<Pair>(Tag);
-    test_assert(t_2 != nullptr);
-
-    test_assert(t_1 != t_2);
-    test_int(t_2->value, 10);    
-}
-
-void Pairs_override_tag_pair_w_type() {
-    flecs::world ecs;
-
-    auto Pair = ecs.entity();
-
-    auto Prefab = ecs.prefab("Prefab")
-        .set_w_object<Position>(Pair, {10, 20});
-
-    auto Type = ecs.type()
-        .add(flecs::IsA, Prefab)
-        .add_w_object<Position>(Pair);
-
-    auto e = ecs.entity()
-        .add(Type);
-
-    test_assert((e.has_w_object<Position>(Pair)));
-
-    const Position *p_1 = Prefab.get_w_object<Position>(Pair);
-    test_assert(p_1 != nullptr);
-    test_int(p_1->x, 10);
-    test_int(p_1->y, 20);
-
-    const Position *p_2 = e.get_w_object<Position>(Pair);
-    test_assert(p_2 != nullptr);
-
-    test_assert(p_1 != p_2);
-    test_int(p_2->x, 10);
-    test_int(p_2->y, 20);
-}
-
 void Pairs_get_relation_from_id() {
     flecs::world ecs;
 
@@ -540,6 +403,165 @@ void Pairs_get_recycled_object_from_id() {
 
     test_assert(pair.object().is_alive());
     test_assert(pair.object().is_valid());
+}
+
+void Pairs_get_rel_obj() {
+    flecs::world ecs;
+
+    auto rel = ecs.component<Position>();
+    auto obj = ecs.entity();
+
+    auto e = ecs.entity()
+        .set<Position>(obj, {10, 20});
+
+    test_assert(e.has<Position>(obj));
+    test_assert(e.has(rel, obj));
+
+    const void *ptr = e.get(rel, obj);
+    test_assert(ptr != nullptr);
+
+    test_int(static_cast<const Position*>(ptr)->x, 10);
+    test_int(static_cast<const Position*>(ptr)->y, 20);
+}
+
+void Pairs_get_rel_obj_id() {
+    flecs::world ecs;
+
+    flecs::id rel = ecs.component<Position>();
+    flecs::id obj = ecs.entity();
+
+    auto e = ecs.entity()
+        .set<Position>(obj, {10, 20});
+
+    test_assert(e.has<Position>(obj));
+    test_assert(e.has(rel, obj));
+
+    const void *ptr = e.get(rel, obj);
+    test_assert(ptr != nullptr);
+
+    test_int(static_cast<const Position*>(ptr)->x, 10);
+    test_int(static_cast<const Position*>(ptr)->y, 20);
+}
+
+void Pairs_get_rel_obj_id_t() {
+    flecs::world ecs;
+
+    flecs::id_t rel = ecs.component<Position>();
+    flecs::id_t obj = ecs.entity();
+
+    auto e = ecs.entity()
+        .set<Position>(obj, {10, 20});
+
+    test_assert(e.has<Position>(obj));
+    test_assert(e.has(rel, obj));
+
+    const void *ptr = e.get(rel, obj);
+    test_assert(ptr != nullptr);
+
+    test_int(static_cast<const Position*>(ptr)->x, 10);
+    test_int(static_cast<const Position*>(ptr)->y, 20);
+}
+
+void Pairs_get_R_obj() {
+    flecs::world ecs;
+
+    auto obj = ecs.entity();
+
+    auto e = ecs.entity()
+        .set<Position>(obj, {10, 20});
+
+    test_assert(e.has<Position>(obj));
+
+    const Position *ptr = e.get<Position>(obj);
+    test_assert(ptr != nullptr);
+
+    test_int(ptr->x, 10);
+    test_int(ptr->y, 20);
+}
+
+void Pairs_get_R_obj_id() {
+    flecs::world ecs;
+
+    flecs::id obj = ecs.entity();
+
+    auto e = ecs.entity()
+        .set<Position>(obj, {10, 20});
+
+    test_assert(e.has<Position>(obj));
+
+    const Position *ptr = e.get<Position>(obj);
+    test_assert(ptr != nullptr);
+
+    test_int(ptr->x, 10);
+    test_int(ptr->y, 20);
+}
+
+void Pairs_get_R_obj_id_t() {
+    flecs::world ecs;
+
+    flecs::id_t obj = ecs.entity();
+
+    auto e = ecs.entity()
+        .set<Position>(obj, {10, 20});
+
+    test_assert(e.has<Position>(obj));
+
+    const Position *ptr = e.get<Position>(obj);
+    test_assert(ptr != nullptr);
+
+    test_int(ptr->x, 10);
+    test_int(ptr->y, 20);
+}
+
+void Pairs_get_w_object() {
+    flecs::world ecs;
+
+    auto rel = ecs.entity();
+
+    auto e = ecs.entity()
+        .set_w_object<Position>(rel, {10, 20});
+
+    test_assert(e.has_w_object<Position>(rel));
+
+    const Position *ptr = e.get_w_object<Position>(rel);
+    test_assert(ptr != nullptr);
+
+    test_int(ptr->x, 10);
+    test_int(ptr->y, 20);
+}
+
+void Pairs_get_w_object_id() {
+    flecs::world ecs;
+
+    flecs::id rel = ecs.entity();
+
+    auto e = ecs.entity()
+        .set_w_object<Position>(rel, {10, 20});
+
+    test_assert(e.has_w_object<Position>(rel));
+
+    const Position *ptr = e.get_w_object<Position>(rel);
+    test_assert(ptr != nullptr);
+
+    test_int(ptr->x, 10);
+    test_int(ptr->y, 20);
+}
+
+void Pairs_get_w_object_id_t() {
+    flecs::world ecs;
+
+    flecs::id_t rel = ecs.entity();
+
+    auto e = ecs.entity()
+        .set_w_object<Position>(rel, {10, 20});
+
+    test_assert(e.has_w_object<Position>(rel));
+
+    const Position *ptr = e.get_w_object<Position>(rel);
+    test_assert(ptr != nullptr);
+
+    test_int(ptr->x, 10);
+    test_int(ptr->y, 20);
 }
 
 void Pairs_each() {
@@ -624,19 +646,19 @@ void Pairs_each_pair_by_type() {
     test_int(count, 2);
 }
 
-void Pairs_each_pair_w_childof() {
+void Pairs_each_pair_w_isa() {
     flecs::world ecs;
 
     auto p_1 = ecs.entity();
     auto p_2 = ecs.entity();
 
     auto e = ecs.entity()
-        .child_of(p_1)
-        .child_of(p_2);
+        .is_a(p_1)
+        .is_a(p_2);
 
     int32_t count = 0;
 
-    e.each(flecs::ChildOf, [&](flecs::entity object) {
+    e.each(flecs::IsA, [&](flecs::entity object) {
         if (count == 0) {
             test_assert(object == p_1);
         } else if (count == 1) {
@@ -738,7 +760,7 @@ void Pairs_match_pair() {
 
     int32_t count = 0;
 
-    e.match(ecs.pair(Eats, Apples), 
+    e.each(Eats, Apples, 
         [&](flecs::id id) {
             test_assert(id.relation() == Eats);
             test_assert(id.object() == Apples);
@@ -766,7 +788,7 @@ void Pairs_match_pair_obj_wildcard() {
 
     int32_t count = 0;
 
-    e.match(ecs.pair(Eats, flecs::Wildcard), 
+    e.each(Eats, flecs::Wildcard, 
         [&](flecs::id id) {
             test_assert(id.relation() == Eats);
             test_assert(id.object() == Apples || id.object() == Pears);
@@ -794,7 +816,7 @@ void Pairs_match_pair_rel_wildcard() {
 
     int32_t count = 0;
 
-    e.match(ecs.pair(flecs::Wildcard, Pears), 
+    e.each(flecs::Wildcard, Pears, 
         [&](flecs::id id) {
             test_assert(id.relation() == Eats);
             test_assert(id.object() == Pears);
@@ -822,7 +844,7 @@ void Pairs_match_pair_both_wildcard() {
 
     int32_t count = 0;
 
-    e.match(ecs.pair(flecs::Wildcard, flecs::Wildcard), 
+    e.each(flecs::Wildcard, flecs::Wildcard, 
         [&](flecs::id id) {
             count ++;
         });
@@ -1039,4 +1061,117 @@ void Pairs_set_get_w_object_variants() {
     v = e4.get<BeginEvent>();
     test_assert(v != NULL);
     test_str(v->value, "Big Bang");            
+}
+
+void Pairs_get_object_for_type_self() {
+    flecs::world ecs;
+
+    auto base = ecs.entity().add<Tag>();
+    auto self = ecs.entity().is_a(base).add<Tag>();
+
+    auto obj = self.get_object_for<Tag>(flecs::IsA);
+    test_assert(obj != 0);
+    test_assert(obj == self);
+}
+
+void Pairs_get_object_for_type_base() {
+    flecs::world ecs;
+
+    auto base = ecs.entity().add<Tag>();
+    auto self = ecs.entity().is_a(base);
+
+    auto obj = self.get_object_for<Tag>(flecs::IsA);
+    test_assert(obj != 0);
+    test_assert(obj == base);
+}
+
+void Pairs_get_object_for_id_self() {
+    flecs::world ecs;
+
+    auto tag = ecs.entity();
+    auto base = ecs.entity().add(tag);
+    auto self = ecs.entity().is_a(base).add(tag);
+
+    auto obj = self.get_object_for(flecs::IsA, tag);
+    test_assert(obj != 0);
+    test_assert(obj == self);
+}
+
+void Pairs_get_object_for_id_base() {
+    flecs::world ecs;
+
+    auto tag = ecs.entity();
+    auto base = ecs.entity().add(tag);
+    auto self = ecs.entity().is_a(base);
+
+    auto obj = self.get_object_for(flecs::IsA, tag);
+    test_assert(obj != 0);
+    test_assert(obj == base);
+}
+
+void Pairs_get_object_for_id_not_found() {
+    flecs::world ecs;
+
+    auto tag = ecs.entity();
+    auto base = ecs.entity();
+    auto self = ecs.entity().is_a(base);
+
+    auto obj = self.get_object_for(flecs::IsA, tag);
+    test_assert(obj == 0);
+}
+
+void Pairs_deref_pair() {
+    flecs::world ecs;
+
+    Position v = {10, 20};
+
+    flecs::pair<Position, Tag> p(v);
+    test_int(p->x, 10);
+    test_int(p->y, 20);
+
+    Position pos = *p;
+    test_int(pos.x, 10);
+    test_int(pos.y, 20);
+}
+
+void Pairs_deref_const_pair() {
+    flecs::world ecs;
+
+    Position v = {10, 20};
+
+    const flecs::pair<Position, Tag> p(v);
+    test_int(p->x, 10);
+    test_int(p->y, 20);
+
+    Position pos = *p;
+    test_int(pos.x, 10);
+    test_int(pos.y, 20);
+}
+
+void Pairs_deref_pair_obj() {
+    flecs::world ecs;
+
+    Position v = {10, 20};
+
+    flecs::pair<Tag, Position> p(v);
+    test_int(p->x, 10);
+    test_int(p->y, 20);
+
+    Position pos = *p;
+    test_int(pos.x, 10);
+    test_int(pos.y, 20);
+}
+
+void Pairs_deref_const_pair_obj() {
+    flecs::world ecs;
+
+    Position v = {10, 20};
+
+    const flecs::pair<Tag, Position> p(v);
+    test_int(p->x, 10);
+    test_int(p->y, 20);
+
+    Position pos = *p;
+    test_int(pos.x, 10);
+    test_int(pos.y, 20);
 }

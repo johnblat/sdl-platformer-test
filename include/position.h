@@ -26,8 +26,6 @@ struct SelectedForEditingNode {
 struct PlatformVertexCollection {
     std::vector<Position> vals;
     bool isCircular;
-    SDL_Color edgeColor;
-    SDL_Color nodeColor;
 };
 
 

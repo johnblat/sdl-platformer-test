@@ -1,16 +1,16 @@
 #include <api.h>
 
 void Internals_setup() {
-    ecs_tracing_enable(-3);
+    ecs_log_set_level(-3);
 }
 
 static
 void Iter(ecs_iter_t *it) {
-    ECS_COLUMN(it, Position, p, 1);
-    ECS_COLUMN(it, Velocity, v, 2);
-    ECS_COLUMN(it, Mass, m, 3);
+    Position *p = ecs_term(it, Position, 1);
+    Velocity *v = ecs_term(it, Velocity, 2);
+    Mass *m = ecs_term(it, Mass, 3);
 
-    probe_system(it);
+    probe_iter(it);
 
     int i;
     for (i = 0; i < it->count; i ++) {
@@ -140,7 +140,7 @@ static int invoked = 0;
 
 static
 void CreateNewTable(ecs_iter_t *it) {
-    ECS_COLUMN_COMPONENT(it, Velocity, 2);
+    ecs_id_t ecs_id(Velocity) = ecs_term_id(it, 2);
 
     int32_t i;
     for (i = 0; i < it->count; i ++) {
@@ -161,7 +161,7 @@ void Internals_no_double_system_table_after_merge() {
 
     ECS_ENTITY(world, e, Position);
 
-    ECS_SYSTEM(world, CreateNewTable, EcsOnUpdate, Position, :Velocity);
+    ECS_SYSTEM(world, CreateNewTable, EcsOnUpdate, Position, Velocity());
     ECS_SYSTEM(world, ManualSystem, 0, Position, Velocity);
 
     /* CreateNewTable system created a new, non-empty table. This will be merged
@@ -215,9 +215,49 @@ void Internals_create_65k_tables() {
     for (i = 0; i <= 65536; i ++) {
         ecs_entity_t e = ecs_new_id(world);
         ecs_add_id(world, e, e);
-        test_assert(ecs_has_entity(world, e, e));
-        test_int(ecs_vector_count(ecs_get_type(world, e)), 1);
+        test_assert(ecs_has_id(world, e, e));
+        test_int(ecs_get_type(world, e)->count, 1);
     }
     
+    ecs_fini(world);
+}
+
+void Internals_no_duplicate_root_table_id() {
+    ecs_world_t *world = ecs_init();
+
+    /* This scenario triggered a bug where the first table registered in the
+     * world would get id 0, which is the same id as the root table. This caused
+     * the table cache to assert as it saw the wrong table for an id. */
+
+    int32_t i;
+    for (i = 0; i <= 50; i ++) {
+        ecs_entity_t e = ecs_new_id(world);
+        ecs_add_id(world, e, i + 1000);
+        test_assert(e != 0);
+        test_assert(ecs_has_id(world, e, i + 1000));
+    }
+
+    ecs_entity_t f = ecs_entity_init(world, &(ecs_entity_desc_t) {
+        .name = "Foo"
+    });
+    
+    test_assert(f != 0);
+    test_str(ecs_get_name(world, f), "Foo");
+    
+    ecs_fini(world);
+}
+
+void Internals_override_os_api_w_addon() {
+    ecs_os_set_api_defaults();
+    ecs_os_api_t os_api = ecs_os_api;
+
+    ecs_os_set_api(&os_api);
+
+    test_assert(ecs_os_has_threading());
+    test_assert(ecs_os_has_time());
+    test_assert(ecs_os_has_logging());
+    test_assert(ecs_os_has_heap());
+
+    ecs_world_t *world = ecs_init();
     ecs_fini(world);
 }

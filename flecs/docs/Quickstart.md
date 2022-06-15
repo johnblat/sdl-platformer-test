@@ -68,7 +68,7 @@ An id is a 64 bit number that can encode anything that can be added to an entity
 The following sections describe components, tags and pairs in more detail.
 
 ## Component
-A component is a type of which instances can be added and removed to entities. Each component can added only once to an entity (though not really, see [Pair](#pair)). In C applications components must be registered before use. In C++ this happens automatically.
+A component is a type of which instances can be added and removed to entities. Each component can be added only once to an entity (though not really, see [Pair](#pair)). In C applications components must be registered before use. In C++ this happens automatically.
 
 ```c
 ECS_COMPONENT(world, Position);
@@ -235,18 +235,18 @@ ecs_id_t id = ecs_pair(Likes, Bob);
 flecs::id id = world.pair(Likes, Bob);
 ```
 
-The following examples show how to get back the relation and object pairs from a pair id:
+The following examples show how to get back the elements from a pair:
 
 ```c
 if (ecs_id_is_pair(id)) {
-    ecs_entity_t rel = ecs_pair_relation(world, id);
-    ecs_entity_t obj = ecs_pair_object(world, id);
+    ecs_entity_t relation = ecs_pair_first(world, id);
+    ecs_entity_t target = ecs_pair_second(world, id);
 }
 ```
 ```cpp
 if (id.is_pair()) {
-    auto rel = id.relation();
-    auto obj = id.object();
+    auto relation = id.first();
+    auto target = id.second();
 }
 ```
 
@@ -335,16 +335,16 @@ Queries (see below) can use hierarchies to order data breadth-first, which can c
 
 ```c
 ecs_query_t *q = ecs_query_init(world, &(ecs_query_desc_t) {
-    .terms = {
+    .filter.terms = {
         { ecs_id(Position) },
-        { ecs_id(Position), .args[0].set = {
+        { ecs_id(Position), .subj.set = {
             .mask = EcsCascade,    // Force breadth-first order
             .relation = EcsChildOf // Use ChildOf relation for ordering
         }} 
     }
 });
 
-ecs_iter_t it = ecs_query_iter(q);
+ecs_iter_t it = ecs_query_iter(world, q);
 while (ecs_query_next(&it)) {
     Position *p = ecs_term(&it, Position, 1);
     Position *p_parent = ecs_term(&it, Position, 2);
@@ -406,7 +406,7 @@ ecs_entity_t e = ecs_new_id(world);
 ecs_add(world, e, Position);
 ecs_add(world, e, Velocity);
 
-ecs_type_t type = ecs_get_type(world, e);
+const ecs_type_t *type = ecs_get_type(world, e);
 char *type_str = ecs_type_str(world, type);
 printf("Type: %s\n", type_str); // output: 'Position,Velocity'
 ecs_os_free(type_str);
@@ -421,10 +421,9 @@ std::cout << e.type().str() << std::endl; // output: 'Position,Velocity'
 
 A type can also be iterated by an application:
 ```c
-ecs_type_t type = ecs_get_type(world, e);
-ecs_id_t *ids = ecs_vector_first(type);
-for (int i = 0; i < ecs_vector_count(type; i ++) {
-    if (ids[i] == ecs_id(Position)) {
+const ecs_type_t *type = ecs_get_type(world, e);
+for (int i = 0; i < type->count; i ++) {
+    if (type->array[i] == ecs_id(Position)) {
         // Found Position component!
     }
 }
@@ -581,13 +580,13 @@ The API for queries looks very similar to filters:
 ```c
 // Create a query with 2 terms
 ecs_query_t *q = ecs_query_init(world, &(ecs_query_desc_t) {
-    .terms = {
+    .filter.terms = {
         { ecs_id(Position) },
         { ecs_pair(EcsChildOf, EcsWildcard) }
     }
 });
 
-ecs_iter_t it = ecs_query_iter(q);
+ecs_iter_t it = ecs_query_iter(world, q);
 while (ecs_query_next(&it)) {
     // Same as for filters
 }
@@ -613,7 +612,7 @@ ecs_run(world, Move, delta_time, NULL); // Run system
 
 // Option 2, use the ecs_system_init function
 ecs_entity_t move_sys = ecs_system_init(world, &(ecs_system_desc_t) {
-    .filter.terms = {
+    .query.filter.terms = {
         {ecs_id(Position)},
         {ecs_id(Velocity)},
     },
@@ -637,8 +636,10 @@ void Move(ecs_iter_t *it) {
 // Use each() function that iterates each individual entity
 auto move_sys = world.system<Position, Velocity>()
     .iter([](flecs::iter it, Position *p, Velocity *v) {
-        p[i].x += v[i].x * it.delta_time();
-        p[i].y += v[i].y * it.delta_time();
+        for (int i : it) {
+            p[i].x += v[i].x * it.delta_time();
+            p[i].y += v[i].y * it.delta_time();
+        }
     });
 
     // Just like with filters & queries, systems have both the iter() and
@@ -671,18 +672,17 @@ EcsOnUpdate
 EcsOnValidate
 EcsPostUpdate
 EcsPreStore
-EcsPostStore
+EcsOnStore
 ```
 ```cpp
 flecs::OnLoad
 flecs::PostLoad
 flecs::PreUpdate
 flecs::OnUpdate
-flecs::PostUpdate
 flecs::OnValidate
-flecs::PostValidate
+flecs::PostUpdate
 flecs::PreStore
-flecs::PostStore
+flecs::OnStore
 ```
 
 When a pipeline is executed, systems are ran in the order of the phases. This makes pipelines and phases the primary mechanism for defining ordering between systems. The following code shows how to assign systems to a pipeline, and how to run the pipeline with the `progress()` function:
@@ -712,7 +712,32 @@ move_sys.add(flecs::OnUpdate);
 move_sys.remove(flecs::PostUpdate);
 ```
 
-Inside a phase systems are guaranteed to be ran in their declaration order.
+Inside a phase, systems are guaranteed to be ran in their declaration order.
+
+### Custom Pipeline
+Under the hood a pipeline is a query that finds all the systems to run in a pipeline. To customize how and which systems are matched by a pipeline, applications can create custom pipelines:
+
+```c
+// Create a pipeline that matches systems with the "Foo" tag
+ecs_entity_t pipeline = ecs_pipeline_init(world, &(ecs_pipeline_desc_t){
+    .entity = { .name = "CustomPipeline" },
+    .query.filter.terms = {
+        { .id = ecs_id(EcsSystem) }, // mandatory, pipeline must match systems
+        { .id = Foo }
+    }
+});
+
+ecs_set_pipeline(world, pipeline);
+```
+```cpp
+// Create a pipeline that matches systems with the "Foo" tag
+auto pipeline = world.pipeline()
+    .term(flecs::System)
+    .term(Foo)
+    .build();
+
+world.set_pipeline(pipeline);
+```
 
 ## Trigger
 A trigger is a callback for an event for a single term. Triggers can be defined for `OnAdd`, `OnRemove`, `OnSet` and `UnSet` events. The API is similar to that of a system, but for a single term and an additional event.
@@ -730,8 +755,7 @@ ecs_trigger_init(world, &(ecs_trigger_desc_t) {
 ecs_set(world, e, Position, {10, 20});
 ```
 ```cpp
-// C++ triggers are created as a system with the phase set to the trigger event
-world.system<Position>("OnSetPosition").kind(flecs::OnSet).each( ... );
+world.trigger<Position>("OnSetPosition").event(flecs::OnSet).each( ... );
 
 // Trigger the trigger
 e.set<Position>({10, 20});
