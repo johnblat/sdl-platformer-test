@@ -139,10 +139,15 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
         .iter(DeselectInputSystem);
+
+    ecs.system<MouseState>()
+        .kind(flecs::OnUpdate)
+        .term<EditMode::PlatformVertexCollectionSelectMode>() //should be AND oper by default?
+        .iter(selectPvcAtMousePositionSystem);
     
     ecs.system<Input, MouseState>()
         .kind(flecs::OnUpdate)
-        .iter(EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem);
+        .iter(AddVertexAtMousePositionOnSelectedPvcSystem);
         
     ecs.system<Position, PlatformVertexCollection, SelectedForEditing>()
         .kind(flecs::OnUpdate)

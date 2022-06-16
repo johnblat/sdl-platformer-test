@@ -9,16 +9,10 @@
 #include "ray2d.h"
 #include "util.h"
 
-namespace EditMode {
-    enum EditModeType {
-        SELECT_PVC_MODE,
-        EDIT_PVC_MODE,
-        SELECT_NODE_MODE
-    };
-}
 
 
-EditMode::EditModeType gCurrentEditMode = EditMode::SELECT_PVC_MODE;
+flecs::entity editorEntity;
+
 
 void deselectAll(flecs::world &ecs){
     ecs.defer_begin();
@@ -107,80 +101,98 @@ bool PointIntersectLineWithTolerance(v2d linePoint1, v2d linePoint2, v2d p, floa
     return false;
 }
 
+// editor should have select state
+void selectPvcAtMousePositionSystem(flecs::iter &it, MouseState *mouseStates){
+    flecs::world ecs = it.world();
+    auto f = ecs.filter<Position, PlatformVertexCollection>();
 
-
-void EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates){
-    if(gCurrentEditMode != EditMode::SELECT_PVC_MODE)
     for(int i : it){
-
         if(mouseStates[i].lmbCurrentState == INPUT_IS_JUST_RELEASED){
             Position mousePosition = {mouseStates[i].worldPosition.x, mouseStates[i].worldPosition.y};
 
-            flecs::world ecs = it.world();
-
-            bool selectedExistingPVC = false;
-            auto f1 = ecs.filter<Position, PlatformVertexCollection>();
-            f1.iter([&](flecs::iter &it, Position *ps, PlatformVertexCollection *pvcs){
+            f.iter([&](flecs::iter &it, Position *ps, PlatformVertexCollection *pvcs){
                 float distanceForSelectionTolerance = 8.0f; // how far away can user click
 
                 for(u32 j : it){
                     if(it.entity(j).has<SelectedForEditing>()){
-                        continue;
+                        continue; //ignore
                     }
                     for(int k = 0; k < pvcs[j].vals.size()- 1; k++){
                         v2d nodePosition = v2d_add(ps[j], pvcs[j].vals[k]);
                         v2d nodePosition2 = v2d_add(ps[j], pvcs[j].vals[k+1]);
-                        // v2d v = nodePosition - mousePosition;
-                        // float distance = v2d_magnitude(v);
+
                         if(PointIntersectLineWithTolerance(nodePosition, nodePosition2, mousePosition, distanceForSelectionTolerance)){
                             flecs::world world = it.world();
                             deselectAll(world);
                             it.world().defer_begin();
                             it.entity(j).add<SelectedForEditing>();
                             it.world().defer_end();
-                            selectedExistingPVC = true;
                             break;
                         }
                     }
 
                 }
             });
+        }
+    }
+}
 
-            if(selectedExistingPVC){
-                break;
-            }
-
-            bool NoneSelected = true;
-            auto f = ecs.filter<Position, PlatformVertexCollection, SelectedForEditing>();
-            f.iter([&](flecs::iter &it, Position *ps,PlatformVertexCollection *pvc, SelectedForEditing *selected){
-                for(u32 j : it){
-                    Position tailVertex = pvc[j].vals.at(pvc[j].vals.size()-1);
-                    Position localPosition = v2d_sub(mousePosition, ps[j]);
-                    Position tailToMousePosition = v2d_sub(localPosition, tailVertex);
-
-                    if(inputIsPressed(inputs[i], "edit-angle-snap")){
-                        if(abs(tailToMousePosition.x) < abs(tailToMousePosition.y)){
-                            localPosition.x = pvc[j].vals.at(pvc[j].vals.size()-1).x;
-                        }
-                        else {
-                            localPosition.y = pvc[j].vals.at(pvc[j].vals.size()-1).y;
-                        }
-                    }
-                    pvc[j].vals.push_back(localPosition);
-                    
-                    NoneSelected = false;
-                }
-                
-            });
-
-            if(NoneSelected){
+/** adding new pvc
+ * @brief  if(NoneSelected){
                 PlatformVertexCollection pvc;
                 pvc.vals.push_back((mousePosition));
                 createAndSelectPlatformVerticesEntity(ecs, pvc);
             }
+ * 
+ * @param it 
+ * @param inputs 
+ * @param mouseStates 
+ */
+
+
+// CreatePvcMode
+void createPvcAtMousePositionSystem(flecs::iter &it, MouseState *mouseStates){
+    auto world = it.world();
+    for(int i : it){
+        if(mouseStates[i].lmbCurrentState != INPUT_IS_JUST_RELEASED){
+            continue;
         }
+        Position mousePosition = mouseStates[i].worldPosition;
+
+        PlatformVertexCollection pvc;
+        pvc.vals.push_back((mousePosition));
+        createAndSelectPlatformVerticesEntity(world, pvc);
+        flecs::entity e = it.entity(i);
+        // left off here!
     }
-    
+}
+
+// AddVertexMode
+void AddVertexAtMousePositionOnSelectedPvcSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates){
+    for(int i : it){
+        auto ecs = it.world();
+
+        Position mousePosition = mouseStates[i].worldPosition;
+
+        auto f = ecs.filter<Position, PlatformVertexCollection, SelectedForEditing>();
+        f.iter([&](flecs::iter &it, Position *ps,PlatformVertexCollection *pvc, SelectedForEditing *selected){
+            for(u32 j : it){
+                Position tailVertex = pvc[j].vals.at(pvc[j].vals.size()-1);
+                Position localPosition = v2d_sub(mousePosition, ps[j]);
+                Position tailToMousePosition = v2d_sub(localPosition, tailVertex);
+
+                if(inputIsPressed(inputs[i], "edit-angle-snap")){
+                    if(abs(tailToMousePosition.x) < abs(tailToMousePosition.y)){
+                        localPosition.x = pvc[j].vals.at(pvc[j].vals.size()-1).x;
+                    }
+                    else {
+                        localPosition.y = pvc[j].vals.at(pvc[j].vals.size()-1).y;
+                    }
+                }
+                pvc[j].vals.push_back(localPosition); 
+            }
+        });
+    }
 }
 
 void SelectedPlatformVertexCollectionDeletionSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *pvcs, SelectedForEditing *s){

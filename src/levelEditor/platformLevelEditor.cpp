@@ -124,7 +124,7 @@ void registerSystems(flecs::world &ecs){
     
     ecs.system<Input, MouseState>()
         .kind(flecs::OnUpdate)
-        .iter(EditPlatformVerticesAddVertexAtMousePositionOnSelectedSystem);
+        .iter(AddVertexAtMousePositionOnSelectedPvcSystem);
     
     ecs.system<>()
         .kind(flecs::OnUpdate)
