@@ -8,7 +8,7 @@
 #include "render.h"
 #include "ray2d.h"
 #include "util.h"
-
+#include "editingFunctionality.h"
 
 
 flecs::entity editorEntity;
@@ -163,7 +163,11 @@ void createPvcAtMousePositionSystem(flecs::iter &it, MouseState *mouseStates){
         pvc.vals.push_back((mousePosition));
         createAndSelectPlatformVerticesEntity(world, pvc);
         flecs::entity e = it.entity(i);
-        // left off here!
+        // left off here !
+        world.defer_begin();
+        e.remove<EditMode::CreatePvcMode>();
+        e.add<EditMode::AddVertexMode>();
+        world.defer_end();
     }
 }
 
