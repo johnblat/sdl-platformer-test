@@ -11,63 +11,63 @@
 #include "v2d.h"
 #include "mouseState.h"
 
-const SDL_Color SELECTED_PVC_EDGE_COLOR = {20, 250, 20, 255};
-const SDL_Color DEFAULT_PVC_EDGE_COLOR = {255,255,255,255};
+const SDL_Color SELECTED_Pnc_EDGE_COLOR = {20, 250, 20, 255};
+const SDL_Color DEFAULT_Pnc_EDGE_COLOR = {255,255,255,255};
 const SDL_Color DEFAULT_NODE_COLOR = {220,220,220,255};
 const SDL_Color SELECTED_NODE_COLOR = {0, 255, 255, 255};
 
 
 
-void renderSelectedPlatformVerticesSystem(flecs::iter &it, SelectedForEditing *ss, Position *positions, PlatformVertexCollection *platformVertexCollections){
+void renderSelectedPlatformNodeSystem(flecs::iter &it, SelectedForEditing *ss, Position *positions, PlatformNodeCollection *platformNodeCollections){
     for(auto i : it){
         renderPolyLineInCamera(
             positions[i], 
-            platformVertexCollections[i].vals, 
-            SELECTED_PVC_EDGE_COLOR
+            platformNodeCollections[i].vals, 
+            SELECTED_Pnc_EDGE_COLOR
         );
     }
 }
 
 // without SelectedForEditing Component
-void renderUnselectedPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *platformVertexCollections){
+void renderUnselectedPlatformNodeSystem(flecs::iter &it, Position *positions, PlatformNodeCollection *platformNodeCollections){
     for(auto i : it){
         renderPolyLineInCamera(
             positions[i], 
-            platformVertexCollections[i].vals, 
-            DEFAULT_PVC_EDGE_COLOR
+            platformNodeCollections[i].vals, 
+            DEFAULT_Pnc_EDGE_COLOR
         );
     }
 }
 
 // without SelectedForEditingNode Component
-void renderUnselectedPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *PlatformVerticesCollection){
+void renderUnselectedPlatformNodeNodesSystem(flecs::iter &it, Position *positions, PlatformNodeCollection *platformNodeCollections){
     for(auto i : it){
-        int size = PlatformVerticesCollection[i].vals.size();
+        int size = platformNodeCollections[i].vals.size();
         for(int j = 0; j < size; j++){
-            Position vertexPositionGlobal;
-            vertexPositionGlobal.x = positions[i].x + PlatformVerticesCollection[i].vals[j].x;
-            vertexPositionGlobal.y = positions[i].y + PlatformVerticesCollection[i].vals[j].y;
+            Position nodePositionGlobal;
+            nodePositionGlobal.x = positions[i].x + platformNodeCollections[i].vals[j].x;
+            nodePositionGlobal.y = positions[i].y + platformNodeCollections[i].vals[j].y;
 
-            renderDiamondInCamera(vertexPositionGlobal, DEFAULT_NODE_COLOR);
+            renderDiamondInCamera(nodePositionGlobal, DEFAULT_NODE_COLOR);
         }
     }
 }
 
 
-void renderSelectedPlatformVerticesNodesSystem(flecs::iter &it, SelectedForEditingNode *sns, Position *positions, PlatformVertexCollection *platformVertexCollections){
+void renderSelectedPlatformNodeNodesSystem(flecs::iter &it, SelectedForEditingNode *sns, Position *positions, PlatformNodeCollection *platformNodeCollections){
     for(auto i : it){
-        size_t size = platformVertexCollections[i].vals.size();
+        size_t size = platformNodeCollections[i].vals.size();
 
         for(int j = 0; j < size; j++){
-            Position vertexPositionGlobal;
-            vertexPositionGlobal.x = positions[i].x + platformVertexCollections[i].vals[j].x;
-            vertexPositionGlobal.y = positions[i].y + platformVertexCollections[i].vals[j].y;
+            Position nodePositionGlobal;
+            nodePositionGlobal.x = positions[i].x + platformNodeCollections[i].vals[j].x;
+            nodePositionGlobal.y = positions[i].y + platformNodeCollections[i].vals[j].y;
 
             if(sns[i].idx == j){
-                renderDiamondInCamera(vertexPositionGlobal, SELECTED_NODE_COLOR);
+                renderDiamondInCamera(nodePositionGlobal, SELECTED_NODE_COLOR);
             }
             else {
-                renderDiamondInCamera(vertexPositionGlobal, DEFAULT_NODE_COLOR);
+                renderDiamondInCamera(nodePositionGlobal, DEFAULT_NODE_COLOR);
             }
         }
     }
@@ -231,22 +231,22 @@ void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseSta
 
             flecs::world ecs = it.world();
 
-            Position tailVertex;
+            Position tailnode;
             bool NoneSelected = true;
-            auto f = ecs.filter<Position, PlatformVertexCollection, SelectedForEditing>();
-            f.iter([&](flecs::iter &it, Position *ps, PlatformVertexCollection *pvc, SelectedForEditing *selected){
-                tailVertex = pvc[0].vals[pvc[0].vals.size()-1];
+            auto f = ecs.filter<Position, PlatformNodeCollection, SelectedForEditing>();
+            f.iter([&](flecs::iter &it, Position *ps, PlatformNodeCollection *pnc, SelectedForEditing *selected){
+                tailnode = pnc[0].vals[pnc[0].vals.size()-1];
                 Position localPosition = v2d_sub(mousePosition, ps[0]);
 
                 if(inputIsPressed(inputs[i], "edit-angle-snap")){
                     
-                    Position a = v2d_sub(localPosition, tailVertex);
+                    Position a = v2d_sub(localPosition, tailnode);
                     if(inputIsPressed(inputs[i], "edit-angle-snap")){
                         if(abs(a.x) < abs(a.y)){
-                            localPosition.x = pvc[0].vals.at(pvc[0].vals.size()-1).x;
+                            localPosition.x = pnc[0].vals.at(pnc[0].vals.size()-1).x;
                         }
                         else {
-                            localPosition.y = pvc[0].vals.at(pvc[0].vals.size()-1).y;
+                            localPosition.y = pnc[0].vals.at(pnc[0].vals.size()-1).y;
                         }
                     }
                 }
@@ -256,14 +256,14 @@ void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseSta
                 NoneSelected = false;
 
                 Position mouseAdjustedPos = v2d_add(localPosition, ps[0]);
-                Position tailVertexAdjustedPos = v2d_add(tailVertex, ps[0]);
+                Position tailnodeAdjustedPos = v2d_add(tailnode, ps[0]);
 
                 if(NoneSelected){
                     SDL_SetRenderDrawColor(gRenderer, 255,150,255,255);
                     renderDiamondInCamera(mouseAdjustedPos, (SDL_Color){255,150,255,255});
                 }
                 else{
-                    renderLineInCamera(tailVertexAdjustedPos, mouseAdjustedPos, (SDL_Color){255,150,255,255});
+                    renderLineInCamera(tailnodeAdjustedPos, mouseAdjustedPos, (SDL_Color){255,150,255,255});
                     SDL_SetRenderDrawColor(gRenderer, 255,150,255,255);
                     renderDiamondInCamera(mouseAdjustedPos, (SDL_Color){255,150,255,255});
 

@@ -11,20 +11,20 @@
 void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidRect *rectObjects);
 
 
-void renderUnselectedPlatformVerticesNodesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *PlatformVerticesCollection);
+void renderUnselectedPlatformNodeNodesSystem(flecs::iter &it, Position *positions, PlatformNodeCollection *PlatformNodeCollection);
 void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, GroundMode *groundModes);
 
-void setColorOnPVCSelect(flecs::iter &it, PlatformVertexCollection *pvcs);
+void setColorOnPncSelect(flecs::iter &it, PlatformNodeCollection *pncs);
 
-void setColorOnPVCDeselect(flecs::iter &it, PlatformVertexCollection *pvcs);
+void setColorOnPncDeselect(flecs::iter &it, PlatformNodeCollection *pncs);
 
 void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates);
 
-void renderSelectedPlatformVerticesSystem(flecs::iter &it, SelectedForEditing *ss, Position *positions, PlatformVertexCollection *platformVertexCollections);
+void renderSelectedPlatformNodeSystem(flecs::iter &it, SelectedForEditing *ss, Position *positions, PlatformNodeCollection *platformVertexCollections);
 
-void renderSelectedPlatformVerticesNodesSystem(flecs::iter &it, SelectedForEditingNode *sns, Position *positions, PlatformVertexCollection *platformVertexCollections);
+void renderSelectedPlatformNodeNodesSystem(flecs::iter &it, SelectedForEditingNode *sns, Position *positions, PlatformNodeCollection *platformVertexCollections);
 
-void renderUnselectedPlatformVerticesSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *platformVertexCollections);
+void renderUnselectedPlatformNodeSystem(flecs::iter &it, Position *positions, PlatformNodeCollection *platformVertexCollections);
 
 
 #endif

@@ -57,21 +57,21 @@ void renderPolyLineInCamera(Position offsetPosition, std::vector<Position> point
     SDL_RenderGetScale(gRenderer,&scale, nullptr );
     Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
 
-    std::vector<Position> cameraPlatformVertices;
+    std::vector<Position> cameraPlatformNode;
     for(int j = 0; j < points.size(); j++){
         Position pv;
         pv.x =  offsetPosition.x + points[j].x - gCameraPosition.x + scaledCenterScreen.x;
         pv.y = offsetPosition.y + points[j].y - gCameraPosition.y + scaledCenterScreen.y;
 
-        cameraPlatformVertices.push_back(pv);
+        cameraPlatformNode.push_back(pv);
 
     }
-    if(cameraPlatformVertices.size() < 1){
+    if(cameraPlatformNode.size() < 1){
         return;
     }
-    for(int i = 0; i < cameraPlatformVertices.size() - 1; i++){
-        v2d p1(cameraPlatformVertices.at(i).x, cameraPlatformVertices.at(i).y);
-        v2d p2(cameraPlatformVertices.at(i+1).x, cameraPlatformVertices.at(i+1).y);
+    for(int i = 0; i < cameraPlatformNode.size() - 1; i++){
+        v2d p1(cameraPlatformNode.at(i).x, cameraPlatformNode.at(i).y);
+        v2d p2(cameraPlatformNode.at(i+1).x, cameraPlatformNode.at(i+1).y);
         SDL_RenderDrawLineF(gRenderer, p1.x, p1.y, p2.x, p2.y);
     }
 }

@@ -49,7 +49,21 @@ ecs.system<ComponentA>()
 */
 
 void registerSystems(flecs::world &ecs){
-// Set up the animation playing and rendering systems
+
+    // INPUT GATHER
+    ecs.system<Input>()
+        .kind(flecs::PreUpdate)
+        .iter(inputUpdateSystem);
+    
+    ecs.system<MouseState>()
+        .kind(flecs::PreUpdate)
+        .iter(mouseStateSetterSystem);
+    
+    // GAMEPLAY
+    ecs.system<Velocity, GroundSpeed, Input, StateCurrPrev, Angle>("keyStateVelocitySetter")
+        .kind(flecs::PreUpdate)
+        .iter(InputVelocitySetterSystem);
+
     ecs.system<AnimatedSprite>("AnimatedSpritePlay")
         .kind(flecs::OnUpdate)
         .iter(animationsAccumulationSystem);
@@ -62,14 +76,6 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(KeyboardStateAnimationSetterSystem);
 
-    ecs.system<Velocity, GroundSpeed, Input, StateCurrPrev, Angle>("keyStateVelocitySetter")
-        .kind(flecs::PreUpdate)
-        .iter(InputVelocitySetterSystem);
-
-    ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision")
-        .kind(flecs::PostUpdate)
-        .iter(sensorsPVCsCollisionSystem);
-
     ecs.system<Velocity, Position>("move")
         .kind(flecs::OnUpdate)
         .iter(moveSystem);
@@ -77,18 +83,6 @@ void registerSystems(flecs::world &ecs){
     ecs.system<AnimatedSprite, Input>()
         .kind(flecs::OnUpdate)
         .iter(InputFlipSystem);
-
-    ecs.system<Input>()
-        .kind(flecs::PreUpdate)
-        .iter(inputUpdateSystem);
-    
-    ecs.system<MouseState>()
-        .kind(flecs::PreUpdate)
-        .iter(mouseStateSetterSystem);
-
-    ecs.system<Position, Sensors, GroundMode>()
-        .kind(flecs::OnStore)
-        .iter(renderSensorsSystem);
 
     ecs.system<AnimatedSprite, Velocity, StateCurrPrev>()
         .kind(flecs::OnUpdate)
@@ -98,23 +92,39 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(gravitySystem);
 
-    ecs.system<SelectedForEditing, Position, PlatformVertexCollection>()
+
+    // COLLISONS
+    ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision")
+        .kind(flecs::PostUpdate)
+        .iter(sensorsPncsCollisionSystem);
+
+    // RENDERING
+
+    ecs.system<>()
+        .kind(flecs::PreFrame)
+        .iter(renderFrameStartSystem);
+
+    ecs.system<Position, Sensors, GroundMode>()
         .kind(flecs::OnStore)
-        .iter(renderSelectedPlatformVerticesSystem);
+        .iter(renderSensorsSystem);
+
+    ecs.system<SelectedForEditing, Position, PlatformNodeCollection>()
+        .kind(flecs::OnStore)
+        .iter(renderSelectedPlatformNodeSystem);
     
-    ecs.system<Position, PlatformVertexCollection>()
+    ecs.system<Position, PlatformNodeCollection>()
         .term<SelectedForEditing>().oper(flecs::Not)
         .kind(flecs::OnStore)
-        .iter(renderUnselectedPlatformVerticesSystem);
+        .iter(renderUnselectedPlatformNodeSystem);
 
-    ecs.system<SelectedForEditingNode, Position, PlatformVertexCollection>()
+    ecs.system<SelectedForEditingNode, Position, PlatformNodeCollection>()
         .kind(flecs::OnStore)
-        .iter(renderSelectedPlatformVerticesNodesSystem);
+        .iter(renderSelectedPlatformNodeNodesSystem);
 
-    ecs.system<Position, PlatformVertexCollection>()
+    ecs.system<Position, PlatformNodeCollection>()
         .term<SelectedForEditingNode>().oper(flecs::Not)
         .kind(flecs::OnStore)
-        .iter(renderUnselectedPlatformVerticesNodesSystem);
+        .iter(renderUnselectedPlatformNodeNodesSystem);
 
     ecs.system<>()
         .kind(flecs::OnStore)
@@ -128,6 +138,16 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(inputZoomSystem);
 
+    ecs.system<Position, ParallaxSprite>()
+        .kind(flecs::OnUpdate)
+        .iter(renderParallaxSpriteSystem);
+
+    ecs.system<>()
+        .kind(flecs::PostFrame)
+        .iter(renderEndFrameSystem);
+
+
+    // EDITING
     ecs.system<Input>()
         .kind(flecs::OnStore)
         .iter(loadInputSystem);
@@ -142,44 +162,34 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<MouseState>()
         .kind(flecs::OnUpdate)
-        .term<EditMode::PlatformVertexCollectionSelectMode>() //should be AND oper by default?
-        .iter(selectPvcAtMousePositionSystem);
+        .term<EditMode::SelectPncMode>() //should be AND oper by default?
+        .iter(selectPncSystem);
     
     ecs.system<Input, MouseState>()
         .kind(flecs::OnUpdate)
-        .iter(AddVertexAtMousePositionOnSelectedPvcSystem);
+        .iter(AppendNodeToSelectedPncSystem);
         
-    ecs.system<Position, PlatformVertexCollection, SelectedForEditing>()
+    ecs.system<Position, PlatformNodeCollection, SelectedForEditing>()
         .kind(flecs::OnUpdate)
-        .iter(SelectedPlatformVertexCollectionDeletionSystem);
+        .iter(DeleteSelectedPncSystem);
     
-    ecs.system<SelectedForEditing, Position, PlatformVertexCollection>()
+    ecs.system<SelectedForEditing, Position, PlatformNodeCollection>()
         .kind(flecs::OnUpdate)
-        .iter(SelectPlatformVertexOnMouseClick);
+        .iter(SelectNodeSystem);
 
-    ecs.system<>()
-        .kind(flecs::PreFrame)
-        .iter(renderFrameStartSystem);
-
-    ecs.system<Position, ParallaxSprite>()
-        .kind(flecs::OnUpdate)
-        .iter(renderParallaxSpriteSystem);
-
-    ecs.system<>()
-        .kind(flecs::PostFrame)
-        .iter(renderEndFrameSystem);
+    
 }
 
 void registerObservers(flecs::world &ecs){
-    // ecs.observer<PlatformVertexCollection>("OnSelect")
+    // ecs.observer<PlatformNodeCollection>("OnSelect")
     //     .event(flecs::OnAdd)
     //     .term<SelectedForEditing>()
-    //     .iter(setColorOnPVCSelect);
+    //     .iter(setColorOnPncSelect);
 
-    // ecs.observer<PlatformVertexCollection>("OnDeselect")
+    // ecs.observer<PlatformNodeCollection>("OnDeselect")
     //     .event(flecs::OnRemove)
     //     .term<SelectedForEditing>()
-    //     .iter(setColorOnPVCDeselect);
+    //     .iter(setColorOnPncDeselect);
 
 }
 
@@ -308,7 +318,7 @@ int main(){
     registerObservers(world);
 
     
-    loadPlatformVertices(world);
+    loadPlatformNode(world);
 
     gTimeStep = TimeStepInit(60.0f);
 

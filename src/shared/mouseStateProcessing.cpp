@@ -116,14 +116,14 @@ void mouseStateSetterSystem(flecs::iter &it, MouseState *mouseStates){
 
 
 
-void mouesStatePlatformVerticesRemoveAll(flecs::world &ecs, MouseState &mouseState){
+void mouesStatePlatformNodeRemoveAll(flecs::world &ecs, MouseState &mouseState){
     if(mouseState.rmbCurrentState == INPUT_IS_JUST_RELEASED){
         // THIS IS WACKY.
         // TODO FIX ME
-        auto f = ecs.filter<PlatformVertexCollection>();
+        auto f = ecs.filter<PlatformNodeCollection>();
         ecs.defer_begin();
-        f.each([&](flecs::entity e, PlatformVertexCollection pvc){
-            e.remove<PlatformVertexCollection>();
+        f.each([&](flecs::entity e, PlatformNodeCollection pnc){
+            e.remove<PlatformNodeCollection>();
         });
         ecs.defer_end();
     }

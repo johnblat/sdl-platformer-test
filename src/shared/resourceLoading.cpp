@@ -13,7 +13,7 @@ void copyDynamicArrayToVector(T *arr, size_t size, std::vector<T> &vec){
 
 
 
-void loadPlatformVertices(flecs::world &ecs){
+void loadPlatformNode(flecs::world &ecs){
 
     //ecs.defer_begin();
 
@@ -26,7 +26,7 @@ void loadPlatformVertices(flecs::world &ecs){
 
     SDL_RWread(loadContext, &numEntities, sizeof(size_t), 1);
     Position *positions = (Position *)malloc(sizeof(Position)*numEntities);
-    PlatformVertexCollection *platformVertexCollections = (PlatformVertexCollection *)calloc(numEntities, sizeof(PlatformVertexCollection)); 
+    PlatformNodeCollection *platformVertexCollections = (PlatformNodeCollection *)calloc(numEntities, sizeof(PlatformNodeCollection)); 
     SDL_RWread(loadContext, positions, sizeof(Position), numEntities);
 
 
@@ -38,11 +38,11 @@ void loadPlatformVertices(flecs::world &ecs){
         Position *platformVertices = (Position *)malloc(sizeof(Position) * count);
         SDL_RWread(loadContext, platformVertices, sizeof(Position), count);
 
-        PlatformVertexCollection pvc;
+        PlatformNodeCollection pnc;
     
-        copyDynamicArrayToVector<Position>(platformVertices, count, pvc.vals);
+        copyDynamicArrayToVector<Position>(platformVertices, count, pnc.vals);
 
-        platformVertexCollections[i].vals = pvc.vals;
+        platformVertexCollections[i].vals = pnc.vals;
 
 
         free(platformVertices);
@@ -54,7 +54,7 @@ void loadPlatformVertices(flecs::world &ecs){
     for(int i = 0; i < numEntities; i++){
         flecs::entity e = ecs.entity();
         e.set<Position>(positions[i]);
-        e.set<PlatformVertexCollection>(platformVertexCollections[i]);
+        e.set<PlatformNodeCollection>(platformVertexCollections[i]);
     }
 
     free(platformVertexCollections);

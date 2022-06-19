@@ -4,25 +4,29 @@
 #include "mouseState.h"
 
 namespace EditMode {
-    struct CreatePvcMode{};
-    struct PlatformVertexCollectionSelectMode{};
-    struct AddVertexMode{};
-    struct VertexSelectMode{};
-    struct VertexMoveMode{};
+    struct CreatePncMode{};
+    struct SelectPncMode{};
+    struct AppendNodeMode{};
+    struct SelectNodeMode{};
+    struct MoveNodeMode{};
 }
+
+
 
 extern flecs::entity editorEntity;
 
-void EndEditingSelectedPlatformVertices(flecs::world &ecs);
-void createAndSelectPlatformVerticesEntity(flecs::world &ecs, PlatformVertexCollection pvc);
-void AddVertexAtMousePositionOnSelectedPvcSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates);
+void EndEditingSelectedPlatformNode(flecs::world &ecs);
+void createAndSelectPlatformNodeEntity(flecs::world &ecs, PlatformNodeCollection pnc);
+void AppendNodeToSelectedPncSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates);
 void DeselectInputSystem(flecs::iter &it, Input *inputs);
-void SelectPlatformVertexCollectionOnMouseClick(flecs::iter &it, Position *positions, PlatformVertexCollection *pvcs);
+void SelectPlatformNodeCollectionOnMouseClick(flecs::iter &it, Position *positions, PlatformNodeCollection *pncs);
 
-void SelectedPlatformVertexCollectionDeletionSystem(flecs::iter &it, Position *positions, PlatformVertexCollection *pvcs, SelectedForEditing *s);
+void DeleteSelectedPncSystem(flecs::iter &it, Position *positions, PlatformNodeCollection *pncs, SelectedForEditing *s);
 
-void SelectPlatformVertexOnMouseClick(flecs::iter &it, SelectedForEditing *s, Position *positions, PlatformVertexCollection *pvcs);
+void SelectNodeSystem(flecs::iter &it, SelectedForEditing *s, Position *positions, PlatformNodeCollection *pncs);
 
 
-void selectPvcAtMousePositionSystem(flecs::iter &it, MouseState *mouseStates);
+void selectPncSystem(flecs::iter &it, MouseState *mouseStates);
+
+// 
 

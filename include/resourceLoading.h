@@ -7,4 +7,4 @@
  * 
  * @param ecs 
  */
-void loadPlatformVertices(flecs::world &ecs);
+void loadPlatformNode(flecs::world &ecs);

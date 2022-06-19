@@ -5,16 +5,16 @@
 #include "resourceLoading.h"
 
 
-void savePlatformVertices(flecs::world &ecs){    
+void savePlatformNode(flecs::world &ecs){    
     ecs.defer_begin();
 
-    auto f = ecs.filter<Position, PlatformVertexCollection>();
+    auto f = ecs.filter<Position, PlatformNodeCollection>();
 
     size_t totalNumEntities = 0;
     std::vector<Position> allPositions;
-    std::vector<PlatformVertexCollection> allpvcs;
+    std::vector<PlatformNodeCollection> allpncs;
 
-    f.iter([&totalNumEntities, &allPositions, &allpvcs](flecs::iter &it,const Position *positions,const PlatformVertexCollection *pvc){ 
+    f.iter([&totalNumEntities, &allPositions, &allpncs](flecs::iter &it,const Position *positions,const PlatformNodeCollection *pnc){ 
         
         
         size_t numEntities = it.count();
@@ -22,7 +22,7 @@ void savePlatformVertices(flecs::world &ecs){
 
         for(i32 i : it){
             allPositions.push_back(positions[i]);
-            allpvcs.push_back(pvc[i]);
+            allpncs.push_back(pnc[i]);
         }
 
     });
@@ -32,9 +32,9 @@ void savePlatformVertices(flecs::world &ecs){
     SDL_RWwrite(saveContext, allPositions.data(), sizeof(Position), totalNumEntities);
 
     for(int i = 0; i < totalNumEntities; i++){    
-        size_t vectorSize = allpvcs[i].vals.size();
+        size_t vectorSize = allpncs[i].vals.size();
         SDL_RWwrite(saveContext, &vectorSize, sizeof(size_t), 1);
-        const Position *vectorData = allpvcs[i].vals.data();
+        const Position *vectorData = allpncs[i].vals.data();
         SDL_RWwrite(saveContext, vectorData, sizeof(Position), vectorSize);
     }
 
@@ -50,8 +50,8 @@ void saveSystem(flecs::iter &it, Input *inputs){
     for(u64 i : it){
         if(inputIsJustReleased(inputs[i], "save")){
             flecs::world ecs = it.world();
-            // auto q = ecs.query<Position, PlatformVertices>();
-            savePlatformVertices(ecs);
+            // auto q = ecs.query<Position, PlatformNode>();
+            savePlatformNode(ecs);
             printf("SAVED!\n");
         }
     }
@@ -62,7 +62,7 @@ void loadInputSystem(flecs::iter &it, Input *inputs){
     for(u64 i : it){
         if(inputIsJustReleased(inputs[i], "load")){
             flecs::world ecs = it.world();
-            loadPlatformVertices(ecs);
+            loadPlatformNode(ecs);
             printf("LOADED!\n");
         }
     }

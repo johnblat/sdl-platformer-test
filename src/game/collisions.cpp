@@ -69,7 +69,7 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 
 
 
-void sensorsPVCsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
+void sensorsPncsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         
@@ -123,12 +123,12 @@ void sensorsPVCsCollisionSystem(flecs::iter &it, Position *positions, Sensors *s
 
         
 
-        auto f = it.world().filter<Position, PlatformVertexCollection>();
+        auto f = it.world().filter<Position, PlatformNodeCollection>();
 
         // NOTE!!!
         // COMMENTED OUT TO IGNORE WALL SENSORS FOR NOW
 
-        // f.each([&](flecs::entity e, Position &position, PlatformVertexCollection &platformVertexCollection){
+        // f.each([&](flecs::entity e, Position &position, PlatformNodeCollection &platformVertexCollection){
         //         //walls
         //     size_t lenCollection = platformVertexCollection.vals.size();
         //     for(int j = 0; j < lenCollection - 1; j++){
@@ -173,7 +173,7 @@ void sensorsPVCsCollisionSystem(flecs::iter &it, Position *positions, Sensors *s
         rfRayGlobal.startingPosition.y = positions[i].y + rfRayLocal.startingPosition.y;
         rfRayGlobal.distance = rfRayLocal.distance;
 
-        f.each([&](flecs::entity e, Position &position, PlatformVertexCollection &platformVertexCollection){
+        f.each([&](flecs::entity e, Position &position, PlatformNodeCollection &platformVertexCollection){
             size_t len = platformVertexCollection.vals.size();
             for(int v = 0; v < len - 1; v++){
                 //breakOnCondition(groundModes[i] == RIGHT_WALL_GM || groundModes[i] == LEFT_WALL_GM);
