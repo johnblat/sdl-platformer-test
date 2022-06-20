@@ -15,8 +15,9 @@ namespace EditMode {
 
 extern flecs::entity editorEntity;
 
-void EndEditingSelectedPlatformNode(flecs::world &ecs);
-void createAndSelectPlatformNodeEntity(flecs::world &ecs, PlatformNodeCollection pnc);
+static void EndEditingSelectedPlatformNode(flecs::world &ecs);
+static void createAndSelectPlatformNodeEntity(flecs::world &ecs, PlatformNodeCollection pnc);
+
 void AppendNodeToSelectedPncSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates);
 void DeselectInputSystem(flecs::iter &it, Input *inputs);
 void SelectPlatformNodeCollectionOnMouseClick(flecs::iter &it, Position *positions, PlatformNodeCollection *pncs);

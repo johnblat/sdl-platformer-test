@@ -63,7 +63,7 @@ public:
      *
      * @param interval The interval value.
      */
-    Base& interval(FLECS_FLOAT interval) {
+    Base& interval(ecs_ftime_t interval) {
         m_desc->interval = interval;
         return *this;
     }
@@ -91,12 +91,6 @@ public:
      */
     Base& rate(int32_t rate) {
         m_desc->rate = rate;
-        return *this;
-    }
-
-    /** Associate system with entity */
-    Base& self(flecs::entity self) {
-        m_desc->self = self;
         return *this;
     }
 
