@@ -11,20 +11,20 @@
 void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidRect *rectObjects);
 
 
-void renderUnselectedPlatformNodeNodesSystem(flecs::iter &it, Position *positions, PlatformNodeCollection *PlatformNodeCollection);
+void renderUnselectedPlatformNodeNodesSystem(flecs::iter &it, Position *positions, PlatformPath *platformPath);
 void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, GroundMode *groundModes);
 
-void setColorOnPncSelect(flecs::iter &it, PlatformNodeCollection *pncs);
+void setColorOnPlatformPathSelect(flecs::iter &it, PlatformPath *platformPaths);
 
-void setColorOnPncDeselect(flecs::iter &it, PlatformNodeCollection *pncs);
+void setColorOnPlatformPathDeselect(flecs::iter &it, PlatformPath *platformPaths);
 
 void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates);
 
-void renderSelectedPlatformNodeSystem(flecs::iter &it, SelectedForEditing *ss, Position *positions, PlatformNodeCollection *platformVertexCollections);
+void renderSelectedPlatformNodeSystem(flecs::iter &it, SelectedForEditing *ss, Position *positions, PlatformPath *platformPaths);
 
-void renderSelectedPlatformNodeNodesSystem(flecs::iter &it, SelectedForEditingNode *sns, Position *positions, PlatformNodeCollection *platformVertexCollections);
+void renderSelectedPlatformNodeNodesSystem(flecs::iter &it, SelectedForEditingNode *sns, Position *positions, PlatformPath *platformPaths);
 
-void renderUnselectedPlatformNodeSystem(flecs::iter &it, Position *positions, PlatformNodeCollection *platformVertexCollections);
+void renderUnselectedPlatformNodeSystem(flecs::iter &it, Position *positions, PlatformPath *platformPaths);
 
 
 #endif

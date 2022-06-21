@@ -11,42 +11,42 @@
 #include "v2d.h"
 #include "mouseState.h"
 
-const SDL_Color SELECTED_Pnc_EDGE_COLOR = {20, 250, 20, 255};
-const SDL_Color DEFAULT_Pnc_EDGE_COLOR = {255,255,255,255};
+const SDL_Color SELECTED_PlatformPath_EDGE_COLOR = {20, 250, 20, 255};
+const SDL_Color DEFAULT_PlatformPath_EDGE_COLOR = {255,255,255,255};
 const SDL_Color DEFAULT_NODE_COLOR = {220,220,220,255};
 const SDL_Color SELECTED_NODE_COLOR = {0, 255, 255, 255};
 
 
 
-void renderSelectedPlatformNodeSystem(flecs::iter &it, SelectedForEditing *ss, Position *positions, PlatformNodeCollection *platformNodeCollections){
+void renderSelectedPlatformNodeSystem(flecs::iter &it, SelectedForEditing *ss, Position *positions, PlatformPath *platformPaths){
     for(auto i : it){
         renderPolyLineInCamera(
             positions[i], 
-            platformNodeCollections[i].vals, 
-            SELECTED_Pnc_EDGE_COLOR
+            platformPaths[i].nodes, 
+            SELECTED_PlatformPath_EDGE_COLOR
         );
     }
 }
 
 // without SelectedForEditing Component
-void renderUnselectedPlatformNodeSystem(flecs::iter &it, Position *positions, PlatformNodeCollection *platformNodeCollections){
+void renderUnselectedPlatformNodeSystem(flecs::iter &it, Position *positions, PlatformPath *platformPaths){
     for(auto i : it){
         renderPolyLineInCamera(
             positions[i], 
-            platformNodeCollections[i].vals, 
-            DEFAULT_Pnc_EDGE_COLOR
+            platformPaths[i].nodes, 
+            DEFAULT_PlatformPath_EDGE_COLOR
         );
     }
 }
 
 // without SelectedForEditingNode Component
-void renderUnselectedPlatformNodeNodesSystem(flecs::iter &it, Position *positions, PlatformNodeCollection *platformNodeCollections){
+void renderUnselectedPlatformNodeNodesSystem(flecs::iter &it, Position *positions, PlatformPath *platformPaths){
     for(auto i : it){
-        int size = platformNodeCollections[i].vals.size();
+        int size = platformPaths[i].nodes.size();
         for(int j = 0; j < size; j++){
             Position nodePositionGlobal;
-            nodePositionGlobal.x = positions[i].x + platformNodeCollections[i].vals[j].x;
-            nodePositionGlobal.y = positions[i].y + platformNodeCollections[i].vals[j].y;
+            nodePositionGlobal.x = positions[i].x + platformPaths[i].nodes[j].x;
+            nodePositionGlobal.y = positions[i].y + platformPaths[i].nodes[j].y;
 
             renderDiamondInCamera(nodePositionGlobal, DEFAULT_NODE_COLOR);
         }
@@ -54,14 +54,14 @@ void renderUnselectedPlatformNodeNodesSystem(flecs::iter &it, Position *position
 }
 
 
-void renderSelectedPlatformNodeNodesSystem(flecs::iter &it, SelectedForEditingNode *sns, Position *positions, PlatformNodeCollection *platformNodeCollections){
+void renderSelectedPlatformNodeNodesSystem(flecs::iter &it, SelectedForEditingNode *sns, Position *positions, PlatformPath *platformPaths){
     for(auto i : it){
-        size_t size = platformNodeCollections[i].vals.size();
+        size_t size = platformPaths[i].nodes.size();
 
         for(int j = 0; j < size; j++){
             Position nodePositionGlobal;
-            nodePositionGlobal.x = positions[i].x + platformNodeCollections[i].vals[j].x;
-            nodePositionGlobal.y = positions[i].y + platformNodeCollections[i].vals[j].y;
+            nodePositionGlobal.x = positions[i].x + platformPaths[i].nodes[j].x;
+            nodePositionGlobal.y = positions[i].y + platformPaths[i].nodes[j].y;
 
             if(sns[i].idx == j){
                 renderDiamondInCamera(nodePositionGlobal, SELECTED_NODE_COLOR);
@@ -233,9 +233,9 @@ void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseSta
 
             Position tailnode;
             bool NoneSelected = true;
-            auto f = ecs.filter<Position, PlatformNodeCollection, SelectedForEditing>();
-            f.iter([&](flecs::iter &it, Position *ps, PlatformNodeCollection *pnc, SelectedForEditing *selected){
-                tailnode = pnc[0].vals[pnc[0].vals.size()-1];
+            auto f = ecs.filter<Position, PlatformPath, SelectedForEditing>();
+            f.iter([&](flecs::iter &it, Position *ps, PlatformPath *platformPath, SelectedForEditing *selected){
+                tailnode = platformPath[0].nodes[platformPath[0].nodes.size()-1];
                 Position localPosition = v2d_sub(mousePosition, ps[0]);
 
                 if(inputIsPressed(inputs[i], "edit-angle-snap")){
@@ -243,10 +243,10 @@ void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseSta
                     Position a = v2d_sub(localPosition, tailnode);
                     if(inputIsPressed(inputs[i], "edit-angle-snap")){
                         if(abs(a.x) < abs(a.y)){
-                            localPosition.x = pnc[0].vals.at(pnc[0].vals.size()-1).x;
+                            localPosition.x = platformPath[0].nodes.at(platformPath[0].nodes.size()-1).x;
                         }
                         else {
-                            localPosition.y = pnc[0].vals.at(pnc[0].vals.size()-1).y;
+                            localPosition.y = platformPath[0].nodes.at(platformPath[0].nodes.size()-1).y;
                         }
                     }
                 }

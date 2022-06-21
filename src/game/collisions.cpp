@@ -69,7 +69,7 @@ bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &dista
 
 
 
-void sensorsPncsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
+void sensorsPlatformPathsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         
@@ -123,17 +123,17 @@ void sensorsPncsCollisionSystem(flecs::iter &it, Position *positions, Sensors *s
 
         
 
-        auto f = it.world().filter<Position, PlatformNodeCollection>();
+        auto f = it.world().filter<Position, PlatformPath>();
 
         // NOTE!!!
         // COMMENTED OUT TO IGNORE WALL SENSORS FOR NOW
 
-        // f.each([&](flecs::entity e, Position &position, PlatformNodeCollection &platformVertexCollection){
+        // f.each([&](flecs::entity e, Position &position, platformPath &platformPath){
         //         //walls
-        //     size_t lenCollection = platformVertexCollection.vals.size();
+        //     size_t lenCollection = platformPath.vals.size();
         //     for(int j = 0; j < lenCollection - 1; j++){
-        //         Position p1 = platformVertexCollection.vals.at(j);
-        //         Position p2 = platformVertexCollection.vals.at(j+1);
+        //         Position p1 = platformPath.vals.at(j);
+        //         Position p2 = platformPath.vals.at(j+1);
         //         v2d v1(p1.x + position.x, p1.y + position.y);
         //         v2d v2(p2.x + position.x, p2.y + position.y);
         //         float distanceFromPoint;
@@ -173,13 +173,13 @@ void sensorsPncsCollisionSystem(flecs::iter &it, Position *positions, Sensors *s
         rfRayGlobal.startingPosition.y = positions[i].y + rfRayLocal.startingPosition.y;
         rfRayGlobal.distance = rfRayLocal.distance;
 
-        f.each([&](flecs::entity e, Position &position, PlatformNodeCollection &platformVertexCollection){
-            size_t len = platformVertexCollection.vals.size();
+        f.each([&](flecs::entity e, Position &position, PlatformPath &platformPath){
+            size_t len = platformPath.nodes.size();
             for(int v = 0; v < len - 1; v++){
                 //breakOnCondition(groundModes[i] == RIGHT_WALL_GM || groundModes[i] == LEFT_WALL_GM);
                 
-                Position p1 = platformVertexCollection.vals.at(v);
-                Position p2 = platformVertexCollection.vals.at(v+1);
+                Position p1 = platformPath.nodes.at(v);
+                Position p2 = platformPath.nodes.at(v+1);
                 v2d v1(p1.x + position.x, p1.y + position.y);
                 v2d v2(p2.x + position.x, p2.y + position.y);
                 v2d r1 = v1;

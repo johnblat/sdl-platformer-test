@@ -8,13 +8,13 @@
 void savePlatformNode(flecs::world &ecs){    
     ecs.defer_begin();
 
-    auto f = ecs.filter<Position, PlatformNodeCollection>();
+    auto f = ecs.filter<Position, PlatformPath>();
 
     size_t totalNumEntities = 0;
     std::vector<Position> allPositions;
-    std::vector<PlatformNodeCollection> allpncs;
+    std::vector<PlatformPath> allplatformPaths;
 
-    f.iter([&totalNumEntities, &allPositions, &allpncs](flecs::iter &it,const Position *positions,const PlatformNodeCollection *pnc){ 
+    f.iter([&totalNumEntities, &allPositions, &allplatformPaths](flecs::iter &it,const Position *positions,const PlatformPath *platformPath){ 
         
         
         size_t numEntities = it.count();
@@ -22,7 +22,7 @@ void savePlatformNode(flecs::world &ecs){
 
         for(i32 i : it){
             allPositions.push_back(positions[i]);
-            allpncs.push_back(pnc[i]);
+            allplatformPaths.push_back(platformPath[i]);
         }
 
     });
@@ -32,9 +32,9 @@ void savePlatformNode(flecs::world &ecs){
     SDL_RWwrite(saveContext, allPositions.data(), sizeof(Position), totalNumEntities);
 
     for(int i = 0; i < totalNumEntities; i++){    
-        size_t vectorSize = allpncs[i].vals.size();
+        size_t vectorSize = allplatformPaths[i].nodes.size();
         SDL_RWwrite(saveContext, &vectorSize, sizeof(size_t), 1);
-        const Position *vectorData = allpncs[i].vals.data();
+        const Position *vectorData = allplatformPaths[i].nodes.data();
         SDL_RWwrite(saveContext, vectorData, sizeof(Position), vectorSize);
     }
 
@@ -62,7 +62,7 @@ void loadInputSystem(flecs::iter &it, Input *inputs){
     for(u64 i : it){
         if(inputIsJustReleased(inputs[i], "load")){
             flecs::world ecs = it.world();
-            loadPlatformNode(ecs);
+            loadPlatformPaths(ecs);
             printf("LOADED!\n");
         }
     }

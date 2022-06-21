@@ -96,7 +96,7 @@ void registerSystems(flecs::world &ecs){
     // COLLISONS
     ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision")
         .kind(flecs::PostUpdate)
-        .iter(sensorsPncsCollisionSystem);
+        .iter(sensorsPlatformPathsCollisionSystem);
 
     // RENDERING
 
@@ -108,20 +108,20 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnStore)
         .iter(renderSensorsSystem);
 
-    ecs.system<SelectedForEditing, Position, PlatformNodeCollection>()
+    ecs.system<SelectedForEditing, Position, PlatformPath>()
         .kind(flecs::OnStore)
         .iter(renderSelectedPlatformNodeSystem);
     
-    ecs.system<Position, PlatformNodeCollection>()
+    ecs.system<Position, PlatformPath>()
         .term<SelectedForEditing>().oper(flecs::Not)
         .kind(flecs::OnStore)
         .iter(renderUnselectedPlatformNodeSystem);
 
-    ecs.system<SelectedForEditingNode, Position, PlatformNodeCollection>()
+    ecs.system<SelectedForEditingNode, Position, PlatformPath>()
         .kind(flecs::OnStore)
         .iter(renderSelectedPlatformNodeNodesSystem);
 
-    ecs.system<Position, PlatformNodeCollection>()
+    ecs.system<Position, PlatformPath>()
         .term<SelectedForEditingNode>().oper(flecs::Not)
         .kind(flecs::OnStore)
         .iter(renderUnselectedPlatformNodeNodesSystem);
@@ -158,40 +158,29 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
-        .iter(DeselectInputSystem);
+        .iter(SelectedForEditing_tag_remove_all_and_set_default_EditMode_on_deselect_button_release_System);
 
     ecs.system<MouseState>()
         .kind(flecs::OnUpdate)
-        .term<EditMode::SelectPncMode>() //should be AND oper by default?
-        .iter(selectPncSystem);
+        .term<EditMode::PlatformPathSelectMode>() //should be AND oper by default?
+        .iter(PlatformPath_select_on_click_System);
     
     ecs.system<Input, MouseState>()
         .kind(flecs::OnUpdate)
-        .iter(AppendNodeToSelectedPncSystem);
+        .iter(PlatformPath_node_append_to_selected_on_click_System);
         
-    ecs.system<Position, PlatformNodeCollection, SelectedForEditing>()
+    ecs.system<Position, PlatformPath, SelectedForEditing>()
         .kind(flecs::OnUpdate)
-        .iter(DeleteSelectedPncSystem);
+        .iter(PlatformPath_destruct_selected_on_delete_button_release_System);
     
-    ecs.system<SelectedForEditing, Position, PlatformNodeCollection>()
+    ecs.system<SelectedForEditing, Position, PlatformPath>()
         .kind(flecs::OnUpdate)
-        .iter(SelectNodeSystem);
+        .iter(PlatformPath_node_select_on_click_System);
 
     
 }
 
-void registerObservers(flecs::world &ecs){
-    // ecs.observer<PlatformNodeCollection>("OnSelect")
-    //     .event(flecs::OnAdd)
-    //     .term<SelectedForEditing>()
-    //     .iter(setColorOnPncSelect);
 
-    // ecs.observer<PlatformNodeCollection>("OnDeselect")
-    //     .event(flecs::OnRemove)
-    //     .term<SelectedForEditing>()
-    //     .iter(setColorOnPncDeselect);
-
-}
 
 
 
@@ -315,10 +304,9 @@ int main(){
     pinkGuyEntity.set<GroundMode>(FLOOR_GM);
     
     registerSystems(world);
-    registerObservers(world);
 
     
-    loadPlatformNode(world);
+    loadPlatformPaths(world);
 
     gTimeStep = TimeStepInit(60.0f);
 

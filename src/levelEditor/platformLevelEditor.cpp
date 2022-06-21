@@ -114,7 +114,7 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .iter(loadInputSystem);
     
-    ecs.system<Position, PlatformNodeCollection>()
+    ecs.system<Position, PlatformPath>()
         .kind(flecs::OnStore)
         .iter(renderSelectedPlatformNodeSystem);
     
@@ -124,7 +124,7 @@ void registerSystems(flecs::world &ecs){
     
     ecs.system<Input, MouseState>()
         .kind(flecs::OnUpdate)
-        .iter(AddVertexAtMousePositionOnSelectedPncSystem);
+        .iter(AddVertexAtMousePositionOnSelectedPlatformPathSystem);
     
     ecs.system<>()
         .kind(flecs::OnUpdate)

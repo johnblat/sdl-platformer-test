@@ -23,8 +23,8 @@ struct SelectedForEditingNode {
     u32 idx;
 };
 
-struct PlatformNodeCollection {
-    std::vector<Position> vals;
+struct PlatformPath {
+    std::vector<Position> nodes;
     bool isCircular;
 };
 

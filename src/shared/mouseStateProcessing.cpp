@@ -120,10 +120,10 @@ void mouesStatePlatformNodeRemoveAll(flecs::world &ecs, MouseState &mouseState){
     if(mouseState.rmbCurrentState == INPUT_IS_JUST_RELEASED){
         // THIS IS WACKY.
         // TODO FIX ME
-        auto f = ecs.filter<PlatformNodeCollection>();
+        auto f = ecs.filter<PlatformPath>();
         ecs.defer_begin();
-        f.each([&](flecs::entity e, PlatformNodeCollection pnc){
-            e.remove<PlatformNodeCollection>();
+        f.each([&](flecs::entity e, PlatformPath platformPath){
+            e.remove<PlatformPath>();
         });
         ecs.defer_end();
     }
