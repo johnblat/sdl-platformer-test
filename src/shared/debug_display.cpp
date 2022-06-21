@@ -238,10 +238,10 @@ void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseSta
                 tailnode = platformPath[0].nodes[platformPath[0].nodes.size()-1];
                 Position localPosition = v2d_sub(mousePosition, ps[0]);
 
-                if(inputIsPressed(inputs[i], "edit-angle-snap")){
+                if(Input_is_pressed(inputs[i], "edit-angle-snap")){
                     
                     Position a = v2d_sub(localPosition, tailnode);
-                    if(inputIsPressed(inputs[i], "edit-angle-snap")){
+                    if(Input_is_pressed(inputs[i], "edit-angle-snap")){
                         if(abs(a.x) < abs(a.y)){
                             localPosition.x = platformPath[0].nodes.at(platformPath[0].nodes.size()-1).x;
                         }

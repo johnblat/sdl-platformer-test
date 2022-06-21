@@ -15,10 +15,10 @@ struct MouseState {
     Position windowPosition;
     Position logicalPosition;
     Position worldPosition;
-    InputState lmbCurrentState;
-    InputState lmbPreviousState;
-    InputState rmbCurrentState;
-    InputState rmbPreviousState;
+    InputStateType lmbCurrentState;
+    InputStateType lmbPreviousState;
+    InputStateType rmbCurrentState;
+    InputStateType rmbPreviousState;
     MouseWheelState currentMouseWheelState;
     MouseWheelState previousMouseWheelState;
 

@@ -53,7 +53,7 @@ void registerSystems(flecs::world &ecs){
     // INPUT GATHER
     ecs.system<Input>()
         .kind(flecs::PreUpdate)
-        .iter(inputUpdateSystem);
+        .iter(Input_update_input_button_states_System);
     
     ecs.system<MouseState>()
         .kind(flecs::PreUpdate)
@@ -259,17 +259,17 @@ int main(){
 
     
     Input pinkGuyInput;
-    addButtonToInput(pinkGuyInput, "left", SDL_SCANCODE_A);
-    addButtonToInput(pinkGuyInput, "right", SDL_SCANCODE_D);
-    addButtonToInput(pinkGuyInput, "jump", SDL_SCANCODE_SPACE);
-    addButtonToInput(pinkGuyInput, "zoom-in", SDL_SCANCODE_UP);
-    addButtonToInput(pinkGuyInput, "zoom-out", SDL_SCANCODE_DOWN);
-    addButtonToInput(pinkGuyInput, "zoom-reset", SDL_SCANCODE_R);
-    addButtonToInput(pinkGuyInput, "save", SDL_SCANCODE_1);
-    addButtonToInput(pinkGuyInput, "load", SDL_SCANCODE_2);
-    addButtonToInput(pinkGuyInput, "deselect", SDL_SCANCODE_LCTRL);
-    addButtonToInput(pinkGuyInput, "edit-angle-snap", SDL_SCANCODE_LSHIFT);
-    addButtonToInput(pinkGuyInput, "delete", SDL_SCANCODE_DELETE);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "left", SDL_SCANCODE_A);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "right", SDL_SCANCODE_D);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "jump", SDL_SCANCODE_SPACE);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "zoom-in", SDL_SCANCODE_UP);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "zoom-out", SDL_SCANCODE_DOWN);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "zoom-reset", SDL_SCANCODE_R);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "save", SDL_SCANCODE_1);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "load", SDL_SCANCODE_2);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "deselect", SDL_SCANCODE_LCTRL);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "edit-angle-snap", SDL_SCANCODE_LSHIFT);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "delete", SDL_SCANCODE_DELETE);
 
 
     pinkGuyEntity.set<Input>(pinkGuyInput);

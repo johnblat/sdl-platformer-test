@@ -48,7 +48,7 @@ void savePlatformNode(flecs::world &ecs){
 
 void saveSystem(flecs::iter &it, Input *inputs){
     for(u64 i : it){
-        if(inputIsJustReleased(inputs[i], "save")){
+        if(Input_is_just_released(inputs[i], "save")){
             flecs::world ecs = it.world();
             // auto q = ecs.query<Position, PlatformNode>();
             savePlatformNode(ecs);
@@ -60,7 +60,7 @@ void saveSystem(flecs::iter &it, Input *inputs){
 
 void loadInputSystem(flecs::iter &it, Input *inputs){
     for(u64 i : it){
-        if(inputIsJustReleased(inputs[i], "load")){
+        if(Input_is_just_released(inputs[i], "load")){
             flecs::world ecs = it.world();
             loadPlatformPaths(ecs);
             printf("LOADED!\n");

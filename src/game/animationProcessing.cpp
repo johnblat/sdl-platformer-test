@@ -118,10 +118,10 @@ void KeyboardStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animate
 void InputFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Input *inputs){
     for(auto i : it){
 
-        if(inputIsPressed(inputs[i], "left")){
+        if(Input_is_pressed(inputs[i], "left")){
             animatedSprites[i].flip = SDL_FLIP_HORIZONTAL;
         }
-        else if(inputIsPressed(inputs[i], "right")){
+        else if(Input_is_pressed(inputs[i], "right")){
             animatedSprites[i].flip = SDL_FLIP_NONE;
         }
     }

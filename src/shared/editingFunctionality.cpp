@@ -134,7 +134,7 @@ PlatformPath_node_append_to_selected_on_click_System(flecs::iter &it, Input *inp
                 Position localPosition = v2d_sub(mousePosition, ps[j]);
                 Position tailToMousePosition = v2d_sub(localPosition, tailVertex);
 
-                if(inputIsPressed(inputs[i], "edit-angle-snap")){
+                if(Input_is_pressed(inputs[i], "edit-angle-snap")){
                     if(abs(tailToMousePosition.x) < abs(tailToMousePosition.y)){
                         localPosition.x = platformPath[j].nodes.at(platformPath[j].nodes.size()-1).x;
                     }
@@ -154,7 +154,7 @@ PlatformPath_destruct_selected_on_delete_button_release_System(flecs::iter &it, 
     auto f = world.filter<Input>();
     bool shouldDelete = false;
     f.each([&](flecs::entity e, Input input){
-        if(inputIsJustReleased(input, "delete")){
+        if(Input_is_just_released(input, "delete")){
             shouldDelete = true;
         }
     });
@@ -218,7 +218,7 @@ SelectedForEditing_tag_remove_all_and_set_default_EditMode_on_deselect_button_re
     
     for(int i : it){
         
-        if(inputIsJustReleased(inputs[i], "deselect")){
+        if(Input_is_just_released(inputs[i], "deselect")){
             flecs::world world = it.world();
 
             internal_SelectedForEditing_tag_remove_on_all_entities_deffered(world);
@@ -263,23 +263,23 @@ void
 EditMode_change_depending_on_Input_release(flecs::iter &it, Input *inputs){
     for(u32 i : it){
 
-        if(inputIsJustReleased(inputs[i], "platform-path-create-mode-enter")){
+        if(Input_is_just_released(inputs[i], "platform-path-create-mode-enter")){
             internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathCreateMode>(it.entity(i));
         }
 
-        else if(inputIsJustReleased(inputs[i], "platform-path-select-mode-enter")){
+        else if(Input_is_just_released(inputs[i], "platform-path-select-mode-enter")){
             internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeAppendMode>(it.entity(i));
         }
 
-        else if(inputIsJustReleased(inputs[i], "platform-path-node-append-mode-enter")){
+        else if(Input_is_just_released(inputs[i], "platform-path-node-append-mode-enter")){
             internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeAppendMode>(it.entity(i));
         }
 
-        else if(inputIsJustReleased(inputs[i], "platform-path-node-select-mode-enter")){
+        else if(Input_is_just_released(inputs[i], "platform-path-node-select-mode-enter")){
             internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeAppendMode>(it.entity(i));
         }
 
-        else if(inputIsJustReleased(inputs[i], "platform-path-node-move-mode-enter")){
+        else if(Input_is_just_released(inputs[i], "platform-path-node-move-mode-enter")){
             internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeAppendMode>(it.entity(i));
         }
     }

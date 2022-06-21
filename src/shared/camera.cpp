@@ -13,13 +13,13 @@ float gZoomSpeed = 0.005;
 
 void inputZoomSystem(flecs::iter &it, Input *inputs){
     for(i64 i : it){
-           if(inputIsPressed(inputs[i], "zoom-in")){
+           if(Input_is_pressed(inputs[i], "zoom-in")){
             gZoomAmount += 0.005;
         }
-        if(inputIsPressed(inputs[i], "zoom-out")){
+        if(Input_is_pressed(inputs[i], "zoom-out")){
             gZoomAmount -= 0.005;
         }
-        if(inputIsPressed(inputs[i], "zoom-reset")){
+        if(Input_is_pressed(inputs[i], "zoom-reset")){
             gZoomAmount = 2.0;
         }
     }
@@ -27,16 +27,16 @@ void inputZoomSystem(flecs::iter &it, Input *inputs){
 
 void inputCameraMoveSystem(flecs::iter &it, Input *inputs){
     for(i64 i : it){
-        if(inputIsPressed(inputs[i], "camera-pan-up")){
+        if(Input_is_pressed(inputs[i], "camera-pan-up")){
             gCameraPosition.y -= 3;
         }
-        if(inputIsPressed(inputs[i], "camera-pan-down")){
+        if(Input_is_pressed(inputs[i], "camera-pan-down")){
             gCameraPosition.y += 3;
         }
-        if(inputIsPressed(inputs[i], "camera-pan-left")){
+        if(Input_is_pressed(inputs[i], "camera-pan-left")){
             gCameraPosition.x -= 3;
         }
-        if(inputIsPressed(inputs[i], "camera-pan-right")){
+        if(Input_is_pressed(inputs[i], "camera-pan-right")){
             gCameraPosition.x += 3;
         }
     }

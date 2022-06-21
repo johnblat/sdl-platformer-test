@@ -82,7 +82,7 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, GroundSpee
             groundSpeeds[i].val -= slp * sin(angles[i].rads);
 
             // side
-            if(inputIsPressed(inputs[i], "left")){
+            if(Input_is_pressed(inputs[i], "left")){
                 if(groundSpeeds[i].val > 0){ // moving right
                     groundSpeeds[i].val -= dec;
                 }
@@ -91,7 +91,7 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, GroundSpee
                     groundSpeeds[i].val = MAX(groundSpeeds[i].val, -topSpeed);
                 }
             }
-            else if(inputIsPressed(inputs[i], "right")){
+            else if(Input_is_pressed(inputs[i], "right")){
                 if(groundSpeeds[i].val < 0){ // moving left
                     groundSpeeds[i].val += dec;
                 }
@@ -125,25 +125,25 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, GroundSpee
             velocities[i].y = groundSpeeds[i].val * -sin(angles[i].rads);
 
 
-            if(inputIsJustPressed(inputs[i], "jump")){
+            if(Input_is_just_pressed(inputs[i], "jump")){
                 setState(states[i], STATE_IN_AIR);
                 velocities[i].x -= jump * sin(angles[i].rads);
                 velocities[i].y -= jump * cos(angles[i].rads);
             }
         }
         else if(states[i].currentState == STATE_IN_AIR){
-            if(!inputIsPressed(inputs[i], "jump")){
+            if(!Input_is_pressed(inputs[i], "jump")){
                 if(velocities[i].y < -4.0f){
                     velocities[i].y = -4.0f;
 
                 }
             }
             // side
-            if(inputIsPressed(inputs[i], "left")){
+            if(Input_is_pressed(inputs[i], "left")){
                 velocities[i].x -= airAcc;
                 velocities[i].x = MAX(velocities[i].x, -topSpeed);
             }
-            else if(inputIsPressed(inputs[i], "right")){
+            else if(Input_is_pressed(inputs[i], "right")){
                 velocities[i].x += airAcc;
                 velocities[i].x = MIN(velocities[i].x, topSpeed);
             }

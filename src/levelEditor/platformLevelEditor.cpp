@@ -100,7 +100,7 @@ void mouseWheelStateEventProcessor(SDL_Event &event){
 void registerSystems(flecs::world &ecs){
     ecs.system<Input>()
         .kind(flecs::PreUpdate)
-        .iter(inputUpdateSystem);
+        .iter(Input_update_input_button_states_System);
     
     ecs.system<MouseState>()
         .kind(flecs::PreUpdate)
@@ -164,63 +164,63 @@ int main(){
 
     Input userInput;
 
-    userInput.buttonStates.push_back((InputButtonState){
+    userInput.inputStates.push_back((InputMappingState){
         std::string("save"),
         SDL_SCANCODE_S,
         INPUT_IS_NOT_PRESSED,
         INPUT_IS_NOT_PRESSED
     });
 
-    userInput.buttonStates.push_back((InputButtonState){
+    userInput.inputStates.push_back((InputMappingState){
         std::string("load"),
         SDL_SCANCODE_L,
         INPUT_IS_NOT_PRESSED,
         INPUT_IS_NOT_PRESSED
     });
 
-    userInput.buttonStates.push_back((InputButtonState){
+    userInput.inputStates.push_back((InputMappingState){
         std::string("zoom-in"),
         SDL_SCANCODE_UP,
         INPUT_IS_NOT_PRESSED,
         INPUT_IS_NOT_PRESSED
     });
 
-    userInput.buttonStates.push_back((InputButtonState){
+    userInput.inputStates.push_back((InputMappingState){
         std::string("zoom-out"),
         SDL_SCANCODE_DOWN,
         INPUT_IS_NOT_PRESSED,
         INPUT_IS_NOT_PRESSED
     });
 
-    userInput.buttonStates.push_back((InputButtonState){
+    userInput.inputStates.push_back((InputMappingState){
         std::string("zoom-reset"),
         SDL_SCANCODE_R,
         INPUT_IS_NOT_PRESSED,
         INPUT_IS_NOT_PRESSED
     });
 
-    userInput.buttonStates.push_back((InputButtonState){
+    userInput.inputStates.push_back((InputMappingState){
         std::string("camera-pan-up"),
         SDL_SCANCODE_W,
         INPUT_IS_NOT_PRESSED,
         INPUT_IS_NOT_PRESSED
     });
 
-    userInput.buttonStates.push_back((InputButtonState){
+    userInput.inputStates.push_back((InputMappingState){
         std::string("camera-pan-down"),
         SDL_SCANCODE_S,
         INPUT_IS_NOT_PRESSED,
         INPUT_IS_NOT_PRESSED
     });
 
-    userInput.buttonStates.push_back((InputButtonState){
+    userInput.inputStates.push_back((InputMappingState){
         std::string("camera-pan-left"),
         SDL_SCANCODE_A,
         INPUT_IS_NOT_PRESSED,
         INPUT_IS_NOT_PRESSED
     });
 
-    userInput.buttonStates.push_back((InputButtonState){
+    userInput.inputStates.push_back((InputMappingState){
         std::string("camera-pan-right"),
         SDL_SCANCODE_D,
         INPUT_IS_NOT_PRESSED,

@@ -20,41 +20,60 @@ struct KeyboardState{
     u8 *keyStates;
 };
 
-enum InputState {
+enum InputStateType {
     INPUT_IS_JUST_PRESSED,
     INPUT_IS_PRESSED,
     INPUT_IS_JUST_RELEASED,
     INPUT_IS_NOT_PRESSED
 };
 
-typedef struct InputButtonState InputButtonState;
-struct InputButtonState {
-    std::string name;
-    SDL_Scancode sdlScancode;
-    InputState currentInputState;
-    InputState previousInputState;
+
+enum InputType {
+    INPUT_TYPE_KEYBOARD,
+    INPUT_TYPE_GAME_CONTROLLER,
+    INPUT_TYPE_MOUSE
 };
 
 
-typedef struct Input Input;
+
+struct GameControllerButtonReference {
+    SDL_GameControllerButton sdlGameControllerButton;
+    SDL_GameController *gameController;
+};
+
+struct InputMapping {
+    InputType type;
+    std::string name;
+    union {
+        SDL_Scancode sdlScancode;
+        GameControllerButtonReference gameControllerButtonRef;
+    };
+};
+
+struct InputMappingState {
+    InputMapping inputMapping;
+    InputStateType state;
+};
+
+
 struct Input {
-    std::vector<InputButtonState> buttonStates;
+    std::vector<InputMappingState> inputStates;
 };
 
 
 /**
  * UTILS
  */
-bool inputIsJustPressed(Input input, std::string buttonName);
-bool inputIsPressed(Input input, std::string buttonName);
-bool inputIsJustReleased(Input input, std::string buttonName);
-InputButtonState createbuttonState(std::string name, SDL_Scancode scanCode);
-void addButtonToInput(Input &input, std::string buttonName, SDL_Scancode scancode);
+bool Input_is_just_pressed(Input input, std::string buttonName);
+bool Input_is_pressed(Input input, std::string buttonName);
+bool Input_is_just_released(Input input, std::string buttonName);
+void Input_append_new_input_button_state_mapped_to_sdlScancode(Input &input, std::string buttonName, SDL_Scancode scancode);
+InputMappingState InputButtonState_create_mapped_to_sdlScancode(std::string name, SDL_Scancode scanCode);
 
 /**
  * SYSTEMS
  */
-void inputUpdateSystem(flecs::iter &it, Input *inputs);
+void Input_update_input_button_states_System(flecs::iter &it, Input *inputs);
 
 
 #endif
