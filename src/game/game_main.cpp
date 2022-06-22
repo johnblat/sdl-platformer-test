@@ -41,12 +41,7 @@ size_t gNumSpriteSheets = 0;
 
 flecs::entity gEditorEntity;
 
-/**
-ecs.system<ComponentA>()
-     .term<ComponentB>().oper(flecs::Not)
-     .kind(flecs::OnUpdate)
-     .iter(someSystem);
-*/
+
 
 void registerSystems(flecs::world &ecs){
 
