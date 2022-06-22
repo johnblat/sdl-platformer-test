@@ -303,14 +303,18 @@ internal_EditMode_tags_remove_all_from_entity_except_T_deferred(flecs::entity en
 
 void 
 EditMode_change_depending_on_Input_release(flecs::iter &it, Input *inputs){
+    flecs::world world = it.world();
+
     for(u32 i : it){
 
         if(Input_is_just_released(inputs[i], "platform-path-create-mode-enter")){
             internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathCreateMode>(it.entity(i));
+            internal_SelectedForEditing_tag_remove_on_all_entities_deffered(world);
         }
 
         else if(Input_is_just_released(inputs[i], "platform-path-select-mode-enter")){
-            internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeSelectMode>(it.entity(i));
+            internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathSelectMode>(it.entity(i));
+            internal_SelectedForEditing_tag_remove_on_all_entities_deffered(world);
         }
 
         else if(Input_is_just_released(inputs[i], "platform-path-node-append-mode-enter")){
@@ -319,10 +323,12 @@ EditMode_change_depending_on_Input_release(flecs::iter &it, Input *inputs){
 
         else if(Input_is_just_released(inputs[i], "platform-path-node-select-mode-enter")){
             internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeSelectMode>(it.entity(i));
+            internal_SelectedForEditing_tag_remove_on_all_entities_deffered(world);
         }
 
         else if(Input_is_just_released(inputs[i], "platform-path-node-move-mode-enter")){
             internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeMoveMode>(it.entity(i));
+            internal_SelectedForEditing_tag_remove_on_all_entities_deffered(world);
         }
     }
 }
