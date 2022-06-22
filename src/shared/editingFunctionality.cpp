@@ -186,7 +186,7 @@ PlatformPath_node_select_on_click_System(flecs::iter &it, MouseState *mouseState
 
     for(u32 i : it){
         f.each([&](flecs::entity e, Position position, PlatformPath platformPath){
-            if(mouseStates[i].lmbCurrentState == INPUT_IS_JUST_RELEASED){
+            if(mouseStates[i].lmbCurrentState == INPUT_IS_JUST_PRESSED){
                 v2d mousePosition = mouseStates[i].worldPosition;
                 for(int j = 0; j < platformPath.nodes.size(); j++){
                     Position worldPlatformPathNodePosition = v2d_add(position, platformPath.nodes[j]);
@@ -222,21 +222,34 @@ PlatformPath_node_select_on_click_System(flecs::iter &it, MouseState *mouseState
 
 
 void 
-PlatformPath_node_move_on_click_System(flecs::iter &it, MouseState *mouseStates){
+PlatformPath_node_move_on_drag_System(flecs::iter &it, MouseState *mouseStates){
     auto f = it.world().filter<Position, PlatformPath, SelectedForEditingNode>();
 
     for(auto i : it){
-        if(mouseStates[i].lmbCurrentState != INPUT_IS_JUST_RELEASED){
-            continue;
-        }
-        Position mousePosition = mouseStates[i].worldPosition;
+        if(mouseStates[i].lmbCurrentState == INPUT_IS_JUST_RELEASED){
+            it.world().defer_begin();
 
-        f.iter([&](flecs::iter &it, Position *positions, PlatformPath *platformPaths, SelectedForEditingNode *selectedNodes){
-            for(u32 j : it){
-                Position mousePositionTransformed = v2d_add(mousePosition, positions[j]);
-                platformPaths[j].nodes[selectedNodes[j].idx] = mousePositionTransformed;
-            }
-        });
+            it.entity(i).remove<EditMode::PlatformPathNodeMoveMode>();
+            it.entity(i).add<EditMode::PlatformPathNodeSelectMode>();
+
+            f.iter([&](flecs::iter &it, Position *positions, PlatformPath *platformPaths, SelectedForEditingNode *selectedNodes){
+                for(u32 j : it){
+                    it.entity(j).remove<SelectedForEditingNode>();
+                }
+            });
+
+            it.world().defer_end();
+        }
+        else if(mouseStates[i].lmbCurrentState == INPUT_IS_JUST_PRESSED || mouseStates[i].lmbCurrentState == INPUT_IS_PRESSED){
+            Position mousePosition = mouseStates[i].worldPosition;
+
+            f.iter([&](flecs::iter &it, Position *positions, PlatformPath *platformPaths, SelectedForEditingNode *selectedNodes){
+                for(u32 j : it){
+                    Position mousePositionTransformed = v2d_add(mousePosition, positions[j]);
+                    platformPaths[j].nodes[selectedNodes[j].idx] = mousePositionTransformed;
+                }
+            });
+        }
     }   
     
 }

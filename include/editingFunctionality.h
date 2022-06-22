@@ -32,7 +32,7 @@ void
 PlatformPath_node_select_on_click_System(flecs::iter &it, MouseState *mouseStates);
 
 void 
-PlatformPath_node_move_on_click_System(flecs::iter &it, MouseState *mouseStates);
+PlatformPath_node_move_on_drag_System(flecs::iter &it, MouseState *mouseStates);
 
 void 
 SelectedForEditing_tag_remove_all_and_set_default_EditMode_on_deselect_button_release_System(flecs::iter &it, Input *inputs);

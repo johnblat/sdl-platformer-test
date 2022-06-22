@@ -201,7 +201,7 @@ void registerSystems(flecs::world &ecs){
         .kind(flecs::OnUpdate)
         .term<EditMode::PlatformPathNodeMoveMode>()
         .iter(
-            PlatformPath_node_move_on_click_System
+            PlatformPath_node_move_on_drag_System
         );
 
     ecs.system<Input>()
