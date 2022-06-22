@@ -33,8 +33,8 @@
 SDL_Renderer *gRenderer;
 SDL_Window *gWindow;
 
-int gScreenWidth = 640 * 2;
-int gScreenHeight = 480 * 2;
+int gScreenWidth = 1920;
+int gScreenHeight = 1080;
 
 SpriteSheet gSpriteSheets[MAX_SPRITE_SHEETS]; 
 size_t gNumSpriteSheets = 0;
