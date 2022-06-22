@@ -132,6 +132,7 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<Input, MouseState>()
         .kind(flecs::OnStore)
+        .term<EditMode::PlatformPathNodeAppendMode>()
         .iter(renderUncommitedLinesToPlaceSystem);
 
     ecs.system<Input>()
@@ -158,25 +159,56 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
-        .iter(SelectedForEditing_tag_remove_all_and_set_default_EditMode_on_deselect_button_release_System);
+        .iter(
+            SelectedForEditing_tag_remove_all_and_set_default_EditMode_on_deselect_button_release_System
+        );
+
+    ecs.system<MouseState>()
+        .kind(flecs::OnUpdate)
+        .term<EditMode::PlatformPathCreateMode>()
+        .iter(
+            PlatformPath_create_entity_on_click_System
+        );
 
     ecs.system<MouseState>()
         .kind(flecs::OnUpdate)
         .term<EditMode::PlatformPathSelectMode>() //should be AND oper by default?
-        .iter(PlatformPath_select_on_click_System);
+        .iter(
+            PlatformPath_select_on_click_System
+        );
     
     ecs.system<Input, MouseState>()
         .kind(flecs::OnUpdate)
-        .iter(PlatformPath_node_append_to_selected_on_click_System);
+        .term<EditMode::PlatformPathNodeAppendMode>()
+        .iter(
+            PlatformPath_node_append_to_selected_on_click_System
+        );
         
     ecs.system<Position, PlatformPath, SelectedForEditing>()
         .kind(flecs::OnUpdate)
-        .iter(PlatformPath_destruct_selected_on_delete_button_release_System);
+        .iter(
+            PlatformPath_destruct_selected_on_delete_button_release_System
+        );
     
-    ecs.system<SelectedForEditing, Position, PlatformPath>()
+    ecs.system<MouseState>()
         .kind(flecs::OnUpdate)
-        .iter(PlatformPath_node_select_on_click_System);
+        .term<EditMode::PlatformPathNodeSelectMode>()
+        .iter(
+            PlatformPath_node_select_on_click_System
+        );
+    
+    ecs.system<MouseState>()
+        .kind(flecs::OnUpdate)
+        .term<EditMode::PlatformPathNodeMoveMode>()
+        .iter(
+            PlatformPath_node_move_on_click_System
+        );
 
+    ecs.system<Input>()
+        .kind(flecs::OnUpdate)
+        .iter(
+            EditMode_change_depending_on_Input_release
+        );
     
 }
 
@@ -196,6 +228,7 @@ int main(){
      */
 
     flecs::world world;
+    world.set<flecs::Rest>({});
     flecs::entity pinkGuyEntity = world.entity("PinkGuy");
 
 
@@ -225,7 +258,7 @@ int main(){
 
     Position parallaxSpritePosition = {gScreenWidth/2.0f, gScreenHeight/2.0f};
 
-    flecs::entity pxBgEntity = world.entity();
+    flecs::entity pxBgEntity = world.entity("Parallax Background Entity");
     pxBgEntity.set<Position>(parallaxSpritePosition);
     pxBgEntity.set<ParallaxSprite>(parallaxSprite);
 
@@ -262,18 +295,28 @@ int main(){
     Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "left", SDL_SCANCODE_A);
     Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "right", SDL_SCANCODE_D);
     Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "jump", SDL_SCANCODE_SPACE);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "zoom-in", SDL_SCANCODE_UP);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "zoom-out", SDL_SCANCODE_DOWN);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "zoom-reset", SDL_SCANCODE_R);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "save", SDL_SCANCODE_1);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "load", SDL_SCANCODE_2);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "deselect", SDL_SCANCODE_LCTRL);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "edit-angle-snap", SDL_SCANCODE_LSHIFT);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(pinkGuyInput, "delete", SDL_SCANCODE_DELETE);
 
+    flecs::entity editorEntity = world.entity();
+    Input editorInput;
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "zoom-in", SDL_SCANCODE_UP);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "zoom-out", SDL_SCANCODE_DOWN);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "zoom-reset", SDL_SCANCODE_R);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "save", SDL_SCANCODE_1);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "load", SDL_SCANCODE_2);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "deselect", SDL_SCANCODE_3);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "platform-path-create-mode-enter", SDL_SCANCODE_4);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "platform-path-select-mode-enter", SDL_SCANCODE_5);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "platform-path-node-append-mode-enter", SDL_SCANCODE_6);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "platform-path-node-select-mode-enter", SDL_SCANCODE_7);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "platform-path-node-move-mode-enter", SDL_SCANCODE_8);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "edit-angle-snap", SDL_SCANCODE_LSHIFT);
+    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "delete", SDL_SCANCODE_DELETE);
+
+    editorEntity.set<Input>(editorInput);
+    editorEntity.set<MouseState>(mouseState);
+    editorEntity.add<EditMode::PlatformPathSelectMode>();
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
-    pinkGuyEntity.set<MouseState>(mouseState);
 
     Sensors pinkGuySensors;
 

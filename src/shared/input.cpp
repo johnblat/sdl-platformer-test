@@ -21,7 +21,7 @@ bool Input_is_just_pressed(Input input, std::string buttonName){
             return false;
         }
     }
-    fprintf(stderr, "%s not found\n", buttonName.c_str());
+    //fprintf(stderr, "%s not found\n", buttonName.c_str());
     return false;
 }
 
@@ -39,7 +39,7 @@ bool Input_is_pressed(Input input, std::string buttonName){
             return false;
         }
     }
-    fprintf(stderr, "%s not found\n", buttonName.c_str());
+    //fprintf(stderr, "%s not found\n", buttonName.c_str());
     return false;
 }
 
@@ -54,7 +54,7 @@ bool Input_is_just_released(Input input, std::string buttonName){
             return false;
         }
     }
-    fprintf(stderr, "%s not found\n", buttonName.c_str());
+    //fprintf(stderr, "%s not found\n", buttonName.c_str());
     return false;
 }
 

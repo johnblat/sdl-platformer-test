@@ -44,6 +44,30 @@ internal_PlatformPath_entity_create_and_init(flecs::world &ecs, PlatformPath pla
 //
 //
 
+void 
+PlatformPath_create_entity_on_click_System(flecs::iter &it, MouseState *mouseStates){
+    auto world = it.world();
+    for(int i : it){
+        if(mouseStates[i].lmbCurrentState != INPUT_IS_JUST_RELEASED){
+            continue;
+        }
+        Position mousePosition = mouseStates[i].worldPosition;
+
+        PlatformPath platformPath;
+        platformPath.nodes.push_back((mousePosition));
+        platformPath.isCircular = false;
+        internal_PlatformPath_entity_create_and_init(world, platformPath);
+        
+        flecs::entity e = it.entity(i);
+
+        world.defer_begin();
+
+        e.remove<EditMode::PlatformPathCreateMode>();
+        e.add<EditMode::PlatformPathNodeAppendMode>();
+
+        world.defer_end();
+    }
+}
 // editor should have select state
 void 
 PlatformPath_select_on_click_System(flecs::iter &it, MouseState *mouseStates){
@@ -52,7 +76,9 @@ PlatformPath_select_on_click_System(flecs::iter &it, MouseState *mouseStates){
 
     for(int i : it){
         if(mouseStates[i].lmbCurrentState == INPUT_IS_JUST_RELEASED){
-            Position mousePosition = {mouseStates[i].worldPosition.x, mouseStates[i].worldPosition.y};
+            Position mousePosition = mouseStates[i].worldPosition;
+
+            bool didSelect = false; // can't remove and add tags to editor entity inside below inline function
 
             f.iter([&](flecs::iter &it, Position *ps, PlatformPath *platformPaths){
                 float distanceForSelectionTolerance = 8.0f; // how far away can user click
@@ -67,55 +93,35 @@ PlatformPath_select_on_click_System(flecs::iter &it, MouseState *mouseStates){
 
                         if(PointIntersectLineWithTolerance(nodePosition, nodePosition2, mousePosition, distanceForSelectionTolerance)){
                             flecs::world world = it.world();
-                            internal_SelectedForEditing_tag_remove_on_all_entities_deffered(world);
+
                             it.world().defer_begin();
+
+                            auto f = ecs.filter<SelectedForEditing>();
+                            f.each([&](flecs::entity e, SelectedForEditing s){
+                                e.remove<SelectedForEditing>();
+                            });
+
                             it.entity(j).add<SelectedForEditing>();
-                            it.entity(i).add<EditMode::PlatformPathNodeAppendMode>();
-                            it.entity(i).remove<EditMode::PlatformPathSelectMode>();
+
                             it.world().defer_end();
-                            break;
+
+                            didSelect = true;
                         }
                     }
 
                 }
             });
-        }
-    }
-}
 
-/** adding new platformPath
- * @brief  if(NoneSelected){
-                platformPath platformPath;
-                platformPath.vals.push_back((mousePosition));
-                createAndSelectPlatformNodeEntity(ecs, platformPath);
+            if(didSelect){
+                it.world().defer_begin();
+
+                flecs::entity currentEditorEntity = it.entity(i);
+                currentEditorEntity.remove<EditMode::PlatformPathSelectMode>();
+                currentEditorEntity.add<EditMode::PlatformPathNodeAppendMode>();
+
+                it.world().defer_end();
             }
- * 
- * @param it 
- * @param inputs 
- * @param mouseStates 
- */
-
-
-void 
-PlatformPath_create_on_click_System(flecs::iter &it, MouseState *mouseStates){
-    auto world = it.world();
-    for(int i : it){
-        if(mouseStates[i].lmbCurrentState != INPUT_IS_JUST_RELEASED){
-            continue;
         }
-        Position mousePosition = mouseStates[i].worldPosition;
-
-        PlatformPath platformPath;
-        platformPath.nodes.push_back((mousePosition));
-        internal_PlatformPath_entity_create_and_init(world, platformPath);
-        flecs::entity e = it.entity(i);
-        // left off here !
-        world.defer_begin();
-
-        e.remove<EditMode::PlatformPathCreateMode>();
-        e.add<EditMode::PlatformPathNodeAppendMode>();
-
-        world.defer_end();
     }
 }
 
@@ -123,6 +129,9 @@ PlatformPath_create_on_click_System(flecs::iter &it, MouseState *mouseStates){
 void 
 PlatformPath_node_append_to_selected_on_click_System(flecs::iter &it, Input *inputs, MouseState *mouseStates){
     for(int i : it){
+        if(mouseStates[i].lmbCurrentState != INPUT_IS_JUST_RELEASED){
+            continue;
+        }
         auto ecs = it.world();
 
         Position mousePosition = mouseStates[i].worldPosition;
@@ -169,31 +178,46 @@ PlatformPath_destruct_selected_on_delete_button_release_System(flecs::iter &it, 
 }
 
 void 
-PlatformPath_node_select_on_click_System(flecs::iter &it, SelectedForEditing *s, Position *positions, PlatformPath *platformPaths){
+PlatformPath_node_select_on_click_System(flecs::iter &it, MouseState *mouseStates){
     float distanceForSelectionTolerance = 5.0f;
-    auto f = it.world().filter<MouseState>();
+    auto f = it.world().filter<Position, PlatformPath>();
 
-    
-    f.each([&](flecs::entity e, MouseState ms){
-        if(ms.lmbCurrentState == INPUT_IS_JUST_RELEASED){
-            v2d mousePosition = ms.worldPosition;
-            for(u32 i : it){
-                for(int j = 0; j < platformPaths[i].nodes.size(); j++){
-                    if(PointIntersectPointWithTolerance(mousePosition, platformPaths[i].nodes[j], distanceForSelectionTolerance)){
+    bool didSelect = false;
+
+    for(u32 i : it){
+        f.each([&](flecs::entity e, Position position, PlatformPath platformPath){
+            if(mouseStates[i].lmbCurrentState == INPUT_IS_JUST_RELEASED){
+                v2d mousePosition = mouseStates[i].worldPosition;
+                for(int j = 0; j < platformPath.nodes.size(); j++){
+                    Position worldPlatformPathNodePosition = v2d_add(position, platformPath.nodes[j]);
+                    
+                    if(PointIntersectPointWithTolerance(mousePosition, worldPlatformPathNodePosition, distanceForSelectionTolerance)){
                         SelectedForEditingNode sn;
                         sn.idx = j;
                         it.world().defer_begin();
 
-                        it.entity(i).set<SelectedForEditingNode>(sn);
-                        e.add<EditMode::PlatformPathNodeMoveMode>();
-                        e.remove<EditMode::PlatformPathNodeSelectMode>();
+                        e.set<SelectedForEditingNode>(sn);
+                        
 
                         it.world().defer_end();
+
+                        didSelect = true;
                     }
                 }
+                
             }
+        });
+
+        if(didSelect){
+            it.world().defer_begin();
+
+            it.entity(i).add<EditMode::PlatformPathNodeMoveMode>();
+            it.entity(i).remove<EditMode::PlatformPathNodeSelectMode>();
+
+            it.world().defer_end();
         }
-    });
+    }   
+    
 }
 
 
@@ -202,11 +226,16 @@ PlatformPath_node_move_on_click_System(flecs::iter &it, MouseState *mouseStates)
     auto f = it.world().filter<Position, PlatformPath, SelectedForEditingNode>();
 
     for(auto i : it){
+        if(mouseStates[i].lmbCurrentState != INPUT_IS_JUST_RELEASED){
+            continue;
+        }
         Position mousePosition = mouseStates[i].worldPosition;
 
-        f.each([&](flecs::entity e, Position p, PlatformPath platformPath, SelectedForEditingNode node){
-            Position mousePositionTransformed = v2d_add(mousePosition, p);
-            platformPath.nodes[node.idx] = mousePositionTransformed = mousePositionTransformed;
+        f.iter([&](flecs::iter &it, Position *positions, PlatformPath *platformPaths, SelectedForEditingNode *selectedNodes){
+            for(u32 j : it){
+                Position mousePositionTransformed = v2d_add(mousePosition, positions[j]);
+                platformPaths[j].nodes[selectedNodes[j].idx] = mousePositionTransformed;
+            }
         });
     }   
     
@@ -268,7 +297,7 @@ EditMode_change_depending_on_Input_release(flecs::iter &it, Input *inputs){
         }
 
         else if(Input_is_just_released(inputs[i], "platform-path-select-mode-enter")){
-            internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeAppendMode>(it.entity(i));
+            internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeSelectMode>(it.entity(i));
         }
 
         else if(Input_is_just_released(inputs[i], "platform-path-node-append-mode-enter")){
@@ -276,11 +305,11 @@ EditMode_change_depending_on_Input_release(flecs::iter &it, Input *inputs){
         }
 
         else if(Input_is_just_released(inputs[i], "platform-path-node-select-mode-enter")){
-            internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeAppendMode>(it.entity(i));
+            internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeSelectMode>(it.entity(i));
         }
 
         else if(Input_is_just_released(inputs[i], "platform-path-node-move-mode-enter")){
-            internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeAppendMode>(it.entity(i));
+            internal_EditMode_tags_remove_all_from_entity_except_T_deferred<EditMode::PlatformPathNodeMoveMode>(it.entity(i));
         }
     }
 }
