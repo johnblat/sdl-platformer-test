@@ -45,7 +45,7 @@ internal_PlatformPath_entity_create_and_init(flecs::world &ecs, PlatformPath pla
 //
 
 void 
-PlatformPath_create_entity_on_click_System(flecs::iter &it, MouseState *mouseStates){
+ed_PlatformPath_create_entity_on_click_System(flecs::iter &it, MouseState *mouseStates){
     auto world = it.world();
     for(int i : it){
         if(mouseStates[i].lmbCurrentState != INPUT_IS_JUST_RELEASED){
@@ -70,7 +70,7 @@ PlatformPath_create_entity_on_click_System(flecs::iter &it, MouseState *mouseSta
 }
 // editor should have select state
 void 
-PlatformPath_select_on_click_System(flecs::iter &it, MouseState *mouseStates){
+ed_PlatformPath_select_on_click_System(flecs::iter &it, MouseState *mouseStates){
     flecs::world ecs = it.world();
     auto f = ecs.filter<Position, PlatformPath>();
 
@@ -127,7 +127,7 @@ PlatformPath_select_on_click_System(flecs::iter &it, MouseState *mouseStates){
 
 
 void 
-PlatformPath_node_append_to_selected_on_click_System(flecs::iter &it, Input *inputs, MouseState *mouseStates){
+ed_PlatformPath_node_append_to_selected_on_click_System(flecs::iter &it, Input *inputs, MouseState *mouseStates){
     for(int i : it){
         if(mouseStates[i].lmbCurrentState != INPUT_IS_JUST_RELEASED){
             continue;
@@ -158,7 +158,7 @@ PlatformPath_node_append_to_selected_on_click_System(flecs::iter &it, Input *inp
 }
 
 void 
-PlatformPath_destruct_selected_on_delete_button_release_System(flecs::iter &it, Position *positions, PlatformPath *platformPaths, SelectedForEditing *s){
+ed_PlatformPath_destruct_selected_on_delete_button_release_System(flecs::iter &it, Position *positions, PlatformPath *platformPaths, SelectedForEditing *s){
     flecs::world world = it.world();
     auto f = world.filter<Input>();
     bool shouldDelete = false;
@@ -178,7 +178,7 @@ PlatformPath_destruct_selected_on_delete_button_release_System(flecs::iter &it, 
 }
 
 void 
-PlatformPath_node_select_on_click_System(flecs::iter &it, MouseState *mouseStates){
+ed_PlatformPath_node_select_on_click_System(flecs::iter &it, MouseState *mouseStates){
     float distanceForSelectionTolerance = 5.0f;
     auto f = it.world().filter<Position, PlatformPath>();
 
@@ -222,7 +222,7 @@ PlatformPath_node_select_on_click_System(flecs::iter &it, MouseState *mouseState
 
 
 void 
-PlatformPath_node_move_on_drag_System(flecs::iter &it, MouseState *mouseStates){
+ed_PlatformPath_node_move_on_drag_System(flecs::iter &it, MouseState *mouseStates){
     auto filter_platformPathsWithSelectedNode = it.world().filter<Position, PlatformPath, SelectedForEditingNode>();
     auto filter_platformPaths = it.world().filter<Position, PlatformPath>();
 
@@ -279,7 +279,7 @@ PlatformPath_node_move_on_drag_System(flecs::iter &it, MouseState *mouseStates){
 
 
 void 
-SelectedForEditing_tag_remove_all_and_set_default_EditMode_on_deselect_button_release_System(flecs::iter &it, Input *inputs){
+ed_SelectedForEditing_tag_remove_all_and_set_default_EditMode_on_deselect_button_release_System(flecs::iter &it, Input *inputs){
     
     for(int i : it){
         
@@ -325,7 +325,7 @@ internal_EditMode_tags_remove_all_from_entity_except_T_deferred(flecs::entity en
 
 
 void 
-EditMode_change_depending_on_Input_release(flecs::iter &it, Input *inputs){
+ed_EditMode_change_depending_on_Input_release(flecs::iter &it, Input *inputs){
     flecs::world world = it.world();
 
     for(u32 i : it){

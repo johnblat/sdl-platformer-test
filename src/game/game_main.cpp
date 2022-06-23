@@ -155,54 +155,54 @@ void registerSystems(flecs::world &ecs){
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
         .iter(
-            SelectedForEditing_tag_remove_all_and_set_default_EditMode_on_deselect_button_release_System
+            ed_SelectedForEditing_tag_remove_all_and_set_default_EditMode_on_deselect_button_release_System
         );
 
     ecs.system<MouseState>()
         .kind(flecs::OnUpdate)
         .term<EditMode::PlatformPathCreateMode>()
         .iter(
-            PlatformPath_create_entity_on_click_System
+            ed_PlatformPath_create_entity_on_click_System
         );
 
     ecs.system<MouseState>()
         .kind(flecs::OnUpdate)
         .term<EditMode::PlatformPathSelectMode>() //should be AND oper by default?
         .iter(
-            PlatformPath_select_on_click_System
+            ed_PlatformPath_select_on_click_System
         );
     
     ecs.system<Input, MouseState>()
         .kind(flecs::OnUpdate)
         .term<EditMode::PlatformPathNodeAppendMode>()
         .iter(
-            PlatformPath_node_append_to_selected_on_click_System
+            ed_PlatformPath_node_append_to_selected_on_click_System
         );
         
     ecs.system<Position, PlatformPath, SelectedForEditing>()
         .kind(flecs::OnUpdate)
         .iter(
-            PlatformPath_destruct_selected_on_delete_button_release_System
+            ed_PlatformPath_destruct_selected_on_delete_button_release_System
         );
     
     ecs.system<MouseState>()
         .kind(flecs::OnUpdate)
         .term<EditMode::PlatformPathNodeSelectMode>()
         .iter(
-            PlatformPath_node_select_on_click_System
+            ed_PlatformPath_node_select_on_click_System
         );
     
     ecs.system<MouseState>()
         .kind(flecs::OnUpdate)
         .term<EditMode::PlatformPathNodeMoveMode>()
         .iter(
-            PlatformPath_node_move_on_drag_System
+            ed_PlatformPath_node_move_on_drag_System
         );
 
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
         .iter(
-            EditMode_change_depending_on_Input_release
+            ed_EditMode_change_depending_on_Input_release
         );
     
 }
