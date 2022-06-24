@@ -355,3 +355,17 @@ ed_EditMode_change_depending_on_Input_release(flecs::iter &it, Input *inputs){
         }
     }
 }
+
+
+void ed_PlatformPaths_remove_all_on_right_mouse_click_System(flecs::world &ecs, MouseState &mouseState){
+    if(mouseState.rmbCurrentState == INPUT_IS_JUST_RELEASED){
+        // THIS IS WACKY.
+        // TODO FIX ME
+        auto f = ecs.filter<PlatformPath>();
+        ecs.defer_begin();
+        f.each([&](flecs::entity e, PlatformPath platformPath){
+            e.remove<PlatformPath>();
+        });
+        ecs.defer_end();
+    }
+}

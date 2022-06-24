@@ -51,7 +51,7 @@ void registerSystems(flecs::world &ecs){
     
     ecs.system<MouseState>()
         .kind(flecs::PreUpdate)
-        .iter(mouseStateSetterSystem);
+        .iter(MouseState_update_System);
     
     // GAMEPLAY
     ecs.system<Velocity, GroundSpeed, Input, StateCurrPrev, Angle>("keyStateVelocitySetter")
@@ -96,7 +96,7 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<>()
         .kind(flecs::PreFrame)
-        .iter(renderFrameStartSystem);
+        .iter(render_frame_start_System);
 
     ecs.system<Position, Sensors, GroundMode>()
         .kind(flecs::OnStore)
@@ -139,7 +139,7 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<>()
         .kind(flecs::PostFrame)
-        .iter(renderEndFrameSystem);
+        .iter(render_end_frame_System);
 
 
     // EDITING

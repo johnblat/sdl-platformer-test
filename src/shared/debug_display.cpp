@@ -22,7 +22,7 @@ const SDL_Color SELECTED_NODE_COLOR = {0, 255, 255, 255};
 
 void renderSelectedPlatformNodeSystem(flecs::iter &it, SelectedForEditing *ss, Position *positions, PlatformPath *platformPaths){
     for(auto i : it){
-        renderPolyLineInCamera(
+        render_poly_line(
             positions[i], 
             platformPaths[i].nodes, 
             SELECTED_PlatformPath_EDGE_COLOR
@@ -33,7 +33,7 @@ void renderSelectedPlatformNodeSystem(flecs::iter &it, SelectedForEditing *ss, P
 // without SelectedForEditing Component
 void renderUnselectedPlatformNodeSystem(flecs::iter &it, Position *positions, PlatformPath *platformPaths){
     for(auto i : it){
-        renderPolyLineInCamera(
+        render_poly_line(
             positions[i], 
             platformPaths[i].nodes, 
             DEFAULT_PlatformPath_EDGE_COLOR
@@ -50,7 +50,7 @@ void renderUnselectedPlatformNodeNodesSystem(flecs::iter &it, Position *position
             nodePositionGlobal.x = positions[i].x + platformPaths[i].nodes[j].x;
             nodePositionGlobal.y = positions[i].y + platformPaths[i].nodes[j].y;
 
-            renderDiamondInCamera(nodePositionGlobal, DEFAULT_NODE_COLOR);
+            render_diamond(nodePositionGlobal, DEFAULT_NODE_COLOR);
         }
     }
 }
@@ -66,10 +66,10 @@ void renderSelectedPlatformNodeNodesSystem(flecs::iter &it, SelectedForEditingNo
             nodePositionGlobal.y = positions[i].y + platformPaths[i].nodes[j].y;
 
             if(sns[i].idx == j){
-                renderDiamondInCamera(nodePositionGlobal, SELECTED_NODE_COLOR);
+                render_diamond(nodePositionGlobal, SELECTED_NODE_COLOR);
             }
             else {
-                renderDiamondInCamera(nodePositionGlobal, DEFAULT_NODE_COLOR);
+                render_diamond(nodePositionGlobal, DEFAULT_NODE_COLOR);
             }
         }
     }
@@ -259,12 +259,12 @@ void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseSta
 
                 if(NoneSelected){
                     SDL_SetRenderDrawColor(gRenderer, 255,150,255,255);
-                    renderDiamondInCamera(mouseAdjustedPos, (SDL_Color){255,150,255,255});
+                    render_diamond(mouseAdjustedPos, (SDL_Color){255,150,255,255});
                 }
                 else{
-                    renderLineInCamera(tailnodeAdjustedPos, mouseAdjustedPos, (SDL_Color){255,150,255,255});
+                    render_line(tailnodeAdjustedPos, mouseAdjustedPos, (SDL_Color){255,150,255,255});
                     SDL_SetRenderDrawColor(gRenderer, 255,150,255,255);
-                    renderDiamondInCamera(mouseAdjustedPos, (SDL_Color){255,150,255,255});
+                    render_diamond(mouseAdjustedPos, (SDL_Color){255,150,255,255});
 
                 }
             });

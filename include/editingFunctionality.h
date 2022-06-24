@@ -40,4 +40,6 @@ ed_SelectedForEditing_tag_remove_all_and_set_default_EditMode_on_deselect_button
 void 
 ed_EditMode_change_depending_on_Input_release(flecs::iter &it, Input *inputs);
 
+void ed_PlatformPaths_remove_all_on_right_mouse_click_System(flecs::world &ecs, MouseState &mouseState);
+
 

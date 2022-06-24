@@ -4,7 +4,7 @@
 #include "camera.h"
 #include "mouseStateProcessing.h"
 
-void mouseStateSetterSystem(flecs::iter &it, MouseState *mouseStates){
+void MouseState_update_System(flecs::iter &it, MouseState *mouseStates){
     u32 buttons;
     int x, y;
     float lx, ly;
@@ -116,18 +116,6 @@ void mouseStateSetterSystem(flecs::iter &it, MouseState *mouseStates){
 
 
 
-void mouesStatePlatformNodeRemoveAll(flecs::world &ecs, MouseState &mouseState){
-    if(mouseState.rmbCurrentState == INPUT_IS_JUST_RELEASED){
-        // THIS IS WACKY.
-        // TODO FIX ME
-        auto f = ecs.filter<PlatformPath>();
-        ecs.defer_begin();
-        f.each([&](flecs::entity e, PlatformPath platformPath){
-            e.remove<PlatformPath>();
-        });
-        ecs.defer_end();
-    }
-}
 
 
 

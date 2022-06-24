@@ -6,14 +6,19 @@
 #include "timestep.h"
 
 
-void renderFrameStartSystem(flecs::iter &it){
+void render_frame_start_System(flecs::iter &it){
     SDL_Color bgColor = {20,20,20,255};
     SDL_SetRenderDrawColor(gRenderer, bgColor.r, bgColor.b, bgColor.g, 255);
     SDL_RenderClear(gRenderer);
 }
 
+void render_end_frame_System(flecs::iter &it){
+    SDL_RenderPresent(gRenderer);
+    ts_TimeStep_delay_remaining_time(gTimeStep);
+}
 
-void renderLineInCamera(Position p1, Position p2, SDL_Color color){
+
+void render_line(Position p1, Position p2, SDL_Color color){
 
     SDL_SetRenderDrawColor(
         gRenderer, 
@@ -41,7 +46,7 @@ void renderLineInCamera(Position p1, Position p2, SDL_Color color){
 }
 
 
-void renderPolyLineInCamera(Position offsetPosition, std::vector<Position> points, SDL_Color color){
+void render_poly_line(Position offsetPosition, std::vector<Position> points, SDL_Color color){
    SDL_SetRenderDrawColor(
         gRenderer, 
         color.r,
@@ -76,7 +81,7 @@ void renderPolyLineInCamera(Position offsetPosition, std::vector<Position> point
     }
 }
 
-void renderDiamondInCamera(Position centerPoint, SDL_Color color){
+void render_diamond(Position centerPoint, SDL_Color color){
     const int DIAMOND_RADIUS = 3;
 
     Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f};
@@ -99,7 +104,3 @@ void renderDiamondInCamera(Position centerPoint, SDL_Color color){
 
 }
 
-void renderEndFrameSystem(flecs::iter &it){
-    SDL_RenderPresent(gRenderer);
-    ts_TimeStep_delay_remaining_time(gTimeStep);
-}
