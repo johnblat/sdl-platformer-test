@@ -12,11 +12,9 @@ void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidR
 
 
 void renderUnselectedPlatformNodeNodesSystem(flecs::iter &it, Position *positions, PlatformPath *platformPath);
+
 void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, GroundMode *groundModes);
 
-void setColorOnPlatformPathSelect(flecs::iter &it, PlatformPath *platformPaths);
-
-void setColorOnPlatformPathDeselect(flecs::iter &it, PlatformPath *platformPaths);
 
 void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates);
 

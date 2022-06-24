@@ -3,7 +3,7 @@
 #include "position.h"
 #include "input.h"
 #include "render.h"
-#include "debug_display.h"
+#include "debug_render.h"
 #include "camera.h"
 #define V2D_IMPLEMENTATION
 #include "v2d.h"

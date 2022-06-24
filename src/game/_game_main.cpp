@@ -15,7 +15,7 @@
 #include "states.h"
 #include "solid_rect.h"
 #include "collisions.h"
-#include "debug_display.h"
+#include "debug_render.h"
 #include "camera.h"
 #include "timestep.h"
 #include "render.h"
