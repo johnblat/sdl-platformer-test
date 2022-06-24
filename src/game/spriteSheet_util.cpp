@@ -1,7 +1,7 @@
 #include "spriteSheets.h"
 #include "ints.h"
 #include <stdlib.h>
-#include "spriteSheetsProcessing.h"
+#include "spriteSheet_util.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "render.h"
@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <string>
 
-u32 createSpriteSheet(std::string filename, size_t numCellRows, size_t numCellCols, const std::string name){
+u32 SpriteSheet_util_create(std::string filename, size_t numCellRows, size_t numCellCols, const std::string name){
     SDL_Surface *imgSurface = IMG_Load(filename.c_str());
 
     SDL_Texture *texture = SDL_CreateTextureFromSurface(gRenderer, imgSurface);
@@ -30,7 +30,7 @@ u32 createSpriteSheet(std::string filename, size_t numCellRows, size_t numCellCo
 
 }
 
-SpriteSheet getSpriteSheet(u32 id){
+SpriteSheet SpriteSheet_util_get_by_id(u32 id){
     assert(id < gNumSpriteSheets);
     SpriteSheet ss = gSpriteSheets[id];
     assert(ss.texture != NULL);

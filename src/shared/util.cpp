@@ -3,7 +3,24 @@
 #include "position.h"
 #include <assert.h>
 
-bool isInRange(float begin, float end, float x){
+
+
+u32 util_index_2d_to_1d(u32 row, u32 col, u32 numRows){
+    return (row * numRows) + col;
+}
+
+
+void util_index_1d_to_2d(u32 i, u32 numRows, u32 *row, u32 *col){
+    *row = i / (numRows);
+    *col = i % (numRows);
+}
+
+v2d util_local_to_global_position(v2d l, v2d o){
+    v2d g = l + o;
+    return g;
+}
+
+bool util_is_in_range(float begin, float end, float x){
     if(begin > end){
         swapValues(begin, end, float);
     }
@@ -13,13 +30,26 @@ bool isInRange(float begin, float end, float x){
     return true;
 }
 
+bool util_in_range(float val, float start, float end){
+    if(end < start){
+        swapValues(end, start, float);
+    }
 
-float getYForXOnLine(Position p1, Position p2, float x){
+    if(val >= start && val <= end){
+        return true;
+    }
+
+    return false;
+
+}
+
+
+float util_get_y_for_x_on_line(Position p1, Position p2, float x){
     if(p2.x < p1.x){
         swapValues(p2, p1, Position);
     }
     if(x < p1.x || x > p2.x){
-        assert("getYForXOnLine: X passed must be in the range p1.x to p2.x" && 0);
+        assert("util_get_y_for_x_on_line: X passed must be in the range p1.x to p2.x" && 0);
     }
     if(p1.x == p2.x){
         //printf("p1.x == p2.x");
@@ -31,7 +61,7 @@ float getYForXOnLine(Position p1, Position p2, float x){
     return y;
 }
 
-float getXForYOnLine(Position p1, Position p2, float y){
+float util_get_x_for_y_on_line(Position p1, Position p2, float y){
     if(p2.y < p1.y){
         swapValues(p2, p1, Position);
     }
@@ -48,20 +78,20 @@ float getXForYOnLine(Position p1, Position p2, float y){
     return x;
 }
 
-inline float rads2deg(float rads){
+inline float util_rads_to_degrees(float rads){
     return rads * 180 / 3.14;
 }
 
-GroundMode whichGroundMode(float angleInRads){
-    float angleInDegrees = rads2deg(angleInRads);
+GroundMode util_rads_to_ground_mode(float angleInRads){
+    float angleInDegrees = util_rads_to_degrees(angleInRads);
 
-    if(inRange(angleInDegrees, 46.0f, 134.0f)){
+    if(util_in_range(angleInDegrees, 46.0f, 134.0f)){
         return RIGHT_WALL_GM;
     }
-    if(inRange(angleInDegrees, 135.0f, 225.0f)){
+    if(util_in_range(angleInDegrees, 135.0f, 225.0f)){
         return CEILING_GM;
     }
-    if(inRange(angleInDegrees, 226.0f, 314.0f)){
+    if(util_in_range(angleInDegrees, 226.0f, 314.0f)){
         return LEFT_WALL_GM;
     }
 
@@ -70,21 +100,10 @@ GroundMode whichGroundMode(float angleInRads){
 }
 
 
-bool inRange(float val, float start, float end){
-    if(end < start){
-        swapValues(end, start, float);
-    }
-
-    if(val >= start && val <= end){
-        return true;
-    }
-
-    return false;
-
-}
 
 
-void breakOnCondition(bool condition){
+
+void util_break_on_condition(bool condition){
     if(condition == true){
         int x = 0;
     }

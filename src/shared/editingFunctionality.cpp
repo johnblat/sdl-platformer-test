@@ -9,7 +9,7 @@
 #include "ray2d.h"
 #include "util.h"
 #include "editingFunctionality.h"
-#include "intersections.h"
+#include "collisions.h"
 
 
 static void 
@@ -91,7 +91,7 @@ ed_PlatformPath_select_on_click_System(flecs::iter &it, MouseState *mouseStates)
                         v2d nodePosition = v2d_add(ps[j], platformPaths[j].nodes[k]);
                         v2d nodePosition2 = v2d_add(ps[j], platformPaths[j].nodes[k+1]);
 
-                        if(PointIntersectLineWithTolerance(nodePosition, nodePosition2, mousePosition, distanceForSelectionTolerance)){
+                        if(collisions_point_intersect_line_segment_with_tolerance(nodePosition, nodePosition2, mousePosition, distanceForSelectionTolerance)){
                             flecs::world world = it.world();
 
                             it.world().defer_begin();
@@ -191,7 +191,7 @@ ed_PlatformPath_node_select_on_click_System(flecs::iter &it, MouseState *mouseSt
                 for(int j = 0; j < platformPath.nodes.size(); j++){
                     Position worldPlatformPathNodePosition = v2d_add(position, platformPath.nodes[j]);
                     
-                    if(PointIntersectPointWithTolerance(mousePosition, worldPlatformPathNodePosition, distanceForSelectionTolerance)){
+                    if(collisions_point_intersects_point_with_tolerance(mousePosition, worldPlatformPathNodePosition, distanceForSelectionTolerance)){
                         SelectedForEditingNode sn;
                         sn.idx = j;
                         it.world().defer_begin();
@@ -250,7 +250,7 @@ ed_PlatformPath_node_move_on_drag_System(flecs::iter &it, MouseState *mouseState
                     for(int j = 0; j < platformPath.nodes.size(); j++){
                         Position worldPlatformPathNodePosition = v2d_add(position, platformPath.nodes[j]);
                         
-                        if(PointIntersectPointWithTolerance(mousePosition, worldPlatformPathNodePosition, distanceForSelectionTolerance)){
+                        if(collisions_point_intersects_point_with_tolerance(mousePosition, worldPlatformPathNodePosition, distanceForSelectionTolerance)){
                             SelectedForEditingNode sn;
                             sn.idx = j;
                             it.world().defer_begin();

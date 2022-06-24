@@ -7,4 +7,4 @@
 #include "ParallaxSprite.h"
 
 
-void renderParallaxSpriteSystem(flecs::iter &it, Position *positions, ParallaxSprite *paralllaxSprites);
+void render_ParallaxSprite_System(flecs::iter &it, Position *positions, ParallaxSprite *paralllaxSprites);

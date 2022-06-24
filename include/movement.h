@@ -11,11 +11,11 @@
 #include "states.h"
 
 
-void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions);
+void movement_apply_velocity_to_position_System(flecs::iter &it, Velocity *velocities, Position *positions);
 
-void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, GroundSpeed *groundSpeeds, Input *inputs, StateCurrPrev *states, Angle *angles);
+void movement_GrounSpeed_Velocity_update_from_Input_and_Phyics_System(flecs::iter &it, Velocity *velocities, GroundSpeed *groundSpeeds, Input *inputs, StateCurrPrev *states, Angle *angles);
 
-void gravitySystem(flecs::iter &it, Velocity *velocities, StateCurrPrev *states);
+void movement_velocity_apply_gravity_System(flecs::iter &it, Velocity *velocities, StateCurrPrev *states);
 
 
 #endif

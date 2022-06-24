@@ -3,10 +3,10 @@
 #include <string>
 #include <vector>
 #include "animation.h"
-#include "animationProcessing.h"
+#include "animation_util.h"
 #include "ints.h"
 #include "spriteSheets.h"
-#include "spriteSheetsProcessing.h"
+#include "spriteSheet_util.h"
 #include "velocity.h"
 #include "movement.h"
 #include "input.h"
@@ -16,7 +16,6 @@
 #include "solid_rect.h"
 #include "collisions.h"
 #include "debug_display.h"
-#include "resourceLoading.h"
 #include "camera.h"
 #include "timestep.h"
 #include "render.h"
@@ -57,41 +56,41 @@ void registerSystems(flecs::world &ecs){
     // GAMEPLAY
     ecs.system<Velocity, GroundSpeed, Input, StateCurrPrev, Angle>("keyStateVelocitySetter")
         .kind(flecs::PreUpdate)
-        .iter(InputVelocitySetterSystem);
+        .iter(movement_GrounSpeed_Velocity_update_from_Input_and_Phyics_System);
 
     ecs.system<AnimatedSprite>("AnimatedSpritePlay")
         .kind(flecs::OnUpdate)
-        .iter(animationsAccumulationSystem);
+        .iter(anim_update_AnimatedSprite_accumulate_time_to_increment_frame_System);
 
     ecs.system<AnimatedSprite, Position, Angle>("renderingAnimatedSprites")
         .kind(flecs::OnStore)
-        .iter(renderingAnimatedSpritesSystem);
+        .iter(anim_render_AnimatedSprites_System);
 
     ecs.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState")
         .kind(flecs::OnUpdate)
-        .iter(KeyboardStateAnimationSetterSystem);
+        .iter(anim_update_KeyboardState_AnimatedSprite_set_animation_System);
 
     ecs.system<Velocity, Position>("move")
         .kind(flecs::OnUpdate)
-        .iter(moveSystem);
+        .iter(movement_apply_velocity_to_position_System);
 
     ecs.system<AnimatedSprite, Input>()
         .kind(flecs::OnUpdate)
-        .iter(InputFlipSystem);
+        .iter(anim_update_AnimatedSprite_flip_based_on_Input_System);
 
     ecs.system<AnimatedSprite, Velocity, StateCurrPrev>()
         .kind(flecs::OnUpdate)
-        .iter(setAnimationBasedOnSpeedSystem);
+        .iter(anim_update_AnimatedSprite_set_animation_based_on_speed_and_state__System);
 
     ecs.system<Velocity, StateCurrPrev>("gravity system")
         .kind(flecs::OnUpdate)
-        .iter(gravitySystem);
+        .iter(movement_velocity_apply_gravity_System);
 
 
     // COLLISONS
     ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision")
         .kind(flecs::PostUpdate)
-        .iter(sensorsPlatformPathsCollisionSystem);
+        .iter(collisions_Sensors_PlatformPaths_update_Position_System);
 
     // RENDERING
 
@@ -123,7 +122,7 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<>()
         .kind(flecs::OnStore)
-        .iter(zoomRenderSetupSystem);
+        .iter(cam_zoom_render_frame_start_System);
 
     ecs.system<Input, MouseState>()
         .kind(flecs::OnStore)
@@ -132,11 +131,11 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
-        .iter(inputZoomSystem);
+        .iter(cam_input_zoom_System);
 
     ecs.system<Position, ParallaxSprite>()
         .kind(flecs::OnUpdate)
-        .iter(renderParallaxSpriteSystem);
+        .iter(render_ParallaxSprite_System);
 
     ecs.system<>()
         .kind(flecs::PostFrame)
@@ -146,11 +145,11 @@ void registerSystems(flecs::world &ecs){
     // EDITING
     ecs.system<Input>()
         .kind(flecs::OnStore)
-        .iter(loadInputSystem);
+        .iter(load_PlatformPaths_on_load_button_release_System);
 
     ecs.system<Input>()
         .kind(flecs::OnStore)
-        .iter(saveSystem);
+        .iter(save_PlatformPaths_on_save_button_release_System);
 
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
@@ -240,7 +239,7 @@ int main(){
      * SETUP BACKGROUND
      * 
      */
-    u32 bgSpriteId = createSpriteSheet(
+    u32 bgSpriteId = SpriteSheet_util_create(
         "res/checkerboard-bg.png", 
         1, 
         1, 
@@ -268,21 +267,21 @@ int main(){
 
     std::string filename = "res/pink-monster-animation-transparent.png";
     std::string animatedSpriteName =  "pink-monster-animation";
-    u32 spriteSheetId = createSpriteSheet(filename, 9, 15, animatedSpriteName);
-    AnimatedSprite animatedSprite = createAnimatedSprite(spriteSheetId);
+    u32 spriteSheetId = SpriteSheet_util_create(filename, 9, 15, animatedSpriteName);
+    AnimatedSprite animatedSprite = anim_util_AnimatedSprite_create(spriteSheetId);
 
-    Animation walkAnimation = createAnimation({15,16,17,18,19,20}, 12.0f, true, "walk");
-    Animation runAnimation = createAnimation({30,31,32,33,34,35}, 12.0f, true, "run");
-    Animation standingAttackAnimation = createAnimation({45,46,47,48}, 12.0f, false, "stand-attack");
-    Animation idleAnimation = createAnimation({75,76,77,78,77,76}, 12.0f, true, "idle");
-    Animation jumpAnimation = createAnimation({120,121,122,123,124,125}, 12.0f, true, "jump");
+    Animation walkAnimation = anim_util_Animation_init({15,16,17,18,19,20}, 12.0f, true, "walk");
+    Animation runAnimation = anim_util_Animation_init({30,31,32,33,34,35}, 12.0f, true, "run");
+    Animation standingAttackAnimation = anim_util_Animation_init({45,46,47,48}, 12.0f, false, "stand-attack");
+    Animation idleAnimation = anim_util_Animation_init({75,76,77,78,77,76}, 12.0f, true, "idle");
+    Animation jumpAnimation = anim_util_Animation_init({120,121,122,123,124,125}, 12.0f, true, "jump");
     
 
-    addAnimationToAnimatedSprite(animatedSprite, walkAnimation);
-    addAnimationToAnimatedSprite(animatedSprite, runAnimation);
-    addAnimationToAnimatedSprite(animatedSprite, idleAnimation);
-    addAnimationToAnimatedSprite(animatedSprite, standingAttackAnimation);
-    addAnimationToAnimatedSprite(animatedSprite, jumpAnimation);
+    anim_util_AnimatedSprite_add_Animation(animatedSprite, walkAnimation);
+    anim_util_AnimatedSprite_add_Animation(animatedSprite, runAnimation);
+    anim_util_AnimatedSprite_add_Animation(animatedSprite, idleAnimation);
+    anim_util_AnimatedSprite_add_Animation(animatedSprite, standingAttackAnimation);
+    anim_util_AnimatedSprite_add_Animation(animatedSprite, jumpAnimation);
 
 
     
@@ -344,14 +343,14 @@ int main(){
     registerSystems(world);
 
     
-    loadPlatformPaths(world);
+    load_PlatformPaths(world);
 
-    gTimeStep = TimeStepInit(60.0f);
+    gTimeStep = ts_TimeStep_init(60.0f);
 
     // main loop
     while(!quit){
 
-        TimeStepSetStartTicks(gTimeStep);
+        ts_TimeStep_start_ticks_set_to_current_ticks(gTimeStep);
 
         while(SDL_PollEvent(&event)){
             if(event.type == SDL_QUIT){

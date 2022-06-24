@@ -5,7 +5,7 @@
 TimeStep gTimeStep;
 
 
-TimeStep TimeStepInit(float FPS){
+TimeStep ts_TimeStep_init(float FPS){
     TimeStep ts;
     ts.secondsPerFrame = 1.0f / FPS;
     ts.startTicks = 0;
@@ -13,11 +13,12 @@ TimeStep TimeStepInit(float FPS){
 }
 
 
-void TimeStepSetStartTicks(TimeStep &ts){
+void ts_TimeStep_start_ticks_set_to_current_ticks(TimeStep &ts){
     ts.startTicks = SDL_GetTicks();
 }
 
-void TimeStepSkip(TimeStep &ts){
+
+void ts_TimeStep_delay_remaining_time(TimeStep &ts){
     float endTicks = SDL_GetTicks();
     float totalTicks = endTicks - ts.startTicks;
     float totalSeconds = totalTicks / 1000.0f;

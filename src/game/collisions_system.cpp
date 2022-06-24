@@ -10,71 +10,18 @@
 #include "v2d.h"
 #include "util.h"
 #include <cassert>
-#include "shapes.h"
-#include "stateProcessing.h"
+#include "state_util.h"
 
 
 
 
 
-
-
-
-bool ray2dIntersectLineSegment(Ray2d ray, Position p1, Position p2, float &distanceFromRayOrigin, SensorType sensorType){
-    if(sensorType == LF_SENSOR || sensorType == RF_SENSOR){
-        if(!isInRange(p1.x, p2.x, ray.startingPosition.x)){
-            return false;
-        }
-        float y = getYForXOnLine(p1, p2, ray.startingPosition.x);
-        distanceFromRayOrigin = y - ray.startingPosition.y;
-        if(distanceFromRayOrigin > ray.distance || distanceFromRayOrigin < 0){
-            return false;
-        }
-        return true;
-    }
-    else if(sensorType == RW_SENSOR){
-        if(!isInRange(p1.y, p2.y, ray.startingPosition.y)){
-            return false;
-        }
-        float x = getXForYOnLine(p1, p2, ray.startingPosition.y);
-        distanceFromRayOrigin = x - ray.startingPosition.x;
-        if(distanceFromRayOrigin > ray.distance || distanceFromRayOrigin < 0){
-            return false;
-        }
-        return true;
-    }
-    else if(sensorType == LW_SENSOR){
-        if(!isInRange(p1.y, p2.y, ray.startingPosition.y)){
-            return false;
-        }
-        float x = getXForYOnLine(p1, p2, ray.startingPosition.y);
-        distanceFromRayOrigin = ray.startingPosition.x - x;
-        if(distanceFromRayOrigin > ray.distance || distanceFromRayOrigin < 0){
-            return false;
-        }
-        return true;
-    }
-
-    return false;
-
-    
-    
-}
-
-
-
-
-
-
-
-
-
-void sensorsPlatformPathsCollisionSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
+void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         
         // set wall sensor height
-        if( rads2deg(angles[i].rads) < 5.0 && rads2deg(angles[i].rads) > -5.0){
+        if( util_rads_to_degrees(angles[i].rads) < 5.0 && util_rads_to_degrees(angles[i].rads) > -5.0){
             sensorCollections[i].rays[RW_SENSOR].startingPosition.y = 8.0f;
             sensorCollections[i].rays[LW_SENSOR].startingPosition.y = 8.0f;
         }
@@ -83,7 +30,7 @@ void sensorsPlatformPathsCollisionSystem(flecs::iter &it, Position *positions, S
             sensorCollections[i].rays[LW_SENSOR].startingPosition.y = 0.0f;
         }
 
-        groundModes[i] = whichGroundMode(angles[i].rads);
+        groundModes[i] = util_rads_to_ground_mode(angles[i].rads);
 
         
         
@@ -176,7 +123,7 @@ void sensorsPlatformPathsCollisionSystem(flecs::iter &it, Position *positions, S
         f.each([&](flecs::entity e, Position &position, PlatformPath &platformPath){
             size_t len = platformPath.nodes.size();
             for(int v = 0; v < len - 1; v++){
-                //breakOnCondition(groundModes[i] == RIGHT_WALL_GM || groundModes[i] == LEFT_WALL_GM);
+                //util_break_on_condition(groundModes[i] == RIGHT_WALL_GM || groundModes[i] == LEFT_WALL_GM);
                 
                 Position p1 = platformPath.nodes.at(v);
                 Position p2 = platformPath.nodes.at(v+1);
@@ -199,8 +146,8 @@ void sensorsPlatformPathsCollisionSystem(flecs::iter &it, Position *positions, S
 
                 float distanceFromPoint;
 
-                if(ray2dIntersectLineSegment(lfRayGlobal, r1, r2, distanceFromPoint, LF_SENSOR)){
-                   //breakOnCondition(groundModes[i] == CEILING_GM);
+                if(collisions_Ray2d_intersects_line_segment(lfRayGlobal, r1, r2, distanceFromPoint, LF_SENSOR)){
+                   //util_break_on_condition(groundModes[i] == CEILING_GM);
                     state = STATE_ON_GROUND;
                     v2d intersectionPoint(
                             lfRayGlobal.startingPosition.x,
@@ -213,8 +160,8 @@ void sensorsPlatformPathsCollisionSystem(flecs::iter &it, Position *positions, S
                     }
                 }
 
-                if(ray2dIntersectLineSegment(rfRayGlobal, r1, r2, distanceFromPoint, RF_SENSOR)){
-                    //breakOnCondition(groundModes[i] == CEILING_GM);
+                if(collisions_Ray2d_intersects_line_segment(rfRayGlobal, r1, r2, distanceFromPoint, RF_SENSOR)){
+                    //util_break_on_condition(groundModes[i] == CEILING_GM);
                     state = STATE_ON_GROUND;
                     v2d intersectionPoint(
                             rfRayGlobal.startingPosition.x,
@@ -253,7 +200,7 @@ void sensorsPlatformPathsCollisionSystem(flecs::iter &it, Position *positions, S
             highestIntersectingLineP2 = v2dRotate180Degrees(highestIntersectingLineP2, positions[i]);
         }
         
-        setState(states[i], state);
+        State_util_set(states[i], state);
         if(state == STATE_ON_GROUND){
             sensorCollections[i].rays[LF_SENSOR].distance = 32;
             sensorCollections[i].rays[RF_SENSOR].distance = 32;
@@ -304,3 +251,5 @@ void sensorsPlatformPathsCollisionSystem(flecs::iter &it, Position *positions, S
         }
     }
 }
+
+

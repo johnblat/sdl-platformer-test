@@ -3,18 +3,18 @@
 #include "ParallaxSprite.h"
 #include "parallaxSpriteProcessing.h"
 #include "window.h"
-#include "spriteSheetsProcessing.h"
+#include "spriteSheet_util.h"
 #include "camera.h"
 #include <SDL2/SDL.h>
 #include "render.h"
 
 
-void renderParallaxSpriteSystem(flecs::iter &it, Position *positions, ParallaxSprite *parallaxSprites){
+void render_ParallaxSprite_System(flecs::iter &it, Position *positions, ParallaxSprite *parallaxSprites){
     for(int i : it){
         Position centerScreen = {(float)gScreenWidth/2, (float)gScreenHeight/2};
         Position scaledCenterScreen = {centerScreen.x / gZoomAmount, centerScreen.y / gZoomAmount};
 
-        SpriteSheet spriteSheet = getSpriteSheet(parallaxSprites[i].spriteSheetId);
+        SpriteSheet spriteSheet = SpriteSheet_util_get_by_id(parallaxSprites[i].spriteSheetId);
 
         SDL_Rect destRect;
         destRect.x =

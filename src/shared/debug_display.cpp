@@ -7,9 +7,11 @@
 #include "solid_rect.h"
 #include "ints.h"
 #include "window.h"
-#include "shapes.h"
 #include "v2d.h"
 #include "mouseState.h"
+#include "util.h"
+
+
 
 const SDL_Color SELECTED_PlatformPath_EDGE_COLOR = {20, 250, 20, 255};
 const SDL_Color DEFAULT_PlatformPath_EDGE_COLOR = {255,255,255,255};
@@ -108,10 +110,7 @@ void renderBorderedVerticalLine(float startY, float endY, float x, SDL_Color fil
     SDL_RenderDrawLineF(gRenderer, x + 1, startY , x + 1, endY);
 }
 
-v2d localToGlobal(v2d l, v2d o){
-    v2d g = l + o;
-    return g;
-}
+
 
 
 void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, GroundMode *groundModes){
@@ -123,9 +122,9 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
         {
             v2d lfRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LF_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            v2d globalPosition = localToGlobal(lfRotatedPos, positions[i]);
+            v2d globalPosition = util_local_to_global_position(lfRotatedPos, positions[i]);
 
-            v2d positionInCamera = worldPositionToCamPosition(globalPosition);
+            v2d positionInCamera = cam_util_world_position_to_camera_position(globalPosition);
 
             SDL_Color fillColor = {167, 236, 29 ,255};
             SDL_Color borderColor = {0,0,0,255};
@@ -148,9 +147,9 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
         {
             v2d rfRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[RF_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            v2d globalPosition = localToGlobal(rfRotatedPos, positions[i]);
+            v2d globalPosition = util_local_to_global_position(rfRotatedPos, positions[i]);
 
-            v2d positionInCamera = worldPositionToCamPosition(globalPosition);
+            v2d positionInCamera = cam_util_world_position_to_camera_position(globalPosition);
 
             SDL_Color fillColor = {29, 236, 158,255};
             SDL_Color borderColor = {0,0,0,255};
@@ -173,9 +172,9 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
         {
             v2d lwRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LW_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            v2d globalPosition = localToGlobal(lwRotatedPos, positions[i]);
+            v2d globalPosition = util_local_to_global_position(lwRotatedPos, positions[i]);
 
-            v2d positionInCamera = worldPositionToCamPosition(globalPosition);
+            v2d positionInCamera = cam_util_world_position_to_camera_position(globalPosition);
 
             SDL_Color fillColor = {255, 151, 241 ,255};
             SDL_Color borderColor = {0,0,0,255};
@@ -197,9 +196,9 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
         {
             v2d lwRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LW_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            v2d globalPosition = localToGlobal(lwRotatedPos, positions[i]);
+            v2d globalPosition = util_local_to_global_position(lwRotatedPos, positions[i]);
 
-            v2d positionInCamera = worldPositionToCamPosition(globalPosition);
+            v2d positionInCamera = cam_util_world_position_to_camera_position(globalPosition);
 
             SDL_Color fillColor = {244, 0, 50 ,255};
             SDL_Color borderColor = {0,0,0,255};

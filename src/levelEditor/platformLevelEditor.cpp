@@ -108,11 +108,11 @@ void registerSystems(flecs::world &ecs){
 
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
-        .iter(saveSystem);
+        .iter(save_PlatformPaths_on_save_button_release_System);
     
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
-        .iter(loadInputSystem);
+        .iter(load_PlatformPaths_on_load_button_release_System);
     
     ecs.system<Position, PlatformPath>()
         .kind(flecs::OnStore)
@@ -120,7 +120,7 @@ void registerSystems(flecs::world &ecs){
     
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
-        .iter(inputZoomSystem);
+        .iter(cam_input_zoom_System);
     
     ecs.system<Input, MouseState>()
         .kind(flecs::OnUpdate)
@@ -128,11 +128,11 @@ void registerSystems(flecs::world &ecs){
     
     ecs.system<>()
         .kind(flecs::OnUpdate)
-        .iter(zoomRenderSetupSystem);
+        .iter(cam_zoom_render_frame_start_System);
     
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
-        .iter(inputCameraMoveSystem);
+        .iter(cam_input_camera_move_System);
     
     ecs.system<>()
         .kind(flecs::PreFrame)
@@ -264,11 +264,11 @@ int main(){
     editorUser.set<MouseState>(mouseState);
 
 
-    gTimeStep = TimeStepInit(60.0f);
+    gTimeStep = ts_TimeStep_init(60.0f);
 
     while(!quit){
 
-        TimeStepSetStartTicks(gTimeStep);
+        ts_TimeStep_start_ticks_set_to_current_ticks(gTimeStep);
 
         mouseState.currentMouseWheelState = NOT_SCROLLING;
 

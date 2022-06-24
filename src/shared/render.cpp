@@ -101,5 +101,5 @@ void renderDiamondInCamera(Position centerPoint, SDL_Color color){
 
 void renderEndFrameSystem(flecs::iter &it){
     SDL_RenderPresent(gRenderer);
-    TimeStepSkip(gTimeStep);
+    ts_TimeStep_delay_remaining_time(gTimeStep);
 }

@@ -6,7 +6,7 @@
  * @param state 
  * @param newState 
  */
-void setState(StateCurrPrev &state, State newState);
+void State_util_set(StateCurrPrev &state, State newState);
 
 
 /**
@@ -17,4 +17,4 @@ void setState(StateCurrPrev &state, State newState);
  * @return true 
  * @return false 
  */
-bool stateJustEntered(StateCurrPrev &state, State s);
+bool State_util_did_just_enter(StateCurrPrev &state, State s);

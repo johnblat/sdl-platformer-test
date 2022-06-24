@@ -7,7 +7,7 @@
 #include <vector>
 #include "ray2d.h"
 #include "states.h"
-#include "stateProcessing.h"
+#include "state_util.h"
 #include <cmath>
 #include "solid_rect.h"
 #include "collisions.h"
@@ -18,7 +18,7 @@
 // SYSTEMS
 // =======
 
-void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
+void movement_apply_velocity_to_position_System(flecs::iter &it, Velocity *velocities, Position *positions){
     for(auto i : it){
         positions[i].x += velocities[i].x ;//* it.delta_time();
         positions[i].y += velocities[i].y ;//* it.delta_time();
@@ -27,7 +27,7 @@ void moveSystem(flecs::iter &it, Velocity *velocities, Position *positions){
 
 
 
-void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, GroundSpeed *groundSpeeds, Input *inputs, StateCurrPrev *states, Angle *angles){
+void movement_GrounSpeed_Velocity_update_from_Input_and_Phyics_System(flecs::iter &it, Velocity *velocities, GroundSpeed *groundSpeeds, Input *inputs, StateCurrPrev *states, Angle *angles){
 
     const float acc = 0.046875;// * 600;
     const float frc = 0.046875;// * 600;
@@ -44,7 +44,7 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, GroundSpee
    
 
     for(auto i : it){
-        if(stateJustEntered(states[i], STATE_ON_GROUND)){
+        if(State_util_did_just_enter(states[i], STATE_ON_GROUND)){
 
             // shallow
             if((angles[i].rads >= degToRads(0.0f) && angles[i].rads <= degToRads(23.0f))
@@ -126,7 +126,7 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, GroundSpee
 
 
             if(Input_is_just_pressed(inputs[i], "jump")){
-                setState(states[i], STATE_IN_AIR);
+                State_util_set(states[i], STATE_IN_AIR);
                 velocities[i].x -= jump * sin(angles[i].rads);
                 velocities[i].y -= jump * cos(angles[i].rads);
             }
@@ -153,13 +153,10 @@ void InputVelocitySetterSystem(flecs::iter &it, Velocity *velocities, GroundSpee
 }
 
 
-void gravitySystem(flecs::iter &it, Velocity *velocities, StateCurrPrev *states){
+void movement_velocity_apply_gravity_System(flecs::iter &it, Velocity *velocities, StateCurrPrev *states){
     const float grv = 0.21875f;
     for(int i : it){
-        // if(states[i].currentState == STATE_ON_GROUND){
-        //     velocities[i].y = 0;
-        //     continue;
-        // }
+
         if(states[i].currentState == STATE_IN_AIR){
             if(velocities[i].y < 0.0f && velocities[i].y > -4.0f){
                 velocities[i].x -= ((velocities[i].x / 0.125f) / 256);

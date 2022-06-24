@@ -8,9 +8,9 @@ extern Position gCenterScreen;
 extern float gZoomAmount;
 extern float gZoomSpeed;
 
-void inputZoomSystem(flecs::iter &it, Input *inputs);
-void zoomRenderSetupSystem(flecs::iter &it);
-void inputCameraMoveSystem(flecs::iter &it, Input *inputs);
-v2d worldPositionToCamPosition(v2d w);
+void cam_input_zoom_System(flecs::iter &it, Input *inputs);
+void cam_zoom_render_frame_start_System(flecs::iter &it);
+void cam_input_camera_move_System(flecs::iter &it, Input *inputs);
+v2d cam_util_world_position_to_camera_position(v2d w);
 
 #endif

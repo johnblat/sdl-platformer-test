@@ -19,8 +19,8 @@ extern Position gCameraPosition;
  * @param numAnimations 
  * @param deltaTime 
  */
-// void animationsAccumulationSystem(AnimatedSprite *animatedSprites, size_t numAnimations, float deltaTime);
-void animationsAccumulationSystem(flecs::iter &it, AnimatedSprite *animatedSprites);
+// void anim_update_AnimatedSprite_accumulate_time_to_increment_frame_System(AnimatedSprite *animatedSprites, size_t numAnimations, float deltaTime);
+void anim_update_AnimatedSprite_accumulate_time_to_increment_frame_System(flecs::iter &it, AnimatedSprite *animatedSprites);
 
 
 /**
@@ -30,7 +30,7 @@ void animationsAccumulationSystem(flecs::iter &it, AnimatedSprite *animatedSprit
  * @param animatedSprites 
  * @param keyStatesCollections 
  */
-void KeyboardStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections);
+void anim_update_KeyboardState_AnimatedSprite_set_animation_System(flecs::iter &it, AnimatedSprite *animatedSprites, KeyboardState *keyStatesCollections);
 
 /**
  * @brief sets animation according to the velocity of the entity
@@ -39,7 +39,7 @@ void KeyboardStateAnimationSetterSystem(flecs::iter &it, AnimatedSprite *animate
  * @param animatedSprites 
  * @param velocities 
  */
-void setAnimationBasedOnSpeedSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities, StateCurrPrev *states);
+void anim_update_AnimatedSprite_set_animation_based_on_speed_and_state__System(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities, StateCurrPrev *states);
 
 /**
  * @brief will flip the animated sprite based on the key that is pressed. intended to set the left and right facing directions
@@ -48,7 +48,7 @@ void setAnimationBasedOnSpeedSystem(flecs::iter &it, AnimatedSprite *animatedSpr
  * @param animatedSprites 
  * @param keyStatesCollections 
  */
-void InputFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Input *inputs);
+void anim_update_AnimatedSprite_flip_based_on_Input_System(flecs::iter &it, AnimatedSprite *animatedSprites, Input *inputs);
 
 /**
  * @brief Create a Animated Sprite object with the spriteSheetId
@@ -56,14 +56,14 @@ void InputFlipSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Input *in
  * @param spriteSheetId the id of the sprite sheet this animatedSprite will reference
  * @return AnimatedSprite 
  */
-AnimatedSprite createAnimatedSprite(u32 spriteSheetId);
+AnimatedSprite anim_util_AnimatedSprite_create(u32 spriteSheetId);
 
 /**
  * @brief creates a blank animation to the animated Sprite's animation list
  * 
  * @param animatedSprite 
  */
-void addNewAnimationToAnimatedSprite(AnimatedSprite *animatedSprite);
+void anim_util_AnimatedSprite_add_blank_Animation(AnimatedSprite *animatedSprite);
 
 /**
  * @brief Overwrites an animation in the animation list at animationIndex within the animatedsprite
@@ -72,8 +72,8 @@ void addNewAnimationToAnimatedSprite(AnimatedSprite *animatedSprite);
  * @param animationIndex the index in the animated sprite's animation list to overwrite
  * @param Animation the animation that will overwrite the animation at the animation index
  */
-void addAnimationToAnimatedSprite(AnimatedSprite &animatedSprite, Animation animation);
-void overwriteAnimationOnAnimatedSprite(AnimatedSprite *animatedSprite, u32 animationIndex, Animation animation);
+void anim_util_AnimatedSprite_add_Animation(AnimatedSprite &animatedSprite, Animation animation);
+void anim_util_AnimatedSprite_overwrite_Animation_at_index(AnimatedSprite *animatedSprite, u32 animationIndex, Animation animation);
 
 
 /**
@@ -91,7 +91,7 @@ void setFpsForAnimatedSprite(AnimatedSprite *animatedSprite, float fps);
  * @param positions list of posisitions for all the animated sprites
  * @param numEntities number of iterations over the above arrays
  */
-void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions, Angle *angles);
+void anim_render_AnimatedSprites_System(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions, Angle *angles);
 
 /**
  * @brief Sets the current animation of animated sprite to the one that matches  the animationName. Crashes if animationName doesn't exist
@@ -99,20 +99,20 @@ void renderingAnimatedSpritesSystem(flecs::iter &it, AnimatedSprite *animatedSpr
  * @param as the animatedSprite to set current animation of
  * @param animationName the name of the new current animation
  */
-void animatedSpritePlay(AnimatedSprite *as, std::string animationName);
+void anim_util_AnimatedSprite_play(AnimatedSprite *as, std::string animationName);
 
 /**
  * @brief just sets the currentFrame to 0. This can be very helpful for non looping animatins
  * 
  * @param animation 
  */
-void restartAnimation(Animation *animation);
+void anim_util_Animation_restart(Animation *animation);
 
 /**
  * @brief has the number of frames in animation been reached?
  * 
  */
-bool isAnimationFinished(Animation *animation);
+bool anim_util_Animation_has_reached_final_frame(Animation *animation);
 
 /**
  * @brief Create a Animation object
@@ -123,6 +123,6 @@ bool isAnimationFinished(Animation *animation);
  * @param name name of the animation
  * @return Animation 
  */
-Animation createAnimation(std::vector<u32> frameIndices, float FPS, bool isLoop, std::string name);
+Animation anim_util_Animation_init(std::vector<u32> frameIndices, float FPS, bool isLoop, std::string name);
 
 #endif
