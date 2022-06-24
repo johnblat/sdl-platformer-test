@@ -122,15 +122,17 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
         {
             v2d lfRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LF_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            v2d globalPosition = util_local_to_global_position(lfRotatedPos, positions[i]);
+            v2d worldPosition = util_local_to_world_position(lfRotatedPos, positions[i]);
 
-            v2d positionInCamera = cam_util_world_position_to_camera_position(globalPosition);
+            v2d positionInCamera = cam_util_world_position_to_camera_position(worldPosition);
 
             SDL_Color fillColor = {167, 236, 29 ,255};
             SDL_Color borderColor = {0,0,0,255};
 
             if(groundModes[i] == LEFT_WALL_GM){
-                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x - sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+                Position p = {worldPosition.x - sensorCollections[i].rays[LF_SENSOR].distance, worldPosition.y};
+                render_line(worldPosition, p, fillColor);
+                //renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x - sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
             }
             else if(groundModes[i] == RIGHT_WALL_GM){
                 renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
@@ -139,7 +141,9 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
                 renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y - sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
             }
             else {
-                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+                Position p = {worldPosition.x, worldPosition.y + sensorCollections[i].rays[LF_SENSOR].distance};
+                render_line(worldPosition, p, fillColor);
+                //renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
             }
             
         }
@@ -147,9 +151,9 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
         {
             v2d rfRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[RF_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            v2d globalPosition = util_local_to_global_position(rfRotatedPos, positions[i]);
+            v2d worldPosition = util_local_to_world_position(rfRotatedPos, positions[i]);
 
-            v2d positionInCamera = cam_util_world_position_to_camera_position(globalPosition);
+            v2d positionInCamera = cam_util_world_position_to_camera_position(worldPosition);
 
             SDL_Color fillColor = {29, 236, 158,255};
             SDL_Color borderColor = {0,0,0,255};
@@ -172,9 +176,9 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
         {
             v2d lwRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LW_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            v2d globalPosition = util_local_to_global_position(lwRotatedPos, positions[i]);
+            v2d worldPosition = util_local_to_world_position(lwRotatedPos, positions[i]);
 
-            v2d positionInCamera = cam_util_world_position_to_camera_position(globalPosition);
+            v2d positionInCamera = cam_util_world_position_to_camera_position(worldPosition);
 
             SDL_Color fillColor = {255, 151, 241 ,255};
             SDL_Color borderColor = {0,0,0,255};
@@ -196,9 +200,9 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
         {
             v2d lwRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LW_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
-            v2d globalPosition = util_local_to_global_position(lwRotatedPos, positions[i]);
+            v2d worldPosition = util_local_to_world_position(lwRotatedPos, positions[i]);
 
-            v2d positionInCamera = cam_util_world_position_to_camera_position(globalPosition);
+            v2d positionInCamera = cam_util_world_position_to_camera_position(worldPosition);
 
             SDL_Color fillColor = {244, 0, 50 ,255};
             SDL_Color borderColor = {0,0,0,255};

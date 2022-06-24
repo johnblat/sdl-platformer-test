@@ -15,7 +15,7 @@ void util_index_1d_to_2d(u32 i, u32 numRows, u32 *row, u32 *col){
     *col = i % (numRows);
 }
 
-v2d util_local_to_global_position(v2d l, v2d o){
+v2d util_local_to_world_position(v2d l, v2d o){
     v2d g = l + o;
     return g;
 }

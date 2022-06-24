@@ -28,22 +28,13 @@ void render_line(Position p1, Position p2, SDL_Color color){
         255
     ); 
 
-    Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f};
-
-
-    float scale;
-    SDL_RenderGetScale(gRenderer,&scale, nullptr );
-    Position scaledCenterScreen = {centerScreen.x / scale, centerScreen.y / scale};
-
-    p1.x = p1.x - gCameraPosition.x + scaledCenterScreen.x;
-    p1.y = p1.y - gCameraPosition.y + scaledCenterScreen.y;
-
-    p2.x = p2.x - gCameraPosition.x + scaledCenterScreen.x;
-    p2.y = p2.y - gCameraPosition.y + scaledCenterScreen.y;
+    p1 = cam_util_world_position_to_camera_position(p1);
+    p2 = cam_util_world_position_to_camera_position(p2);
 
     SDL_RenderDrawLineF(gRenderer, p1.x, p1.y, p2.x, p2.y);
 
 }
+
 
 
 void render_poly_line(Position offsetPosition, std::vector<Position> points, SDL_Color color){
