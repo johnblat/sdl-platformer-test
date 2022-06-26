@@ -75,38 +75,37 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
         // NOTE!!!
         // COMMENTED OUT TO IGNORE WALL SENSORS FOR NOW
 
-        // f.each([&](flecs::entity e, Position &position, platformPath &platformPath){
-        //         //walls
-        //     size_t lenCollection = platformPath.vals.size();
-        //     for(int j = 0; j < lenCollection - 1; j++){
-        //         Position p1 = platformPath.vals.at(j);
-        //         Position p2 = platformPath.vals.at(j+1);
-        //         v2d v1(p1.x + position.x, p1.y + position.y);
-        //         v2d v2(p2.x + position.x, p2.y + position.y);
-        //         float distanceFromPoint;
+        f.each([&](flecs::entity e, Position &position, PlatformPath &platformPath){
+                //walls
+            for(int j = 0; j < platformPath.nodes.size() - 1; j++){
+                Position p1 = platformPath.nodes.at(j);
+                Position p2 = platformPath.nodes.at(j+1);
+                v2d v1(p1.x + position.x, p1.y + position.y);
+                v2d v2(p2.x + position.x, p2.y + position.y);
+                float distanceFromPoint;
                 
-        //         // is wall?
-        //         if(p1.x == p2.x){
-        //             // moving right
-        //             if(velocities[i].x > 0){
-        //                 if(ray2dIntersectLineSegment(rwRayGlobal, v1, v2, distanceFromPoint, RW_SENSOR)){
-        //                     positions[i].x = v1.x - rwRayGlobal.distance;
-        //                     velocities[i].x = 0;
-        //                     groundSpeeds[i].val = 0.0f;
-        //                 }
-        //             }
-        //             // moving left
-        //             else {
-        //                 if(ray2dIntersectLineSegment(lwRayGlobal, v1, v2, distanceFromPoint, LW_SENSOR)){
-        //                     positions[i].x = v1.x + lwRayGlobal.distance;
-        //                     velocities[i].x = 0;
-        //                     groundSpeeds[i].val = 0.0f;
-        //                 }
-        //             }
-        //         }
+                // is wall?
+                if(true){
+                    // moving right
+                    if(velocities[i].x > 0){
+                        if(collisions_Ray2d_intersects_line_segment(rwRayGlobal, v1, v2, distanceFromPoint, RW_SENSOR)){
+                            positions[i].x = v1.x - rwRayGlobal.distance;
+                            velocities[i].x = 0;
+                            groundSpeeds[i].val = 0.0f;
+                        }
+                    }
+                    // moving left
+                    else {
+                        if(collisions_Ray2d_intersects_line_segment(lwRayGlobal, v1, v2, distanceFromPoint, LW_SENSOR)){
+                            positions[i].x = v1.x + lwRayGlobal.distance;
+                            velocities[i].x = 0;
+                            groundSpeeds[i].val = 0.0f;
+                        }
+                    }
+                }
                 
-        //     }
-        // });
+            }
+        });
 
         Ray2d lfSesnorRayLocal = sensorCollections[i].rays[LF_SENSOR];
         Ray2d lfRayGlobal;

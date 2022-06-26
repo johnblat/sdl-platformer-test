@@ -1,7 +1,9 @@
-#include "v2d.h"
-#include "util.h"
-#include "ray2d.h"
+#include "circle.h"
 #include "collisions.h"
+#include "ray2d.h"
+#include "util.h"
+#include "v2d.h"
+
 
 bool collisions_Ray2d_intersects_line_segment(Ray2d ray, Position p1, Position p2, float &distanceFromRayOrigin, SensorType sensorType){
     if(sensorType == LF_SENSOR || sensorType == RF_SENSOR){
@@ -42,51 +44,32 @@ bool collisions_Ray2d_intersects_line_segment(Ray2d ray, Position p1, Position p
 }
 
 
-bool collisions_point_intersects_point_with_tolerance(v2d p1, v2d p2, float tolerance){
-    v2d v = p1 - p2;
-    float distance = v2d_magnitude(v);
-    if(fabs(distance) <= tolerance){
+bool collisions_point_intersect_circle(v2d p, Circle circle){
+    v2d v_circle_midpoint_to_p = v2d_sub(p, circle.midpoint);
+    float magnitude_circle_midpoint_to_p = v2d_magnitude(v_circle_midpoint_to_p);
+    if(magnitude_circle_midpoint_to_p <= circle.radius){
         return true;
     }
     return false;
 }
 
-bool collisions_horizontal_Ray2d_intersect_line_segment(Ray2d ray, v2d linePoint1, v2d linePoint2){
-    if(!util_is_in_range(linePoint1.y, linePoint2.y, ray.startingPosition.y)){
-        return false;
-    }
-    float x = util_get_x_for_y_on_line(linePoint1, linePoint2, ray.startingPosition.y);
-    float distanceFromRayStartPoint = fabs(x - ray.startingPosition.x);
-    if(distanceFromRayStartPoint > ray.distance || distanceFromRayStartPoint < 0){
-        return false;
-    }
-    return true;
-}
 
-
-bool collisions_vertical_Ray2d_intersect_line_segment(Ray2d ray, v2d linePoint1, v2d linePoint2){
-    if(!util_is_in_range(linePoint1.x, linePoint2.x, ray.startingPosition.x)){
-        return false;
-    }
-    float y = util_get_y_for_x_on_line(linePoint1, linePoint2, ray.startingPosition.x);
-    float distanceFromRayStartPoint = fabs(y - ray.startingPosition.y);
-    if(distanceFromRayStartPoint > ray.distance || distanceFromRayStartPoint < 0){
-        return false;
-    }
-    return true;
-}
-
-// Maybe instead of tolerance, I can give the line a "thickness"
-bool collisions_point_intersect_line_segment_with_tolerance(v2d linePoint1, v2d linePoint2, v2d p, float tolerance ){
-    Ray2d ray;
-    ray.startingPosition = p;
-    ray.distance = tolerance;
-
-    if(collisions_vertical_Ray2d_intersect_line_segment(ray, linePoint1, linePoint2)){
+bool collisions_line_segment_intersect_circle(v2d p1, v2d p2, Circle circle){
+    if(collisions_point_intersect_circle(p1, circle)){
         return true;
     }
-    else if(collisions_horizontal_Ray2d_intersect_line_segment(ray, linePoint1, linePoint2)){
+    if(collisions_point_intersect_circle(p2, circle)){
         return true;
     }
+
+    float shortest_distance_from_circle_midpoint_to_line_segment =
+        v2d_shortest_distance_from_point_to_line_segment(circle.midpoint, p1, p2);
+    
+    if(shortest_distance_from_circle_midpoint_to_line_segment <= circle.radius){
+        return true;
+    }
+    
     return false;
 }
+
+

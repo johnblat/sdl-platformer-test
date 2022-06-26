@@ -102,4 +102,61 @@ v2d v2d_perp(v2d v){
     return perpV;
 }
 
+v2d v2d_orthogonal_projection_point_to_line(v2d p, v2d line_p1, v2d line_p2){
+    v2d v_line_segment_direction_vector = v2d_sub(line_p2, line_p1);
+    v2d v_point_to_line_p1 = v2d_sub(line_p1, p);
 
+    v2d v_orthogonal_projection_point_to_direction_vector =
+        v2d_add(
+            p, v2d_scale(
+                v2d_dot(
+                    v_point_to_line_p1, 
+                    v_line_segment_direction_vector
+                ) / v2d_dot(
+                    v_line_segment_direction_vector, 
+                    v_line_segment_direction_vector
+                ), 
+                v_line_segment_direction_vector
+            )
+        );
+    return v_orthogonal_projection_point_to_direction_vector;
+}
+
+
+float v2d_shortest_distance_from_point_to_line_segment(v2d p, v2d line_p1, v2d line_p2){
+    v2d v_line_segment_direction_vector = v2d_sub(line_p2, line_p1);
+    v2d v_point_to_line_p1 = v2d_sub(p, line_p1);
+    v2d v_point_to_line_p2 = v2d_sub(p, line_p2);
+
+    float t0 = v2d_dot(v_point_to_line_p1, v_line_segment_direction_vector)
+        / v2d_dot(v_line_segment_direction_vector, v_line_segment_direction_vector);
+    
+    float distance = 0.0f;
+
+    if(t0 <= 0.0f){
+        distance = fabs(v2d_magnitude(v_point_to_line_p1));
+        return distance;
+    }
+
+    else if(t0 > 0.0f && t0 < 1.0f){
+        distance = fabs(
+            v2d_magnitude(
+                v2d_sub(
+                    p,
+                    v2d_add(
+                        line_p1,
+                        v2d_scale(
+                            t0,
+                            v_line_segment_direction_vector
+                        )
+                    )
+                )
+            )
+        );
+        return distance;
+    }
+
+    distance = fabs(v2d_magnitude(v_point_to_line_p2));
+    return distance;
+
+}

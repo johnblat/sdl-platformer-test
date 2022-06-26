@@ -81,7 +81,7 @@ ed_PlatformPath_select_on_click_System(flecs::iter &it, MouseState *mouseStates)
             bool didSelect = false; // can't remove and add tags to editor entity inside below inline function
 
             f.iter([&](flecs::iter &it, Position *ps, PlatformPath *platformPaths){
-                float distanceForSelectionTolerance = 8.0f; // how far away can user click
+                float distanceForSelectionTolerance = 5.0f; // how far away can user click
 
                 for(u32 j : it){
                     if(it.entity(j).has<SelectedForEditing>()){
@@ -91,7 +91,11 @@ ed_PlatformPath_select_on_click_System(flecs::iter &it, MouseState *mouseStates)
                         v2d nodePosition = v2d_add(ps[j], platformPaths[j].nodes[k]);
                         v2d nodePosition2 = v2d_add(ps[j], platformPaths[j].nodes[k+1]);
 
-                        if(collisions_point_intersect_line_segment_with_tolerance(nodePosition, nodePosition2, mousePosition, distanceForSelectionTolerance)){
+                        Circle circleMouseClick;
+                        circleMouseClick.midpoint = mousePosition;
+                        circleMouseClick.radius = distanceForSelectionTolerance;
+
+                        if(collisions_line_segment_intersect_circle(nodePosition, nodePosition2, circleMouseClick)){
                             flecs::world world = it.world();
 
                             it.world().defer_begin();
@@ -191,7 +195,11 @@ ed_PlatformPath_node_select_on_click_System(flecs::iter &it, MouseState *mouseSt
                 for(int j = 0; j < platformPath.nodes.size(); j++){
                     Position worldPlatformPathNodePosition = v2d_add(position, platformPath.nodes[j]);
                     
-                    if(collisions_point_intersects_point_with_tolerance(mousePosition, worldPlatformPathNodePosition, distanceForSelectionTolerance)){
+                    Circle nodeCircle;
+                    nodeCircle.midpoint = worldPlatformPathNodePosition;
+                    nodeCircle.radius = distanceForSelectionTolerance;
+
+                    if(collisions_point_intersect_circle(mousePosition, nodeCircle)){
                         SelectedForEditingNode sn;
                         sn.idx = j;
                         it.world().defer_begin();
@@ -242,15 +250,19 @@ ed_PlatformPath_node_move_on_drag_System(flecs::iter &it, MouseState *mouseState
         }
         else if(mouseStates[i].lmbCurrentState == INPUT_IS_JUST_PRESSED){
             float distanceForSelectionTolerance = 5.0f;
-
+            
             v2d mousePosition = mouseStates[i].worldPosition;
 
             filter_platformPaths
                 .each([&](flecs::entity e, Position position, PlatformPath platformPath){
                     for(int j = 0; j < platformPath.nodes.size(); j++){
                         Position worldPlatformPathNodePosition = v2d_add(position, platformPath.nodes[j]);
-                        
-                        if(collisions_point_intersects_point_with_tolerance(mousePosition, worldPlatformPathNodePosition, distanceForSelectionTolerance)){
+
+                        Circle nodeCircle;
+                        nodeCircle.midpoint = worldPlatformPathNodePosition;
+                        nodeCircle.radius = distanceForSelectionTolerance;
+
+                        if(collisions_point_intersect_circle(mousePosition, nodeCircle)){
                             SelectedForEditingNode sn;
                             sn.idx = j;
                             it.world().defer_begin();
