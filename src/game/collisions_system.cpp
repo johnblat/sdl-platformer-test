@@ -82,13 +82,27 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
                 Position p2 = platformPath.nodes.at(j+1);
                 v2d v1(p1.x + position.x, p1.y + position.y);
                 v2d v2(p2.x + position.x, p2.y + position.y);
+                v2d r1 = v1;
+                v2d r2 = v2;
+                if(groundModes[i] == RIGHT_WALL_GM && states[i].currentState == STATE_ON_GROUND){
+                    r1 = v2dRotate90DegreesCW(v1, positions[i]);
+                    r2 = v2dRotate90DegreesCW(v2, positions[i]);
+                }
+                else if(groundModes[i] == LEFT_WALL_GM && states[i].currentState == STATE_ON_GROUND){
+                    r1 = v2dRotate90DegreesCCW(v1, positions[i]);
+                    r2 = v2dRotate90DegreesCCW(v2, positions[i]);
+                }
+                else if(groundModes[i] == CEILING_GM && states[i].currentState == STATE_ON_GROUND){
+                    r1 = v2dRotate180Degrees(v1, positions[i]);
+                    r2 = v2dRotate180Degrees(v2, positions[i]);
+                }
                 float distanceFromPoint;
                 
                 // is wall?
                 if(true){
                     // moving right
                     if(velocities[i].x > 0){
-                        if(collisions_Ray2d_intersects_line_segment(rwRayGlobal, v1, v2, distanceFromPoint, RW_SENSOR)){
+                        if(collisions_Ray2d_intersects_line_segment(rwRayGlobal, r1, r2, distanceFromPoint, RW_SENSOR)){
                             positions[i].x = v1.x - rwRayGlobal.distance;
                             velocities[i].x = 0;
                             groundSpeeds[i].val = 0.0f;
@@ -96,7 +110,7 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
                     }
                     // moving left
                     else {
-                        if(collisions_Ray2d_intersects_line_segment(lwRayGlobal, v1, v2, distanceFromPoint, LW_SENSOR)){
+                        if(collisions_Ray2d_intersects_line_segment(lwRayGlobal, r1, r2, distanceFromPoint, LW_SENSOR)){
                             positions[i].x = v1.x + lwRayGlobal.distance;
                             velocities[i].x = 0;
                             groundSpeeds[i].val = 0.0f;
@@ -121,9 +135,7 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
 
         f.each([&](flecs::entity e, Position &position, PlatformPath &platformPath){
             size_t len = platformPath.nodes.size();
-            for(int v = 0; v < len - 1; v++){
-                //util_break_on_condition(groundModes[i] == RIGHT_WALL_GM || groundModes[i] == LEFT_WALL_GM);
-                
+            for(int v = 0; v < len - 1; v++){                
                 Position p1 = platformPath.nodes.at(v);
                 Position p2 = platformPath.nodes.at(v+1);
                 v2d v1(p1.x + position.x, p1.y + position.y);
@@ -146,7 +158,6 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
                 float distanceFromPoint;
 
                 if(collisions_Ray2d_intersects_line_segment(lfRayGlobal, r1, r2, distanceFromPoint, LF_SENSOR)){
-                   //util_break_on_condition(groundModes[i] == CEILING_GM);
                     state = STATE_ON_GROUND;
                     v2d intersectionPoint(
                             lfRayGlobal.startingPosition.x,
@@ -160,7 +171,6 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
                 }
 
                 if(collisions_Ray2d_intersects_line_segment(rfRayGlobal, r1, r2, distanceFromPoint, RF_SENSOR)){
-                    //util_break_on_condition(groundModes[i] == CEILING_GM);
                     state = STATE_ON_GROUND;
                     v2d intersectionPoint(
                             rfRayGlobal.startingPosition.x,
