@@ -17,5 +17,9 @@ void movement_GrounSpeed_Velocity_update_from_Input_and_Phyics_System(flecs::ite
 
 void movement_velocity_apply_gravity_System(flecs::iter &it, Velocity *velocities, StateCurrPrev *states);
 
+void movement_ControlLockTimer_update_when_on_ground(flecs::iter &it, ControlLockTimer *controlLockTimers, StateCurrPrev *states);
+
+void movement_GroundSpeed_zero_ControlLockTimer_add_based_on_too_steep_angle_System(flecs::iter &it, GroundSpeed *groundSpeeds, Angle *angles, StateCurrPrev *states);
+
 
 #endif

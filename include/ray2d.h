@@ -12,12 +12,12 @@ struct Ray2d {
 };
 
 enum SensorType {
-    LF_SENSOR, // Left Floor
-    RF_SENSOR, // Right Floor
-    LW_SENSOR, // Left Wall
-    RW_SENSOR, // Right Wall
-    LC_SENSOR, // Left Ceiling
-    RC_SENSOR // Right Ceiling
+    SENSOR_LEFT_FLOOR, // Left Floor
+    SENSOR_RIGHT_FLOOR, // Right Floor
+    SENSOR_LEFT_WALL, // Left Wall
+    SENSOR_RIGHT_WALL, // Right Wall
+    SENSOR_LEFT_CEILING, // Left Ceiling
+    SENSOR_RIGHT_CEILING // Right Ceiling
 };
 
 

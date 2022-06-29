@@ -13,6 +13,15 @@
 #include "collisions.h"
 
 
+// maybe separate into different functions for the purpose of not checking control lock timer in system
+// void movement_GroundSpeed_update_from_Input_and_Physics_System(flecs::iter &it, GroundSpeed *groundSpeeds, Velocity *velocities, Input *inputs, StateCurrPrev *states, Angle *angles){
+
+// }
+
+
+// void movement_Velocity_apply_GroundSpeed(flecs::iter &it, GroundSpeed *groundSpeeds, Velocity *velocities, StateCurrPrev *states, Angle *angles){
+
+// }
 
 // ======= 
 // SYSTEMS
@@ -24,6 +33,8 @@ void movement_apply_velocity_to_position_System(flecs::iter &it, Velocity *veloc
         positions[i].y += velocities[i].y ;//* it.delta_time();
     }
 }
+
+
 
 
 
@@ -82,7 +93,7 @@ void movement_GrounSpeed_Velocity_update_from_Input_and_Phyics_System(flecs::ite
             groundSpeeds[i].val -= slp * sin(angles[i].rads);
 
             // side
-            if(Input_is_pressed(inputs[i], "left")){
+            if(Input_is_pressed(inputs[i], "left") && !it.entity(i).has<ControlLockTimer>()){
                 if(groundSpeeds[i].val > 0){ // moving right
                     groundSpeeds[i].val -= dec;
                 }
@@ -91,7 +102,7 @@ void movement_GrounSpeed_Velocity_update_from_Input_and_Phyics_System(flecs::ite
                     groundSpeeds[i].val = MAX(groundSpeeds[i].val, -topSpeed);
                 }
             }
-            else if(Input_is_pressed(inputs[i], "right")){
+            else if(Input_is_pressed(inputs[i], "right") && !it.entity(i).has<ControlLockTimer>()){
                 if(groundSpeeds[i].val < 0){ // moving left
                     groundSpeeds[i].val += dec;
                 }
@@ -117,7 +128,7 @@ void movement_GrounSpeed_Velocity_update_from_Input_and_Phyics_System(flecs::ite
                     }
                 }
                 else {
-                    groundSpeeds[i].val = 0;
+                    //groundSpeeds[i].val = 0;
                 }
             }
 
@@ -166,6 +177,60 @@ void movement_velocity_apply_gravity_System(flecs::iter &it, Velocity *velocitie
             if (velocities[i].y > 16.0f){
                 velocities[i].y = 16.0f;
             } 
+        }
+    }
+}
+
+
+
+void movement_ControlLockTimer_update_when_on_ground(flecs::iter &it, ControlLockTimer *controlLockTimers, StateCurrPrev *states){
+    for(u64 i : it){
+        if(states[i].currentState != STATE_ON_GROUND){
+            continue;
+        }
+
+        controlLockTimers[i].accumulator += it.delta_time();
+        if(controlLockTimers[i].accumulator >= controlLockTimers[i].endTicks){
+
+            controlLockTimers[i].endTicks = 0.0f;
+            controlLockTimers[i].accumulator = 0.0f;
+
+            flecs::world world = it.world();
+            
+            world.defer_begin();
+
+            it.entity(i).remove<ControlLockTimer>();
+            
+            world.defer_end();
+
+        }
+    }
+}
+
+void movement_GroundSpeed_zero_ControlLockTimer_add_based_on_too_steep_angle_System(flecs::iter &it, GroundSpeed *groundSpeeds, Angle *angles, StateCurrPrev *states){
+    const float slip_range_angle_degrees_start = 46.0f;
+    const float slip_range_angle_degrees_end = 315.0f;
+
+    for(u64 i : it){
+        float angle_degrees = util_rads_to_degrees(angles[i].rads);
+
+        if(util_in_range(angle_degrees, slip_range_angle_degrees_start, slip_range_angle_degrees_end)){
+            if(fabs(groundSpeeds[i].val) < 2.5f){
+                State_util_set(states[i], STATE_IN_AIR);
+                groundSpeeds[i].val = 0.0f;
+
+                flecs::world world = it.world();
+
+                world.defer_begin();
+
+                it.entity(i).set<ControlLockTimer>(
+                    (ControlLockTimer){
+                        0.5f, 0.0f
+                    }
+                );
+
+                world.defer_end();
+            }
         }
     }
 }

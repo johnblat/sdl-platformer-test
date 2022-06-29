@@ -1,3 +1,5 @@
+#include "flecs.h"
+#include "input.h"
 #include "timestep.h"
 #include <SDL2/SDL.h>
 #include "ints.h"
@@ -27,5 +29,16 @@ void ts_TimeStep_delay_remaining_time(TimeStep &ts){
         float secondsRemainingToFixTimeStep = ts.secondsPerFrame - totalSeconds;
         float msRemainingToFixTimeStep = secondsRemainingToFixTimeStep * 1000;
         SDL_Delay((u32)msRemainingToFixTimeStep);
+    }
+}
+
+void ts_TimeStep_adjust_on_input_System(flecs::iter &it, Input *inputs){
+    for(u64 i : it){
+        if(Input_is_just_released(inputs[i], "frame-rate-increase")){
+            gTimeStep = ts_TimeStep_init(60.0f);
+        }
+        else if(Input_is_just_released(inputs[i], "frame-rate-decrease")){
+            gTimeStep = ts_TimeStep_init(2.0f);
+        }
     }
 }

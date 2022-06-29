@@ -6,7 +6,7 @@
 
 
 bool collisions_Ray2d_intersects_line_segment(Ray2d ray, Position p1, Position p2, float &distanceFromRayOrigin, SensorType sensorType){
-    if(sensorType == LF_SENSOR || sensorType == RF_SENSOR){
+    if(sensorType == SENSOR_LEFT_FLOOR || sensorType == SENSOR_RIGHT_FLOOR){
         if(!util_is_in_range(p1.x, p2.x, ray.startingPosition.x)){
             return false;
         }
@@ -17,7 +17,7 @@ bool collisions_Ray2d_intersects_line_segment(Ray2d ray, Position p1, Position p
         }
         return true;
     }
-    else if(sensorType == RW_SENSOR){
+    else if(sensorType == SENSOR_RIGHT_WALL){
         if(!util_is_in_range(p1.y, p2.y, ray.startingPosition.y)){
             return false;
         }
@@ -28,7 +28,8 @@ bool collisions_Ray2d_intersects_line_segment(Ray2d ray, Position p1, Position p
         }
         return true;
     }
-    else if(sensorType == LW_SENSOR){
+    else if(sensorType == SENSOR_LEFT_WALL){
+        util_break_on_condition(p1.x == p2.x);
         if(!util_is_in_range(p1.y, p2.y, ray.startingPosition.y)){
             return false;
         }

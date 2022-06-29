@@ -78,14 +78,14 @@ void renderSelectedPlatformNodeNodesSystem(flecs::iter &it, SelectedForEditingNo
 
 v2d rotateSensorPositionBasedOnGroundMode(v2d v, v2d o, GroundMode groundMode){
     v2d rotated = v;
-    if(groundMode == LEFT_WALL_GM){
-        rotated = v2dRotate90DegreesCW(rotated, o);
+    if(groundMode == GROUND_MODE_LEFT_WALL){
+        rotated = v2d_rotate_90_degrees_clockwise(rotated, o);
     }
-    else if(groundMode == RIGHT_WALL_GM){
-        rotated = v2dRotate90DegreesCCW(rotated, o);
+    else if(groundMode == GROUND_MODE_RIGHT_WALL){
+        rotated = v2d_rotate_90_degrees_counter_clockwise(rotated, o);
     }
-    else if(groundMode == CEILING_GM ){
-        rotated = v2dRotate180Degrees(v, o);
+    else if(groundMode == GROUND_MODE_CEILING ){
+        rotated = v2d_rotate_180_degrees(v, o);
     }
     return rotated;
 }
@@ -120,7 +120,7 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
     for(u64 i : it){
 
         {
-            v2d lfRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LF_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
+            v2d lfRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[SENSOR_LEFT_FLOOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
             v2d worldPosition = util_local_to_world_position(lfRotatedPos, positions[i]);
 
@@ -129,27 +129,27 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
             SDL_Color fillColor = {167, 236, 29 ,255};
             SDL_Color borderColor = {0,0,0,255};
 
-            if(groundModes[i] == LEFT_WALL_GM){
-                Position p = {worldPosition.x - sensorCollections[i].rays[LF_SENSOR].distance, worldPosition.y};
-                render_line(worldPosition, p, fillColor);
-                //renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x - sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            if(groundModes[i] == GROUND_MODE_LEFT_WALL){
+                Position p = {worldPosition.x - sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance, worldPosition.y};
+                //render_line(worldPosition, p, fillColor);
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x - sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance, positionInCamera.y, fillColor, borderColor);
             }
-            else if(groundModes[i] == RIGHT_WALL_GM){
-                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance, positionInCamera.y, fillColor, borderColor);
             }
-            else if(groundModes[i] == CEILING_GM){
-                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y - sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            else if(groundModes[i] == GROUND_MODE_CEILING){
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y - sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance, positionInCamera.x, fillColor, borderColor);
             }
             else {
-                Position p = {worldPosition.x, worldPosition.y + sensorCollections[i].rays[LF_SENSOR].distance};
-                render_line(worldPosition, p, fillColor);
-                //renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[LF_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+                Position p = {worldPosition.x, worldPosition.y + sensorCollections[i].rays[SENSOR_LEFT_WALL].distance};
+                //render_line(worldPosition, p, fillColor);
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance, positionInCamera.x, fillColor, borderColor);
             }
             
         }
 
         {
-            v2d rfRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[RF_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
+            v2d rfRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
             v2d worldPosition = util_local_to_world_position(rfRotatedPos, positions[i]);
 
@@ -158,23 +158,23 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
             SDL_Color fillColor = {29, 236, 158,255};
             SDL_Color borderColor = {0,0,0,255};
 
-            if(groundModes[i] == LEFT_WALL_GM){
-                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x - sensorCollections[i].rays[RF_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            if(groundModes[i] == GROUND_MODE_LEFT_WALL){
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x - sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance, positionInCamera.y, fillColor, borderColor);
             }
-            else if(groundModes[i] == RIGHT_WALL_GM){
-                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[RF_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance, positionInCamera.y, fillColor, borderColor);
             }
-            else if(groundModes[i] == CEILING_GM) {
-                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y - sensorCollections[i].rays[RF_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            else if(groundModes[i] == GROUND_MODE_CEILING) {
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y - sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance, positionInCamera.x, fillColor, borderColor);
             }
             else {
-                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[RF_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance, positionInCamera.x, fillColor, borderColor);
             }
         }
 
 
         {
-            v2d lwRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LW_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
+            v2d lwRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[SENSOR_LEFT_WALL].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
             v2d worldPosition = util_local_to_world_position(lwRotatedPos, positions[i]);
 
@@ -183,22 +183,22 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
             SDL_Color fillColor = {255, 151, 241 ,255};
             SDL_Color borderColor = {0,0,0,255};
 
-            if(groundModes[i] == LEFT_WALL_GM){
-                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y - sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            if(groundModes[i] == GROUND_MODE_LEFT_WALL){
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y - sensorCollections[i].rays[SENSOR_LEFT_WALL].distance, positionInCamera.x, fillColor, borderColor);
             }
-            else if(groundModes[i] == RIGHT_WALL_GM){
-                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[SENSOR_LEFT_WALL].distance, positionInCamera.x, fillColor, borderColor);
             }
-            else if(groundModes[i] == CEILING_GM) {
-                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            else if(groundModes[i] == GROUND_MODE_CEILING) {
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[SENSOR_LEFT_WALL].distance, positionInCamera.y, fillColor, borderColor);
             }
             else {
-                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x - sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x - sensorCollections[i].rays[SENSOR_LEFT_WALL].distance, positionInCamera.y, fillColor, borderColor);
             }
         }
 
         {
-            v2d lwRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[LW_SENSOR].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
+            v2d lwRotatedPos = rotateSensorPositionBasedOnGroundMode(sensorCollections[i].rays[SENSOR_LEFT_WALL].startingPosition, v2d(0.0f, 0.0f), groundModes[i]);
 
             v2d worldPosition = util_local_to_world_position(lwRotatedPos, positions[i]);
 
@@ -207,17 +207,17 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
             SDL_Color fillColor = {244, 0, 50 ,255};
             SDL_Color borderColor = {0,0,0,255};
 
-            if(groundModes[i] == LEFT_WALL_GM){
-                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            if(groundModes[i] == GROUND_MODE_LEFT_WALL){
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y + sensorCollections[i].rays[SENSOR_LEFT_WALL].distance, positionInCamera.x, fillColor, borderColor);
             }
-            else if(groundModes[i] == RIGHT_WALL_GM){
-                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y - sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.x, fillColor, borderColor);
+            else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
+                renderBorderedVerticalLine(positionInCamera.y, positionInCamera.y - sensorCollections[i].rays[SENSOR_LEFT_WALL].distance, positionInCamera.x, fillColor, borderColor);
             }
-            else if (groundModes[i] == CEILING_GM) {
-                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+            else if (groundModes[i] == GROUND_MODE_CEILING) {
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[SENSOR_LEFT_WALL].distance, positionInCamera.y, fillColor, borderColor);
             }
             else {
-                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[LW_SENSOR].distance, positionInCamera.y, fillColor, borderColor);
+                renderBorderedHorizontalLine(positionInCamera.x, positionInCamera.x + sensorCollections[i].rays[SENSOR_LEFT_WALL].distance, positionInCamera.y, fillColor, borderColor);
             }
 
         }

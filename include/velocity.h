@@ -10,10 +10,15 @@ struct Velocity {
 };
 
 enum GroundMode {
-    FLOOR_GM,
-    RIGHT_WALL_GM,
-    CEILING_GM,
-    LEFT_WALL_GM
+    GROUND_MODE_FLOOR,
+    GROUND_MODE_RIGHT_WALL,
+    GROUND_MODE_CEILING,
+    GROUND_MODE_LEFT_WALL
+};
+
+struct ControlLockTimer {
+    float endTicks;
+    float accumulator;
 };
 
 #endif

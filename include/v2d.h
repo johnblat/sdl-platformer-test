@@ -37,9 +37,9 @@ v2d v2d_orthogonal_projection_point_to_line(v2d p, v2d line_p1, v2d line_p2);
 float v2d_shortest_distance_from_point_to_line_segment(v2d p, v2d line_p1, v2d line_p2);
 float v2d_angle_between(v2d v, v2d u);
 v2d v2d_rotate(v2d v, v2d o, float rads);
-v2d v2dRotate90DegreesCCW(v2d v, v2d o);
-v2d v2dRotate90DegreesCW(v2d v, v2d o);
-v2d v2dRotate180Degrees(v2d v, v2d o);
+v2d v2d_rotate_90_degrees_counter_clockwise(v2d v, v2d o);
+v2d v2d_rotate_90_degrees_clockwise(v2d v, v2d o);
+v2d v2d_rotate_180_degrees(v2d v, v2d o);
 
 
 

@@ -27,5 +27,7 @@ TimeStep ts_TimeStep_init(float FPS);
 void ts_TimeStep_start_ticks_set_to_current_ticks(TimeStep &ts);
 void ts_TimeStep_delay_remaining_time(TimeStep &ts);
 
+void ts_TimeStep_adjust_on_input_System(flecs::iter &it, Input *inputs);
+
 
 #endif

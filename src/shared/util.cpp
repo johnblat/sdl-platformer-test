@@ -86,16 +86,16 @@ GroundMode util_rads_to_ground_mode(float angleInRads){
     float angleInDegrees = util_rads_to_degrees(angleInRads);
 
     if(util_in_range(angleInDegrees, 46.0f, 134.0f)){
-        return RIGHT_WALL_GM;
+        return GROUND_MODE_RIGHT_WALL;
     }
     if(util_in_range(angleInDegrees, 135.0f, 225.0f)){
-        return CEILING_GM;
+        return GROUND_MODE_CEILING;
     }
     if(util_in_range(angleInDegrees, 226.0f, 314.0f)){
-        return LEFT_WALL_GM;
+        return GROUND_MODE_LEFT_WALL;
     }
 
-    return FLOOR_GM;
+    return GROUND_MODE_FLOOR;
     
 }
 

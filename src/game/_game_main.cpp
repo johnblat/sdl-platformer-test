@@ -44,102 +44,196 @@ flecs::entity gEditorEntity;
 
 void registerSystems(flecs::world &ecs){
 
-    // INPUT GATHER
+    auto custom_phase_input_gather = ecs.entity().add(flecs::Phase);
+    auto custom_phase_speeds_set = ecs.entity().add(flecs::Phase).depends_on(custom_phase_input_gather);
+    auto custom_phase_pre_movement = ecs.entity().add(flecs::Phase).depends_on(custom_phase_speeds_set);
+    auto custom_phase_collision_wall = ecs.entity().add(flecs::Phase).depends_on(custom_phase_speeds_set);
+    auto custom_phase_movement = ecs.entity().add(flecs::Phase).depends_on(custom_phase_collision_wall);
+    auto custom_phase_collision_floor = ecs.entity().add(flecs::Phase).depends_on(custom_phase_movement);
+    auto custom_phase_control_lock_activate_slip = ecs.entity().add(flecs::Phase).depends_on(custom_phase_collision_floor);
+    auto custom_phase_animation = ecs.entity().add(flecs::Phase).depends_on(custom_phase_collision_floor);
+    auto custom_phase_render = ecs.entity().add(flecs::Phase).depends_on(custom_phase_animation);
+
+
     ecs.system<Input>()
-        .kind(flecs::PreUpdate)
-        .iter(Input_update_input_button_states_System);
+        .kind(custom_phase_input_gather)
+        .iter(
+            Input_update_input_button_states_System
+        );
     
     ecs.system<MouseState>()
-        .kind(flecs::PreUpdate)
-        .iter(MouseState_update_System);
+        .kind(custom_phase_input_gather)
+        .iter(
+            MouseState_update_System
+        );
     
-    // GAMEPLAY
     ecs.system<Velocity, GroundSpeed, Input, StateCurrPrev, Angle>("keyStateVelocitySetter")
-        .kind(flecs::PreUpdate)
-        .iter(movement_GrounSpeed_Velocity_update_from_Input_and_Phyics_System);
+        .kind(custom_phase_speeds_set)
+        .iter(
+            movement_GrounSpeed_Velocity_update_from_Input_and_Phyics_System
+        );
+    
+    ecs.system<Velocity, StateCurrPrev>("gravity system")
+        .kind(custom_phase_speeds_set)
+        .iter(
+            movement_velocity_apply_gravity_System
+        );
 
-    ecs.system<AnimatedSprite>("AnimatedSpritePlay")
-        .kind(flecs::OnUpdate)
-        .iter(anim_update_AnimatedSprite_accumulate_time_to_increment_frame_System);
+    ecs.system<Sensors, Velocity, GroundMode>("wall sensor distance set based on velocity")
+        .kind(custom_phase_pre_movement)
+        .iter(
+            collisions_Sensors_wall_sensors_set_distance_from_velocity_System
+        );
+    
+    ecs.system<Sensors, Angle>("wall sensor height set based on angle")
+        .kind(custom_phase_pre_movement)
+        .iter(
+            collisions_Sensors_wall_set_height_from_Angle_System
+        );
 
-    ecs.system<AnimatedSprite, Position, Angle>("renderingAnimatedSprites")
-        .kind(flecs::OnStore)
-        .iter(anim_render_AnimatedSprites_System);
+    ecs.system<GroundMode, Angle>("ground mode udpate based on angle")
+        .kind(custom_phase_pre_movement)
+        .iter(
+            collisions_GroundMode_update_from_Angle_System
+        );
 
-    ecs.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState")
-        .kind(flecs::OnUpdate)
-        .iter(anim_update_KeyboardState_AnimatedSprite_set_animation_System);
+    ecs.system<ControlLockTimer, StateCurrPrev>()
+        .kind(custom_phase_pre_movement)
+        .iter(
+            movement_ControlLockTimer_update_when_on_ground
+        );
 
     ecs.system<Velocity, Position>("move")
-        .kind(flecs::OnUpdate)
-        .iter(movement_apply_velocity_to_position_System);
+        .kind(custom_phase_movement)
+        .iter(
+            movement_apply_velocity_to_position_System
+        );
+
 
     ecs.system<AnimatedSprite, Input>()
-        .kind(flecs::OnUpdate)
-        .iter(anim_update_AnimatedSprite_flip_based_on_Input_System);
+        .kind(custom_phase_animation)
+        .iter(
+            anim_update_AnimatedSprite_flip_based_on_Input_System
+        );
 
     ecs.system<AnimatedSprite, Velocity, StateCurrPrev>()
-        .kind(flecs::OnUpdate)
-        .iter(anim_update_AnimatedSprite_set_animation_based_on_speed_and_state__System);
+        .kind(custom_phase_animation)
+        .iter(
+            anim_update_AnimatedSprite_set_animation_based_on_speed_and_state__System
+        );
 
-    ecs.system<Velocity, StateCurrPrev>("gravity system")
-        .kind(flecs::OnUpdate)
-        .iter(movement_velocity_apply_gravity_System);
+    
 
 
-    // COLLISONS
+   
+    
+
+    ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision wall update position")
+        .kind(custom_phase_collision_wall)
+        .iter(collisions_Sensors_wall_update_Position_System);
+    
     ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision")
-        .kind(flecs::PostUpdate)
+        .kind(custom_phase_collision_floor)
         .iter(collisions_Sensors_PlatformPaths_update_Position_System);
 
-    // RENDERING
+    ecs.system<GroundSpeed, Angle, StateCurrPrev>("slip and add controllocktimer when too steep and too slow")
+        .kind(custom_phase_control_lock_activate_slip)
+        .term<ControlLockTimer>().oper(flecs::Not)
+        .iter(
+            movement_GroundSpeed_zero_ControlLockTimer_add_based_on_too_steep_angle_System
+        );
+
+    ecs.system<AnimatedSprite>("AnimatedSpritePlay")
+        .kind(custom_phase_animation)
+        .iter(
+            anim_update_AnimatedSprite_accumulate_time_to_increment_frame_System
+        );
+
+    ecs.system<AnimatedSprite, KeyboardState>("keyStateAnimationSpriteState")
+        .kind(custom_phase_animation)
+        .iter(
+            anim_update_KeyboardState_AnimatedSprite_set_animation_System
+        );
 
     ecs.system<>()
         .kind(flecs::PreFrame)
-        .iter(render_frame_start_System);
+        .iter(render_frame_start_System
+    );
+    
+    ecs.system<AnimatedSprite, Position, Angle>("renderingAnimatedSprites")
+        .kind(custom_phase_render)
+        .iter(
+            anim_render_AnimatedSprites_System
+    );
 
     ecs.system<Position, Sensors, GroundMode>()
-        .kind(flecs::OnStore)
-        .iter(renderSensorsSystem);
+        .kind(custom_phase_render)
+        .iter(
+            renderSensorsSystem
+        );
 
     ecs.system<SelectedForEditing, Position, PlatformPath>()
-        .kind(flecs::OnStore)
-        .iter(renderSelectedPlatformNodeSystem);
+        .kind(custom_phase_render)
+        .iter(
+            renderSelectedPlatformNodeSystem
+        );
     
     ecs.system<Position, PlatformPath>()
         .term<SelectedForEditing>().oper(flecs::Not)
-        .kind(flecs::OnStore)
-        .iter(renderUnselectedPlatformNodeSystem);
+        .kind(custom_phase_render)
+        .iter(
+            renderUnselectedPlatformNodeSystem
+        );
 
     ecs.system<SelectedForEditingNode, Position, PlatformPath>()
-        .kind(flecs::OnStore)
-        .iter(renderSelectedPlatformNodeNodesSystem);
+        .kind(custom_phase_render)
+        .iter(
+            renderSelectedPlatformNodeNodesSystem
+        );
 
     ecs.system<Position, PlatformPath>()
         .term<SelectedForEditingNode>().oper(flecs::Not)
-        .kind(flecs::OnStore)
-        .iter(renderUnselectedPlatformNodeNodesSystem);
+        .kind(custom_phase_render)
+        .iter(
+            renderUnselectedPlatformNodeNodesSystem
+        );
 
     ecs.system<>()
-        .kind(flecs::OnStore)
-        .iter(cam_zoom_render_frame_start_System);
+        .kind(custom_phase_render)
+        .iter(
+            cam_zoom_render_frame_start_System
+        );
 
     ecs.system<Input, MouseState>()
-        .kind(flecs::OnStore)
+        .kind(custom_phase_render)
         .term<EditMode::PlatformPathNodeAppendMode>()
-        .iter(renderUncommitedLinesToPlaceSystem);
+        .iter(
+            renderUncommitedLinesToPlaceSystem
+        );
 
     ecs.system<Input>()
         .kind(flecs::OnUpdate)
-        .iter(cam_input_zoom_System);
+        .iter(
+            cam_input_zoom_System
+        );
+
+    ecs.system<Input>()
+        .kind(flecs::OnUpdate)
+        .iter(
+            ts_TimeStep_adjust_on_input_System
+        );
 
     ecs.system<Position, ParallaxSprite>()
         .kind(flecs::OnUpdate)
-        .iter(render_ParallaxSprite_System);
+        .iter(
+            render_ParallaxSprite_System
+        );
 
     ecs.system<>()
         .kind(flecs::PostFrame)
-        .iter(render_end_frame_System);
+        .iter(
+            render_end_frame_System
+        );
 
 
     // EDITING
@@ -292,19 +386,52 @@ int main(){
 
     flecs::entity editorEntity = world.entity();
     Input editorInput;
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "zoom-in", SDL_SCANCODE_UP);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "zoom-out", SDL_SCANCODE_DOWN);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "zoom-reset", SDL_SCANCODE_R);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "save", SDL_SCANCODE_1);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "load", SDL_SCANCODE_2);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "deselect", SDL_SCANCODE_3);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "platform-path-create-mode-enter", SDL_SCANCODE_4);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "platform-path-select-mode-enter", SDL_SCANCODE_5);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "platform-path-node-append-mode-enter", SDL_SCANCODE_6);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "platform-path-node-select-mode-enter", SDL_SCANCODE_7);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "platform-path-node-move-mode-enter", SDL_SCANCODE_8);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "edit-angle-snap", SDL_SCANCODE_LSHIFT);
-    Input_append_new_input_button_state_mapped_to_sdlScancode(editorInput, "delete", SDL_SCANCODE_DELETE);
+
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "zoom-in", SDL_SCANCODE_UP
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "zoom-out", SDL_SCANCODE_DOWN
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "zoom-reset", SDL_SCANCODE_R
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "frame-rate-increase", SDL_SCANCODE_RIGHT
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "frame-rate-decrease", SDL_SCANCODE_LEFT
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "save", SDL_SCANCODE_1
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "load", SDL_SCANCODE_2
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "deselect", SDL_SCANCODE_3
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "platform-path-create-mode-enter", SDL_SCANCODE_4
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "platform-path-select-mode-enter", SDL_SCANCODE_5
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "platform-path-node-append-mode-enter", SDL_SCANCODE_6
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "platform-path-node-select-mode-enter", SDL_SCANCODE_7
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "platform-path-node-move-mode-enter", SDL_SCANCODE_8
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "edit-angle-snap", SDL_SCANCODE_LSHIFT
+    );
+    Input_append_new_input_button_state_mapped_to_sdlScancode(
+        editorInput, "delete", SDL_SCANCODE_DELETE
+    );
 
     editorEntity.set<Input>(editorInput);
     editorEntity.set<MouseState>(mouseState);
@@ -314,15 +441,15 @@ int main(){
 
     Sensors pinkGuySensors;
 
-    pinkGuySensors.rays[LF_SENSOR].startingPosition = (Position){-8.0f, 0.0f};
-    pinkGuySensors.rays[LF_SENSOR].distance = 16.0f;
-    pinkGuySensors.rays[RF_SENSOR].startingPosition = (Position){8.0f, 0.0f};
-    pinkGuySensors.rays[RF_SENSOR].distance = 16.0f;
+    pinkGuySensors.rays[SENSOR_LEFT_FLOOR].startingPosition = (Position){-8.0f, 0.0f};
+    pinkGuySensors.rays[SENSOR_LEFT_FLOOR].distance = 16.0f;
+    pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].startingPosition = (Position){8.0f, 0.0f};
+    pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].distance = 16.0f;
 
-    pinkGuySensors.rays[LW_SENSOR].startingPosition = (Position){0.0f, 8.0f};
-    pinkGuySensors.rays[LW_SENSOR].distance = 8.0f;
-    pinkGuySensors.rays[RW_SENSOR].startingPosition = (Position){0.0f, 8.0f};
-    pinkGuySensors.rays[RW_SENSOR].distance = 8.0f;
+    pinkGuySensors.rays[SENSOR_LEFT_WALL].startingPosition = (Position){0.0f, 8.0f};
+    pinkGuySensors.rays[SENSOR_LEFT_WALL].distance = 8.0f;
+    pinkGuySensors.rays[SENSOR_RIGHT_WALL].startingPosition = (Position){0.0f, 8.0f};
+    pinkGuySensors.rays[SENSOR_RIGHT_WALL].distance = 8.0f;
 
 
 
@@ -338,7 +465,7 @@ int main(){
     pinkGuyEntity.set<StateCurrPrev>(state);
     pinkGuyEntity.set<Sensors>(pinkGuySensors);
     pinkGuyEntity.set<GroundSpeed>((GroundSpeed){0.0f});
-    pinkGuyEntity.set<GroundMode>(FLOOR_GM);
+    pinkGuyEntity.set<GroundMode>(GROUND_MODE_FLOOR);
     
     registerSystems(world);
 
