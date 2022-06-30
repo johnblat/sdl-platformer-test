@@ -49,7 +49,8 @@ void registerSystems(flecs::world &ecs){
     auto custom_phase_pre_movement = ecs.entity().add(flecs::Phase).depends_on(custom_phase_speeds_set);
     auto custom_phase_collision_wall = ecs.entity().add(flecs::Phase).depends_on(custom_phase_speeds_set);
     auto custom_phase_movement = ecs.entity().add(flecs::Phase).depends_on(custom_phase_collision_wall);
-    auto custom_phase_collision_floor = ecs.entity().add(flecs::Phase).depends_on(custom_phase_movement);
+    auto custom_phase_pre_collision_floor = ecs.entity().add(flecs::Phase).depends_on(custom_phase_movement);
+    auto custom_phase_collision_floor = ecs.entity().add(flecs::Phase).depends_on(custom_phase_pre_collision_floor);
     auto custom_phase_control_lock_activate_slip = ecs.entity().add(flecs::Phase).depends_on(custom_phase_collision_floor);
     auto custom_phase_animation = ecs.entity().add(flecs::Phase).depends_on(custom_phase_collision_floor);
     auto custom_phase_render = ecs.entity().add(flecs::Phase).depends_on(custom_phase_animation);
@@ -91,11 +92,11 @@ void registerSystems(flecs::world &ecs){
             collisions_Sensors_wall_set_height_from_Angle_System
         );
 
-    ecs.system<GroundMode, Angle>("ground mode udpate based on angle")
-        .kind(custom_phase_pre_movement)
-        .iter(
-            collisions_GroundMode_update_from_Angle_System
-        );
+    // ecs.system<GroundMode, Angle>("ground mode udpate based on angle")
+    //     .kind(custom_phase_pre_movement)
+    //     .iter(
+    //         collisions_GroundMode_update_from_Angle_System
+    //     );
 
     ecs.system<ControlLockTimer, StateCurrPrev>()
         .kind(custom_phase_pre_movement)
@@ -115,11 +116,17 @@ void registerSystems(flecs::world &ecs){
         .iter(
             anim_update_AnimatedSprite_flip_based_on_Input_System
         );
+    
+    ecs.system<AnimatedSprite, Input>()
+        .kind(custom_phase_animation)
+        .iter(
+            anim_update_set_jump_animation_on_jump_input_System
+        );
 
     ecs.system<AnimatedSprite, Velocity, StateCurrPrev>()
         .kind(custom_phase_animation)
         .iter(
-            anim_update_AnimatedSprite_set_animation_based_on_speed_and_state__System
+            anim_update_AnimatedSprite_set_animation_based_on_speed_on_ground_System
         );
 
     
@@ -132,6 +139,10 @@ void registerSystems(flecs::world &ecs){
         .kind(custom_phase_collision_wall)
         .iter(collisions_Sensors_wall_update_Position_System);
     
+    ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("pre collision floor")
+        .kind(custom_phase_pre_collision_floor)
+        .iter(collisions_Sensors_PlatformPaths_update_Angle_System);
+        
     ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision")
         .kind(custom_phase_collision_floor)
         .iter(collisions_Sensors_PlatformPaths_update_Position_System);
@@ -441,10 +452,10 @@ int main(){
 
     Sensors pinkGuySensors;
 
-    pinkGuySensors.rays[SENSOR_LEFT_FLOOR].startingPosition = (Position){-8.0f, 0.0f};
-    pinkGuySensors.rays[SENSOR_LEFT_FLOOR].distance = 16.0f;
-    pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].startingPosition = (Position){8.0f, 0.0f};
-    pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].distance = 16.0f;
+    pinkGuySensors.rays[SENSOR_LEFT_FLOOR].startingPosition = (Position){-9.0f, 0.0f};
+    pinkGuySensors.rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+    pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].startingPosition = (Position){9.0f, 0.0f};
+    pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
     pinkGuySensors.rays[SENSOR_LEFT_WALL].startingPosition = (Position){0.0f, 8.0f};
     pinkGuySensors.rays[SENSOR_LEFT_WALL].distance = 8.0f;

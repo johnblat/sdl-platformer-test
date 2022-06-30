@@ -8,7 +8,7 @@
 
 Position gCameraPosition;
 Position gCenterScreen;
-float gZoomAmount = 2.0f;
+float gZoomAmount = 3.0f;
 float gZoomSpeed = 0.005;
 
 

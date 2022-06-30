@@ -38,7 +38,7 @@ void ts_TimeStep_adjust_on_input_System(flecs::iter &it, Input *inputs){
             gTimeStep = ts_TimeStep_init(60.0f);
         }
         else if(Input_is_just_released(inputs[i], "frame-rate-decrease")){
-            gTimeStep = ts_TimeStep_init(2.0f);
+            gTimeStep = ts_TimeStep_init(1.0f);
         }
     }
 }

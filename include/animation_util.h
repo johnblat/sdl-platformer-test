@@ -39,7 +39,7 @@ void anim_update_KeyboardState_AnimatedSprite_set_animation_System(flecs::iter &
  * @param animatedSprites 
  * @param velocities 
  */
-void anim_update_AnimatedSprite_set_animation_based_on_speed_and_state__System(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities, StateCurrPrev *states);
+void anim_update_AnimatedSprite_set_animation_based_on_speed_on_ground_System(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities, StateCurrPrev *states);
 
 /**
  * @brief will flip the animated sprite based on the key that is pressed. intended to set the left and right facing directions
@@ -92,6 +92,8 @@ void setFpsForAnimatedSprite(AnimatedSprite *animatedSprite, float fps);
  * @param numEntities number of iterations over the above arrays
  */
 void anim_render_AnimatedSprites_System(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions, Angle *angles);
+
+void anim_update_set_jump_animation_on_jump_input_System(flecs::iter &it, AnimatedSprite *animatedSprites, Input *inputs);
 
 /**
  * @brief Sets the current animation of animated sprite to the one that matches  the animationName. Crashes if animationName doesn't exist

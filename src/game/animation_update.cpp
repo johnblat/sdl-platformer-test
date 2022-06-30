@@ -61,24 +61,37 @@ void anim_update_AnimatedSprite_flip_based_on_Input_System(flecs::iter &it, Anim
     }
 }
 
-void anim_update_AnimatedSprite_set_animation_based_on_speed_and_state__System(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities, StateCurrPrev *states){
+void anim_update_AnimatedSprite_set_animation_based_on_speed_on_ground_System(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities, StateCurrPrev *states){
     for(int i : it){
         // set animation
         
-        if(states[i].currentState == STATE_IN_AIR){
-            anim_util_AnimatedSprite_play(&animatedSprites[i], "jump");
-            if(State_util_did_just_enter(states[i], STATE_IN_AIR)){
-                anim_util_Animation_restart(&animatedSprites[i].animations[animatedSprites[i].currentAnimation]);
+        if(states[i].currentState == STATE_ON_GROUND){
+            if(velocities[i].x == 0){
+            anim_util_AnimatedSprite_play(&animatedSprites[i], "idle");
+            }
+            else if(velocities[i].x < 5.0f && velocities[i].x > -5.0f){
+                anim_util_AnimatedSprite_play(&animatedSprites[i], "walk");
+            }
+            else {
+                anim_util_AnimatedSprite_play(&animatedSprites[i], "run");
             }
         }
-        else if(velocities[i].x == 0){
-            anim_util_AnimatedSprite_play(&animatedSprites[i], "idle");
-        }
-        else if(velocities[i].x < 5.0f && velocities[i].x > -5.0f){
-            anim_util_AnimatedSprite_play(&animatedSprites[i], "walk");
-        }
-        else {
-            anim_util_AnimatedSprite_play(&animatedSprites[i], "run");
+        
+    }
+}
+
+
+void anim_update_set_jump_animation_on_jump_input_System(flecs::iter &it, AnimatedSprite *animatedSprites, Input *inputs){
+    for(u64 i : it){
+        if(Input_is_just_pressed(inputs[i], "jump")){
+            anim_util_AnimatedSprite_play(&animatedSprites[i], "jump");
         }
     }
 }
+
+
+
+
+// void anim_update_set_animation_on_player_enter_ground_state(flecs::iter &it, AnimatedSprite *animatedSprites, StateCurrPrev *states, ){
+
+// }

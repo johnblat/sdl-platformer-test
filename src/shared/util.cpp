@@ -85,7 +85,7 @@ inline float util_rads_to_degrees(float rads){
 GroundMode util_rads_to_ground_mode(float angleInRads){
     float angleInDegrees = util_rads_to_degrees(angleInRads);
 
-    if(util_in_range(angleInDegrees, 46.0f, 134.0f)){
+    if(util_in_range(angleInDegrees, 45.1f, 135.0f)){
         return GROUND_MODE_RIGHT_WALL;
     }
     if(util_in_range(angleInDegrees, 135.0f, 225.0f)){
