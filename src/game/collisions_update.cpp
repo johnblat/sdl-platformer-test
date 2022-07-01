@@ -176,21 +176,9 @@ void collisions_Sensors_PlatformPaths_update_Angle_System(flecs::iter &it, Posit
                 Position p2 = platformPath.nodes.at(v+1);
                 v2d v1(p1.x + position.x, p1.y + position.y);
                 v2d v2(p2.x + position.x, p2.y + position.y);
-                v2d r1 = v1;
-                v2d r2 = v2;
-                if(groundModes[i] == GROUND_MODE_RIGHT_WALL && states[i].currentState == STATE_ON_GROUND){
-                    r1 = v2d_rotate_90_degrees_clockwise(v1, positions[i]);
-                    r2 = v2d_rotate_90_degrees_clockwise(v2, positions[i]);
-                }
-                else if(groundModes[i] == GROUND_MODE_LEFT_WALL && states[i].currentState == STATE_ON_GROUND){
-                    r1 = v2d_rotate_90_degrees_counter_clockwise(v1, positions[i]);
-                    r2 = v2d_rotate_90_degrees_counter_clockwise(v2, positions[i]);
-                }
-                else if(groundModes[i] == GROUND_MODE_CEILING && states[i].currentState == STATE_ON_GROUND){
-                    r1 = v2d_rotate_180_degrees(v1, positions[i]);
-                    r2 = v2d_rotate_180_degrees(v2, positions[i]);
-                }
-
+                v2d r1 = v2d_rotate(v1, positions[i], angles[i].rads);
+                v2d r2 = v2d_rotate(v2, positions[i], angles[i].rads);
+                
                 float distanceFromPoint;
 
                 if(collisions_Ray2d_intersects_line_segment(lfRayGlobal, r1, r2, distanceFromPoint, SENSOR_LEFT_FLOOR)){
@@ -228,22 +216,10 @@ void collisions_Sensors_PlatformPaths_update_Angle_System(flecs::iter &it, Posit
 
         // rotate highest points back to their normal state
 
+        highestIntersectingPoint = v2d_rotate(highestIntersectingPoint, positions[i], -angles[i].rads);
+        highestIntersectingLineP1 = v2d_rotate(highestIntersectingLineP1, positions[i], -angles[i].rads);
+        highestIntersectingLineP2 = v2d_rotate(highestIntersectingLineP2, positions[i], -angles[i].rads);
 
-        if(groundModes[i] == GROUND_MODE_RIGHT_WALL && states[i].currentState == STATE_ON_GROUND){
-            highestIntersectingPoint = v2d_rotate_90_degrees_counter_clockwise(highestIntersectingPoint, positions[i]);
-            highestIntersectingLineP1 = v2d_rotate_90_degrees_counter_clockwise(highestIntersectingLineP1, positions[i]);
-            highestIntersectingLineP2 = v2d_rotate_90_degrees_counter_clockwise(highestIntersectingLineP2, positions[i]);
-        }
-        else if(groundModes[i] == GROUND_MODE_LEFT_WALL && states[i].currentState == STATE_ON_GROUND){
-            highestIntersectingPoint = v2d_rotate_90_degrees_clockwise(highestIntersectingPoint, positions[i]);
-            highestIntersectingLineP1 = v2d_rotate_90_degrees_clockwise(highestIntersectingLineP1, positions[i]);
-            highestIntersectingLineP2 = v2d_rotate_90_degrees_clockwise(highestIntersectingLineP2, positions[i]);
-        }
-        else if(groundModes[i] == GROUND_MODE_CEILING && states[i].currentState == STATE_ON_GROUND){
-            highestIntersectingPoint = v2d_rotate_180_degrees(highestIntersectingPoint, positions[i]);
-            highestIntersectingLineP1 = v2d_rotate_180_degrees(highestIntersectingLineP1, positions[i]);
-            highestIntersectingLineP2 = v2d_rotate_180_degrees(highestIntersectingLineP2, positions[i]);
-        }
         
         State_util_set(states[i], state);
         if(state == STATE_ON_GROUND){
@@ -337,80 +313,46 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
                 Position p2 = platformPath.nodes.at(v+1);
                 v2d v1(p1.x + position.x, p1.y + position.y);
                 v2d v2(p2.x + position.x, p2.y + position.y);
-                v2d r1 = v1;
-                v2d r2 = v2;
-                if(groundModes[i] == GROUND_MODE_RIGHT_WALL && states[i].currentState == STATE_ON_GROUND){
-                    r1 = v2d_rotate_90_degrees_clockwise(v1, positions[i]);
-                    r2 = v2d_rotate_90_degrees_clockwise(v2, positions[i]);
-                }
-                else if(groundModes[i] == GROUND_MODE_LEFT_WALL && states[i].currentState == STATE_ON_GROUND){
-                    r1 = v2d_rotate_90_degrees_counter_clockwise(v1, positions[i]);
-                    r2 = v2d_rotate_90_degrees_counter_clockwise(v2, positions[i]);
-                }
-                else if(groundModes[i] == GROUND_MODE_CEILING && states[i].currentState == STATE_ON_GROUND){
-                    r1 = v2d_rotate_180_degrees(v1, positions[i]);
-                    r2 = v2d_rotate_180_degrees(v2, positions[i]);
-                }
+                v2d r1 = v2d_rotate(v1, positions[i], angles[i].rads);
+                v2d r2 = v2d_rotate(v2, positions[i], angles[i].rads);
+               
+                float distance_from_point;
 
-
-                float distanceFromPoint;
-
-                
-
-                if(collisions_Ray2d_intersects_line_segment(lfRayGlobal, r1, r2, distanceFromPoint, SENSOR_LEFT_FLOOR)){
+                if(collisions_Ray2d_intersects_line_segment(lfRayGlobal, r1, r2, distance_from_point, SENSOR_LEFT_FLOOR)){
                     state = STATE_ON_GROUND;
                     v2d intersectionPoint(
                             lfRayGlobal.startingPosition.x,
-                            lfRayGlobal.startingPosition.y + distanceFromPoint
+                            lfRayGlobal.startingPosition.y + distance_from_point
                     );
                     if(intersectionPoint.y < highestIntersectingPoint.y){
                         highestIntersectingPoint = intersectionPoint;
                         highestIntersectingLineP1 = r1;
                         highestIntersectingLineP2 = r2;
-                        closest_distance_from_point = distanceFromPoint;
+                        closest_distance_from_point = distance_from_point;
                     }
                 }
 
-                if(collisions_Ray2d_intersects_line_segment(rfRayGlobal, r1, r2, distanceFromPoint, SENSOR_RIGHT_FLOOR)){
+                if(collisions_Ray2d_intersects_line_segment(rfRayGlobal, r1, r2, distance_from_point, SENSOR_RIGHT_FLOOR)){
                     state = STATE_ON_GROUND;
                     v2d intersectionPoint(
                             rfRayGlobal.startingPosition.x,
-                            rfRayGlobal.startingPosition.y + distanceFromPoint
+                            rfRayGlobal.startingPosition.y + distance_from_point
                     );
                     if(intersectionPoint.y < highestIntersectingPoint.y){
                         highestIntersectingPoint = intersectionPoint;
                         highestIntersectingLineP1 = r1;
                         highestIntersectingLineP2 = r2;
-                        closest_distance_from_point = distanceFromPoint;
+                        closest_distance_from_point = distance_from_point;
 
                     }
                 }
-
-                
-                
-                
             } 
-            
         });
 
         // rotate highest points back to their normal state
-
-
-        if(groundModes[i] == GROUND_MODE_RIGHT_WALL && states[i].currentState == STATE_ON_GROUND){
-            highestIntersectingPoint = v2d_rotate_90_degrees_counter_clockwise(highestIntersectingPoint, positions[i]);
-            highestIntersectingLineP1 = v2d_rotate_90_degrees_counter_clockwise(highestIntersectingLineP1, positions[i]);
-            highestIntersectingLineP2 = v2d_rotate_90_degrees_counter_clockwise(highestIntersectingLineP2, positions[i]);
-        }
-        else if(groundModes[i] == GROUND_MODE_LEFT_WALL && states[i].currentState == STATE_ON_GROUND){
-            highestIntersectingPoint = v2d_rotate_90_degrees_clockwise(highestIntersectingPoint, positions[i]);
-            highestIntersectingLineP1 = v2d_rotate_90_degrees_clockwise(highestIntersectingLineP1, positions[i]);
-            highestIntersectingLineP2 = v2d_rotate_90_degrees_clockwise(highestIntersectingLineP2, positions[i]);
-        }
-        else if(groundModes[i] == GROUND_MODE_CEILING && states[i].currentState == STATE_ON_GROUND){
-            highestIntersectingPoint = v2d_rotate_180_degrees(highestIntersectingPoint, positions[i]);
-            highestIntersectingLineP1 = v2d_rotate_180_degrees(highestIntersectingLineP1, positions[i]);
-            highestIntersectingLineP2 = v2d_rotate_180_degrees(highestIntersectingLineP2, positions[i]);
-        }
+        highestIntersectingPoint = v2d_rotate(highestIntersectingPoint, positions[i], -angles[i].rads);
+        highestIntersectingLineP1 = v2d_rotate(highestIntersectingLineP1, positions[i], -angles[i].rads);
+        highestIntersectingLineP2 = v2d_rotate(highestIntersectingLineP2, positions[i], -angles[i].rads);
         
         State_util_set(states[i], state);
         if(state == STATE_ON_GROUND){
