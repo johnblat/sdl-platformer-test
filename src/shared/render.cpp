@@ -101,7 +101,7 @@ void render_sensor_rotated_as_line(Position position, Sensors sensors, SensorTyp
     v2d v_left_floor_start_local = sensors.rays[sensor_type].startingPosition;
 
     v2d v_left_floor_end_local;
-    if(sensor_type == SENSOR_LEFT_FLOOR || sensor_type == SENSOR_RIGHT_FLOOR){
+    if(sensor_type == SENSOR_LEFT_FLOOR || sensor_type == SENSOR_RIGHT_FLOOR || sensor_type == SENSOR_CENTER_FLOOR){
         v_left_floor_end_local = v2d(v_left_floor_start_local.x, v_left_floor_start_local.y + sensors.rays[sensor_type].distance);
     } 
     else if(sensor_type == SENSOR_LEFT_WALL) {

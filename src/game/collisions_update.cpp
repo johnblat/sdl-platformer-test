@@ -224,6 +224,7 @@ void collisions_Sensors_PlatformPaths_update_Angle_System(flecs::iter &it, Posit
         State_util_set(states[i], state);
         if(state == STATE_ON_GROUND){
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
+            sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             if(groundModes[i] == GROUND_MODE_FLOOR){
                 if(highestIntersectingLineP2.x < highestIntersectingLineP1.x){
@@ -258,6 +259,7 @@ void collisions_Sensors_PlatformPaths_update_Angle_System(flecs::iter &it, Posit
         }
         else {
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+            sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             groundModes[i] = GROUND_MODE_FLOOR;
             angles[i].rads = 0.0f;
@@ -278,14 +280,15 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
             FLT_MAX
         );
 
-        v2d highestIntersectingLineP1;
-        v2d highestIntersectingLineP2;
+        v2d p1_closest_intersecting_line;
+        v2d p2_closest_intersecting_line;
 
 
 
         // is in air
         if(states[i].currentState == STATE_IN_AIR){
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+            sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
         }
@@ -326,8 +329,8 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
                     );
                     if(intersectionPoint.y < highestIntersectingPoint.y){
                         highestIntersectingPoint = intersectionPoint;
-                        highestIntersectingLineP1 = r1;
-                        highestIntersectingLineP2 = r2;
+                        p1_closest_intersecting_line = r1;
+                        p2_closest_intersecting_line = r2;
                         closest_distance_from_point = distance_from_point;
                     }
                 }
@@ -340,8 +343,8 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
                     );
                     if(intersectionPoint.y < highestIntersectingPoint.y){
                         highestIntersectingPoint = intersectionPoint;
-                        highestIntersectingLineP1 = r1;
-                        highestIntersectingLineP2 = r2;
+                        p1_closest_intersecting_line = r1;
+                        p2_closest_intersecting_line = r2;
                         closest_distance_from_point = distance_from_point;
 
                     }
@@ -351,34 +354,83 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
 
         // rotate highest points back to their normal state
         highestIntersectingPoint = v2d_rotate(highestIntersectingPoint, positions[i], -angles[i].rads);
-        highestIntersectingLineP1 = v2d_rotate(highestIntersectingLineP1, positions[i], -angles[i].rads);
-        highestIntersectingLineP2 = v2d_rotate(highestIntersectingLineP2, positions[i], -angles[i].rads);
+        p1_closest_intersecting_line = v2d_rotate(p1_closest_intersecting_line, positions[i], -angles[i].rads);
+        p2_closest_intersecting_line = v2d_rotate(p2_closest_intersecting_line, positions[i], -angles[i].rads);
         
-        State_util_set(states[i], state);
-        if(state == STATE_ON_GROUND){
-            sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
-            sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
-            if(groundModes[i] == GROUND_MODE_FLOOR){
-                positions[i].y -= (HALF_PLAYER_HEIGHT - closest_distance_from_point);
-                
+
+        if(groundModes[i] == GROUND_MODE_FLOOR){
+                if(p2_closest_intersecting_line.x < p1_closest_intersecting_line.x){
+                    swapValues(p2_closest_intersecting_line, p1_closest_intersecting_line, Position);
+                }
             }
             else if(groundModes[i] == GROUND_MODE_CEILING){
-                positions[i].y +=  (HALF_PLAYER_HEIGHT - closest_distance_from_point);
-                
+                if(p2_closest_intersecting_line.x > p1_closest_intersecting_line.x){
+                    swapValues(p2_closest_intersecting_line, p1_closest_intersecting_line, Position);
+                }
             }
             else if(groundModes[i] == GROUND_MODE_LEFT_WALL){
-                positions[i].x += (HALF_PLAYER_HEIGHT - closest_distance_from_point);
-                
+                if(p2_closest_intersecting_line.y < p1_closest_intersecting_line.y){
+                    swapValues(p2_closest_intersecting_line, p1_closest_intersecting_line, Position);
+                }
             }
             else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
-                positions[i].x -= (HALF_PLAYER_HEIGHT - closest_distance_from_point);
-               
+                if(p2_closest_intersecting_line.y > p1_closest_intersecting_line.y){
+                    swapValues(p2_closest_intersecting_line, p1_closest_intersecting_line, Position);
+                }
             }
+
+        State_util_set(states[i], state);
+        if(state == STATE_ON_GROUND){
+            // get direction vector of line
+            // Find perpendicular/normal of itnersecting line
+            // nomralize/make unit vector
+            // scale vector by closest distance
+            // move player that amount
+            v2d v_direction_closest_intersecting_line = v2d_sub(
+                p2_closest_intersecting_line, 
+                p1_closest_intersecting_line
+            );
+            
+            v2d v_unit_closest_intersecting_line = v2d_unit(
+                v_direction_closest_intersecting_line
+            );
+            
+            v2d v_normal_closest_intersecting_line = v2d_perp(
+                v_unit_closest_intersecting_line
+            );
+
+            v2d v_move_player = v2d_scale(
+                HALF_PLAYER_HEIGHT - closest_distance_from_point,
+                v_normal_closest_intersecting_line
+            );
+
+            positions[i] = v2d_add(positions[i], v_move_player);
+
+            sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
+            sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
+            sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
+            // if(groundModes[i] == GROUND_MODE_FLOOR){
+            //     positions[i].y -= (HALF_PLAYER_HEIGHT - closest_distance_from_point);
+                
+            // }
+            // else if(groundModes[i] == GROUND_MODE_CEILING){
+            //     positions[i].y +=  (HALF_PLAYER_HEIGHT - closest_distance_from_point);
+                
+            // }
+            // else if(groundModes[i] == GROUND_MODE_LEFT_WALL){
+            //     positions[i].x += (HALF_PLAYER_HEIGHT - closest_distance_from_point);
+                
+            // }
+            // else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
+            //     positions[i].x -= (HALF_PLAYER_HEIGHT - closest_distance_from_point);
+               
+            // }
             
             
         }
         else {
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+            sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             groundModes[i] = GROUND_MODE_FLOOR;
             angles[i].rads = 0.0f;

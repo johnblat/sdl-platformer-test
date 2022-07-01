@@ -13,6 +13,7 @@ struct Ray2d {
 
 enum SensorType {
     SENSOR_LEFT_FLOOR, // Left Floor
+    SENSOR_CENTER_FLOOR, // Center Floor
     SENSOR_RIGHT_FLOOR, // Right Floor
     SENSOR_LEFT_WALL, // Left Wall
     SENSOR_RIGHT_WALL, // Right Wall

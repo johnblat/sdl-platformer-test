@@ -126,6 +126,14 @@ void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCo
         render_sensor_rotated_as_line(
             positions[i], 
             sensorCollections[i], 
+            SENSOR_CENTER_FLOOR, 
+            angles[i], 
+            (SDL_Color){0, 255, 29 ,255} 
+        );
+
+        render_sensor_rotated_as_line(
+            positions[i], 
+            sensorCollections[i], 
             SENSOR_RIGHT_FLOOR, 
             angles[i], 
             (SDL_Color){29, 236, 158,255}
