@@ -177,7 +177,7 @@ void registerSystems(flecs::world &ecs){
             anim_render_AnimatedSprites_System
     );
 
-    ecs.system<Position, Sensors, GroundMode>()
+    ecs.system<Position, Sensors, Angle>()
         .kind(custom_phase_render)
         .iter(
             renderSensorsSystem

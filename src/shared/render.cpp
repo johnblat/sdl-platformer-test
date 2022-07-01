@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include "window.h"
 #include "timestep.h"
+#include "ray2d.h"
 
 
 void render_frame_start_System(flecs::iter &it){
@@ -93,5 +94,38 @@ void render_diamond(Position centerPoint, SDL_Color color){
         SDL_RenderDrawLineF(gRenderer, x1, y1, x2, y2);
     }
 
+}
+
+
+void render_sensor_rotated_as_line(Position position, Sensors sensors, SensorType sensor_type, Angle angle, SDL_Color color){
+    v2d v_left_floor_start_local = sensors.rays[sensor_type].startingPosition;
+
+    v2d v_left_floor_end_local;
+    if(sensor_type == SENSOR_LEFT_FLOOR || sensor_type == SENSOR_RIGHT_FLOOR){
+        v_left_floor_end_local = v2d(v_left_floor_start_local.x, v_left_floor_start_local.y + sensors.rays[sensor_type].distance);
+    } 
+    else if(sensor_type == SENSOR_LEFT_WALL) {
+        v_left_floor_end_local = v2d(v_left_floor_start_local.x - sensors.rays[sensor_type].distance, v_left_floor_start_local.y);
+    }
+    else if(sensor_type == SENSOR_RIGHT_WALL) {
+        v_left_floor_end_local = v2d(v_left_floor_start_local.x + sensors.rays[sensor_type].distance, v_left_floor_start_local.y);
+    }
+
+    v2d v_left_floor_rotated_start_local = v2d_rotate(
+        sensors.rays[sensor_type].startingPosition, v2d(0.0f,0.0f), -angle.rads
+    );
+
+    v2d v_left_floor_rotated_end_local = v2d_rotate(
+        v_left_floor_end_local, v2d(0.0f, 0.0f), -angle.rads
+    );
+
+    v2d v_left_floor_rotated_start_world = util_local_to_world_position(v_left_floor_rotated_start_local, position);
+    v2d v_left_floor_rotated_end_world = util_local_to_world_position(v_left_floor_rotated_end_local, position);
+
+
+    v2d v_left_floor_rotated_start_camera = cam_util_world_position_to_camera_position(v_left_floor_rotated_start_world);
+    v2d v_left_floor_rotated_end_camera = cam_util_world_position_to_camera_position(v_left_floor_rotated_end_world);
+
+    render_line(v_left_floor_rotated_start_world, v_left_floor_rotated_end_world, color);  
 }
 
