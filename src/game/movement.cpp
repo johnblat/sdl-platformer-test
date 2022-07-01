@@ -208,8 +208,8 @@ void movement_ControlLockTimer_update_when_on_ground(flecs::iter &it, ControlLoc
 }
 
 void movement_GroundSpeed_zero_ControlLockTimer_add_based_on_too_steep_angle_System(flecs::iter &it, GroundSpeed *groundSpeeds, Angle *angles, StateCurrPrev *states){
-    const float slip_range_angle_degrees_start = 46.0f;
-    const float slip_range_angle_degrees_end = 315.0f;
+    const float slip_range_angle_degrees_start = 47.0f;
+    const float slip_range_angle_degrees_end = 314.0f;
 
     for(u64 i : it){
         float angle_degrees = util_rads_to_degrees(angles[i].rads);
@@ -217,6 +217,7 @@ void movement_GroundSpeed_zero_ControlLockTimer_add_based_on_too_steep_angle_Sys
         if(util_in_range(angle_degrees, slip_range_angle_degrees_start, slip_range_angle_degrees_end)){
             if(fabs(groundSpeeds[i].val) < 2.5f){
                 State_util_set(states[i], STATE_IN_AIR);
+                angles[i].rads = 0.0f;
                 groundSpeeds[i].val = 0.0f;
 
                 flecs::world world = it.world();

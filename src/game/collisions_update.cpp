@@ -81,7 +81,7 @@ void collisions_Sensors_wall_update_Position_System(flecs::iter &it, Position *p
                     // moving right
                     if(velocities[i].x > 0){
                        if(collisions_Ray2d_intersects_line_segment(ray2d_right_wall_world, world_position_node_current_rotated, world_position_node_next_rotated, intersection_distance_from_ray_origin, SENSOR_RIGHT_WALL)){
-                            positions[i].x = world_position_node_current.x - SENSORS_DEFAULT_WALL_DISTANCE;
+                           positions[i].x = world_position_node_current.x - SENSORS_DEFAULT_WALL_DISTANCE;
                             velocities[i].x = 0;
                             groundSpeeds[i].val = 0.0f;
                             velocities[i].x = 0.0f;
@@ -417,19 +417,19 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             if(groundModes[i] == GROUND_MODE_FLOOR){
-                positions[i].y -= HALF_PLAYER_HEIGHT - closest_distance_from_point;
+                positions[i].y -= (HALF_PLAYER_HEIGHT - closest_distance_from_point);
                 
             }
             else if(groundModes[i] == GROUND_MODE_CEILING){
-                positions[i].y +=  HALF_PLAYER_HEIGHT - closest_distance_from_point;
+                positions[i].y +=  (HALF_PLAYER_HEIGHT - closest_distance_from_point);
                 
             }
             else if(groundModes[i] == GROUND_MODE_LEFT_WALL){
-                positions[i].x += HALF_PLAYER_HEIGHT - closest_distance_from_point;
+                positions[i].x += (HALF_PLAYER_HEIGHT - closest_distance_from_point);
                 
             }
             else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
-                positions[i].x -= HALF_PLAYER_HEIGHT - closest_distance_from_point;
+                positions[i].x -= (HALF_PLAYER_HEIGHT - closest_distance_from_point);
                
             }
             
