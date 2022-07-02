@@ -7,7 +7,7 @@
 // always points downwards
 typedef struct Ray2d Ray2d;
 struct Ray2d {
-    Position startingPosition;
+    Position position_start;
     float distance; 
 };
 

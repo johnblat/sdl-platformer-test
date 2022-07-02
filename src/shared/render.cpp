@@ -98,7 +98,7 @@ void render_diamond(Position centerPoint, SDL_Color color){
 
 
 void render_sensor_rotated_as_line(Position position, Sensors sensors, SensorType sensor_type, Angle angle, SDL_Color color){
-    v2d v_left_floor_start_local = sensors.rays[sensor_type].startingPosition;
+    v2d v_left_floor_start_local = sensors.rays[sensor_type].position_start;
 
     v2d v_left_floor_end_local;
     if(sensor_type == SENSOR_LEFT_FLOOR || sensor_type == SENSOR_RIGHT_FLOOR || sensor_type == SENSOR_CENTER_FLOOR){
@@ -112,15 +112,15 @@ void render_sensor_rotated_as_line(Position position, Sensors sensors, SensorTyp
     }
 
     v2d v_left_floor_rotated_start_local = v2d_rotate(
-        sensors.rays[sensor_type].startingPosition, v2d(0.0f,0.0f), -angle.rads
+        sensors.rays[sensor_type].position_start, v2d(0.0f,0.0f), -angle.rads
     );
 
     v2d v_left_floor_rotated_end_local = v2d_rotate(
         v_left_floor_end_local, v2d(0.0f, 0.0f), -angle.rads
     );
 
-    v2d v_left_floor_rotated_start_world = util_local_to_world_position(v_left_floor_rotated_start_local, position);
-    v2d v_left_floor_rotated_end_world = util_local_to_world_position(v_left_floor_rotated_end_local, position);
+    v2d v_left_floor_rotated_start_world = util_v2d_local_to_world(v_left_floor_rotated_start_local, position);
+    v2d v_left_floor_rotated_end_world = util_v2d_local_to_world(v_left_floor_rotated_end_local, position);
 
 
     v2d v_left_floor_rotated_start_camera = cam_util_world_position_to_camera_position(v_left_floor_rotated_start_world);

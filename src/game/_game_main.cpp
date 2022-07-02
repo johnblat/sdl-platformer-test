@@ -452,16 +452,16 @@ int main(){
 
     Sensors pinkGuySensors;
 
-    pinkGuySensors.rays[SENSOR_LEFT_FLOOR].startingPosition = (Position){-9.0f, 0.0f};
+    pinkGuySensors.rays[SENSOR_LEFT_FLOOR].position_start = (Position){-9.0f, 0.0f};
     pinkGuySensors.rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
-    pinkGuySensors.rays[SENSOR_CENTER_FLOOR].startingPosition = (Position){0.0f, 0.0f};
+    pinkGuySensors.rays[SENSOR_CENTER_FLOOR].position_start = (Position){0.0f, 0.0f};
     pinkGuySensors.rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
-    pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].startingPosition = (Position){9.0f, 0.0f};
+    pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].position_start = (Position){9.0f, 0.0f};
     pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
-    pinkGuySensors.rays[SENSOR_LEFT_WALL].startingPosition = (Position){0.0f, 8.0f};
+    pinkGuySensors.rays[SENSOR_LEFT_WALL].position_start = (Position){0.0f, 8.0f};
     pinkGuySensors.rays[SENSOR_LEFT_WALL].distance = 8.0f;
-    pinkGuySensors.rays[SENSOR_RIGHT_WALL].startingPosition = (Position){0.0f, 8.0f};
+    pinkGuySensors.rays[SENSOR_RIGHT_WALL].position_start = (Position){0.0f, 8.0f};
     pinkGuySensors.rays[SENSOR_RIGHT_WALL].distance = 8.0f;
 
 

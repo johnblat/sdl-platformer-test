@@ -22,7 +22,7 @@ void
 util_index_1d_to_2d(u32 i, u32 numRows, u32 *row, u32 *col);
 
 v2d 
-util_local_to_world_position(v2d l, v2d o);
+util_v2d_local_to_world(v2d l, v2d o);
 
 bool 
 util_is_in_range(float begin, float end, float x);

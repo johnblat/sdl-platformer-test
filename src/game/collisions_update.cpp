@@ -39,12 +39,12 @@ void collisions_Sensors_wall_update_Position_System(flecs::iter &it, Position *p
     for(u64 i : it){
         Ray2d ray2d_left_wall_local, ray2d_left_wall_world; 
         ray2d_left_wall_local = sensorCollections[i].rays[SENSOR_LEFT_WALL];
-        ray2d_left_wall_world.startingPosition = util_local_to_world_position(ray2d_left_wall_local.startingPosition, positions[i]);
+        ray2d_left_wall_world.position_start = util_v2d_local_to_world(ray2d_left_wall_local.position_start, positions[i]);
         ray2d_left_wall_world.distance = ray2d_left_wall_local.distance;
 
         Ray2d ray2d_right_wall_local, ray2d_right_wall_world; 
         ray2d_right_wall_local = sensorCollections[i].rays[SENSOR_RIGHT_WALL];
-        ray2d_right_wall_world.startingPosition = util_local_to_world_position(ray2d_right_wall_local.startingPosition, positions[i]);
+        ray2d_right_wall_world.position_start = util_v2d_local_to_world(ray2d_right_wall_local.position_start, positions[i]);
         ray2d_right_wall_world.distance = ray2d_right_wall_local.distance;
 
         auto f = it.world().filter<Position, PlatformPath>();
@@ -55,8 +55,8 @@ void collisions_Sensors_wall_update_Position_System(flecs::iter &it, Position *p
                 Position local_position_node_current = platformPath.nodes.at(j);
                 Position local_position_node_next = platformPath.nodes.at(j+1);
 
-                v2d world_position_node_current = util_local_to_world_position(local_position_node_current, platformPath_position);
-                v2d world_position_node_next = util_local_to_world_position(local_position_node_next, platformPath_position);
+                v2d world_position_node_current = util_v2d_local_to_world(local_position_node_current, platformPath_position);
+                v2d world_position_node_next = util_v2d_local_to_world(local_position_node_next, platformPath_position);
 
                 v2d world_position_node_current_rotated = world_position_node_current;
                 v2d world_position_node_next_rotated = world_position_node_next;
@@ -75,12 +75,13 @@ void collisions_Sensors_wall_update_Position_System(flecs::iter &it, Position *p
                 }
 
                 float intersection_distance_from_ray_origin;
+                v2d p_intersection;
                 
                 // is wall?
                 if(true){
                     // moving right
                     if(velocities[i].x > 0){
-                       if(collisions_Ray2d_intersects_line_segment(ray2d_right_wall_world, world_position_node_current_rotated, world_position_node_next_rotated, intersection_distance_from_ray_origin, SENSOR_RIGHT_WALL)){
+                       if(collisions_Ray2d_intersects_line_segment(ray2d_right_wall_world, SENSOR_RIGHT_WALL, world_position_node_current_rotated, world_position_node_next_rotated, intersection_distance_from_ray_origin, p_intersection)){
                            positions[i].x = world_position_node_current.x - SENSORS_DEFAULT_WALL_DISTANCE;
                             velocities[i].x = 0;
                             groundSpeeds[i].val = 0.0f;
@@ -89,7 +90,7 @@ void collisions_Sensors_wall_update_Position_System(flecs::iter &it, Position *p
                     }
                     // moving left
                     else if(velocities[i].x < 0) {
-                        if(collisions_Ray2d_intersects_line_segment(ray2d_left_wall_world, world_position_node_current_rotated, world_position_node_next_rotated, intersection_distance_from_ray_origin, SENSOR_LEFT_WALL)){
+                        if(collisions_Ray2d_intersects_line_segment(ray2d_left_wall_world, SENSOR_LEFT_WALL,world_position_node_current_rotated, world_position_node_next_rotated, intersection_distance_from_ray_origin,p_intersection )){
                             positions[i].x = world_position_node_current.x + SENSORS_DEFAULT_WALL_DISTANCE;
                             velocities[i].x = 0;
                             groundSpeeds[i].val = 0.0f;
@@ -112,12 +113,12 @@ void collisions_Sensors_wall_set_height_from_Angle_System(flecs::iter &it, Senso
         const float NOT_FLAT_WALL_SENSOR_HEIGHT = 0.0f;
 
         if(util_rads_to_degrees(angles[i].rads) < FLAT_ENOUGH_ANGLE && util_rads_to_degrees(angles[i].rads) > -FLAT_ENOUGH_ANGLE){
-            sensorCollections[i].rays[SENSOR_RIGHT_WALL].startingPosition.y = FLAT_ENOUGH_WALL_SENSOR_HEIGHT;
-            sensorCollections[i].rays[SENSOR_LEFT_WALL].startingPosition.y = FLAT_ENOUGH_WALL_SENSOR_HEIGHT;
+            sensorCollections[i].rays[SENSOR_RIGHT_WALL].position_start.y = FLAT_ENOUGH_WALL_SENSOR_HEIGHT;
+            sensorCollections[i].rays[SENSOR_LEFT_WALL].position_start.y = FLAT_ENOUGH_WALL_SENSOR_HEIGHT;
         }
         else {
-            sensorCollections[i].rays[SENSOR_RIGHT_WALL].startingPosition.y = NOT_FLAT_WALL_SENSOR_HEIGHT;
-            sensorCollections[i].rays[SENSOR_LEFT_WALL].startingPosition.y = NOT_FLAT_WALL_SENSOR_HEIGHT;
+            sensorCollections[i].rays[SENSOR_RIGHT_WALL].position_start.y = NOT_FLAT_WALL_SENSOR_HEIGHT;
+            sensorCollections[i].rays[SENSOR_LEFT_WALL].position_start.y = NOT_FLAT_WALL_SENSOR_HEIGHT;
         }
     }
 }
@@ -132,139 +133,274 @@ void collisions_GroundMode_update_from_Angle_System(flecs::iter &it, GroundMode 
 
 // void collisions_Angle_update_from_intersecting_sensors(flecs::iter &it, Angle)
 
+bool v2d_equal(v2d v1, v2d v2){
+    if(v1.x == v2.x && v1.y == v2.y){
+        return true;
+    }
+    return false;
+}
+
+bool lines_equal(v2d line_start_1, v2d line_end_1, v2d line_start_2, v2d line_end_2){
+    if(v2d_equal(line_start_1, line_start_2) && v2d_equal(line_end_1, line_end_2)){
+        return true;
+    }
+    return false;
+}
+
+
+Ray2d ray2d_local_to_world(Position world_position, Ray2d ray2d_local){
+    Ray2d ray2d_world;
+    ray2d_world.distance = ray2d_local.distance;
+    ray2d_world.position_start = v2d_add(world_position, ray2d_local.position_start);
+
+    return ray2d_world;
+}
+
 void collisions_Sensors_PlatformPaths_update_Angle_System(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         
         State state = STATE_IN_AIR;
 
-        v2d highestIntersectingPoint(
+        CollisionResultRay2dIntersectLine collision_result_closest_left_floor_sensor;
+        collision_result_closest_left_floor_sensor.did_intersect = false;
+
+        CollisionResultRay2dIntersectLine collision_result_closest_right_floor_sensor;
+        collision_result_closest_right_floor_sensor.did_intersect = false;
+
+        v2d point_closest_left_floor_sensor_intersection_rotated(
             FLT_MAX,
             FLT_MAX
         );
 
-        v2d highestIntersectingLineP1;
-        v2d highestIntersectingLineP2;
+        v2d point_closest_intersection_right_floor_sensor_rotated(
+            FLT_MAX,
+            FLT_MAX
+        );
+
+        v2d p1_intersecting_line_left_floor_sensor_rotated;
+        v2d p2_intersecting_line_left_floor_sensor_rotated;
+
+        v2d p1_intersecting_line_right_floor_sensor_rotated;
+        v2d p2_intersecting_line_right_floor_sensor_rotated;
 
 
 
-        // is in air
+        // ensure height is correct for in air collision check
         if(states[i].currentState == STATE_IN_AIR){
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
         }
 
-        Ray2d lfSesnorRayLocal = sensorCollections[i].rays[SENSOR_LEFT_FLOOR];
-        Ray2d lfRayGlobal;
-        lfRayGlobal.startingPosition.x = positions[i].x + lfSesnorRayLocal.startingPosition.x;
-        lfRayGlobal.startingPosition.y = positions[i].y + lfSesnorRayLocal.startingPosition.y;
-        lfRayGlobal.distance = lfSesnorRayLocal.distance;
+        Ray2d left_floor_sensor_ray_world = ray2d_local_to_world(
+            positions[i], 
+            sensorCollections[i].rays[SENSOR_LEFT_FLOOR]
+        );
 
-        Ray2d rfRayLocal = sensorCollections[i].rays[SENSOR_RIGHT_FLOOR];
-        Ray2d rfRayGlobal;
-        rfRayGlobal.startingPosition.x = positions[i].x + rfRayLocal.startingPosition.x;
-        rfRayGlobal.startingPosition.y = positions[i].y + rfRayLocal.startingPosition.y;
-        rfRayGlobal.distance = rfRayLocal.distance;
+
+        Ray2d right_floor_sensor_ray_world = ray2d_local_to_world(
+            positions[i], 
+            sensorCollections[i].rays[SENSOR_RIGHT_FLOOR]
+        );
 
         auto f = it.world().filter<Position, PlatformPath>();
 
-        f.each([&](flecs::entity e, Position &position, PlatformPath &platformPath){
-            size_t len = platformPath.nodes.size();
-            for(int v = 0; v < len - 1; v++){                
-                Position p1 = platformPath.nodes.at(v);
-                Position p2 = platformPath.nodes.at(v+1);
-                v2d v1(p1.x + position.x, p1.y + position.y);
-                v2d v2(p2.x + position.x, p2.y + position.y);
-                v2d r1 = v2d_rotate(v1, positions[i], angles[i].rads);
-                v2d r2 = v2d_rotate(v2, positions[i], angles[i].rads);
-                
-                float distanceFromPoint;
+        f.each([&](flecs::entity e, Position &world_position, PlatformPath &platformPath){
 
-                if(collisions_Ray2d_intersects_line_segment(lfRayGlobal, r1, r2, distanceFromPoint, SENSOR_LEFT_FLOOR)){
+            for(int j = 0; j < platformPath.nodes.size() - 1; j++){                
+                v2d p1_local_platform_line = platformPath.nodes.at(j);
+                v2d p2_local_platform_line = platformPath.nodes.at(j+1);
+
+                v2d p1_world_platform_line = util_v2d_local_to_world(
+                    p1_local_platform_line, 
+                    world_position 
+                );
+                v2d p2_world_platform_line = util_v2d_local_to_world(
+                    p2_local_platform_line, 
+                    world_position 
+                );
+
+                v2d p1_world_rotated_platform_line = v2d_rotate(
+                    p1_world_platform_line, 
+                    positions[i], 
+                    angles[i].rads
+                );
+                v2d p2_world_rotated_platform_line = v2d_rotate(
+                    p2_world_platform_line, 
+                    positions[i], 
+                    angles[i].rads
+                );
+                
+                
+
+                CollisionResultRay2dIntersectLine collision_result_left_floor_sensor_rotated = collisions_Ray2d_intersects_line_segment_result(
+                    left_floor_sensor_ray_world, 
+                    SENSOR_LEFT_FLOOR,
+                    p1_world_rotated_platform_line, 
+                    p2_world_rotated_platform_line
+                );
+
+                if(collision_result_left_floor_sensor_rotated.did_intersect){
                     state = STATE_ON_GROUND;
-                    v2d intersectionPoint(
-                            lfRayGlobal.startingPosition.x,
-                            lfRayGlobal.startingPosition.y + distanceFromPoint
-                    );
-                    if(intersectionPoint.y < highestIntersectingPoint.y){
-                        highestIntersectingPoint = intersectionPoint;
-                        highestIntersectingLineP1 = r1;
-                        highestIntersectingLineP2 = r2;
+
+                    if(collision_result_left_floor_sensor_rotated.p_world_intersection.y < point_closest_left_floor_sensor_intersection_rotated.y){
+                        point_closest_left_floor_sensor_intersection_rotated = collision_result_left_floor_sensor_rotated.p_world_intersection;
+
+                        p1_intersecting_line_left_floor_sensor_rotated = p1_world_rotated_platform_line;
+                        p2_intersecting_line_left_floor_sensor_rotated = p2_world_rotated_platform_line;
+
+                        collision_result_closest_left_floor_sensor = collision_result_closest_left_floor_sensor;
+                        collision_result_closest_left_floor_sensor.p_world_intersection = v2d_rotate(collision_result_closest_left_floor_sensor.p_world_intersection, positions[i], -angles[i].rads);
+
                     }
                 }
 
-                if(collisions_Ray2d_intersects_line_segment(rfRayGlobal, r1, r2, distanceFromPoint, SENSOR_RIGHT_FLOOR)){
+                CollisionResultRay2dIntersectLine collision_result_right_floor_sensor = collisions_Ray2d_intersects_line_segment_result(
+                    right_floor_sensor_ray_world, 
+                    SENSOR_RIGHT_FLOOR,
+                    p1_world_rotated_platform_line, 
+                    p2_world_rotated_platform_line
+                );
+
+                if(collision_result_right_floor_sensor.did_intersect){
                     state = STATE_ON_GROUND;
-                    v2d intersectionPoint(
-                            rfRayGlobal.startingPosition.x,
-                            rfRayGlobal.startingPosition.y + distanceFromPoint
-                    );
-                    if(intersectionPoint.y < highestIntersectingPoint.y){
-                        highestIntersectingPoint = intersectionPoint;
-                        highestIntersectingLineP1 = r1;
-                        highestIntersectingLineP2 = r2;
+
+                    if(collision_result_right_floor_sensor.p_world_intersection.y < point_closest_intersection_right_floor_sensor_rotated.y){
+                        point_closest_intersection_right_floor_sensor_rotated = collision_result_right_floor_sensor.p_world_intersection;
+
+                        collision_result_closest_right_floor_sensor.p1_intersecting_line = v2d_rotate(p1_world_rotated_platform_line, positions[i], -angles[i].rads);
+                        collision_result_closest_right_floor_sensor.p2_intersecting_line = v2d_rotate(p2_world_rotated_platform_line, positions[i], -angles[i].rads);
+
+                        collision_result_closest_right_floor_sensor = collision_result_closest_right_floor_sensor;
+
+                        collision_result_closest_right_floor_sensor.p_world_intersection = v2d_rotate(collision_result_closest_right_floor_sensor.p_world_intersection,  positions[i], -angles[i].rads);
                     }
                 }
-
-                
-                
-                
+    
             } 
             
         });
 
-        // rotate highest points back to their normal state
-
-        highestIntersectingPoint = v2d_rotate(highestIntersectingPoint, positions[i], -angles[i].rads);
-        highestIntersectingLineP1 = v2d_rotate(highestIntersectingLineP1, positions[i], -angles[i].rads);
-        highestIntersectingLineP2 = v2d_rotate(highestIntersectingLineP2, positions[i], -angles[i].rads);
-
-        
         State_util_set(states[i], state);
-        if(state == STATE_ON_GROUND){
+
+
+        // they were rotated around player when being checked for collision, so now rotate them back to their original positions
+        v2d p1_intersecting_line_left_floor_sensor = v2d_rotate(p1_intersecting_line_left_floor_sensor_rotated, positions[i], -angles[i].rads);
+        v2d p2_intersecting_line_left_floor_sensor = v2d_rotate(p2_intersecting_line_left_floor_sensor_rotated, positions[i], -angles[i].rads);
+
+        v2d p1_intersecting_line_right_floor_sensor = v2d_rotate(p1_intersecting_line_right_floor_sensor_rotated, positions[i], -angles[i].rads);
+        v2d p2_intersecting_line_right_floor_sensor = v2d_rotate(p2_intersecting_line_right_floor_sensor_rotated, positions[i], -angles[i].rads);
+
+        // the direction of vector the player will be standing on
+        // used to determine angle
+        v2d v_direction;
+
+        if(collision_result_closest_left_floor_sensor.did_intersect && !collision_result_closest_right_floor_sensor.did_intersect){
+
+            v_direction = v2d_sub(
+                p1_intersecting_line_left_floor_sensor,
+                p2_intersecting_line_left_floor_sensor
+            );
+
+        }
+        else if(!collision_result_closest_left_floor_sensor.did_intersect && collision_result_closest_right_floor_sensor.did_intersect){
+
+            v_direction = v2d_sub(
+                p1_intersecting_line_right_floor_sensor,
+                p2_intersecting_line_right_floor_sensor
+            );
+
+        }
+        else if(collision_result_closest_left_floor_sensor.did_intersect && collision_result_closest_right_floor_sensor.did_intersect){
+            bool closest_intersections_intersecting_same_line = lines_equal(
+                p1_intersecting_line_left_floor_sensor,
+                p2_intersecting_line_left_floor_sensor,
+                p1_intersecting_line_right_floor_sensor,
+                p2_intersecting_line_right_floor_sensor
+            );
+            
+            if(closest_intersections_intersecting_same_line){
+                v_direction = v2d_sub(
+                    p1_intersecting_line_left_floor_sensor_rotated,
+                    p2_intersecting_line_left_floor_sensor_rotated
+                );
+            }
+            else{ // since they are different lines, try to find the "difference" between them to get an angle "between" the two  angles
+                
+                v2d v_direction_closest_intersecting_line_left_floor_sensor = v2d_sub(
+                    p1_intersecting_line_left_floor_sensor,
+                    p2_intersecting_line_left_floor_sensor
+                );
+
+                v2d v_direction_closest_intersecting_line_right_floor_sensor = v2d_sub(
+                    p2_intersecting_line_right_floor_sensor,
+                    p1_intersecting_line_right_floor_sensor
+                );
+
+                v2d v_unit_direction_closest_intersecting_line_left_floor_sensor = v2d_unit(
+                    v_direction_closest_intersecting_line_left_floor_sensor
+                );
+
+                v2d v_unit_direction_closest_intersecting_line_right_floor_sensor = v2d_unit(
+                    v_direction_closest_intersecting_line_right_floor_sensor
+                );
+
+                v2d v_direction_closest_intersecting_line_right_to_left = v2d_sub(
+                    v_unit_direction_closest_intersecting_line_right_floor_sensor,
+                    v_unit_direction_closest_intersecting_line_left_floor_sensor
+                );
+
+                v2d v_direction_closest_intersecting_line_right_to_left_unit = v2d_unit(
+                    v_direction_closest_intersecting_line_right_to_left
+                );
+
+                v_direction = v_direction_closest_intersecting_line_right_to_left_unit;
+            }
+
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
+
             if(groundModes[i] == GROUND_MODE_FLOOR){
-                if(highestIntersectingLineP2.x < highestIntersectingLineP1.x){
-                    swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
+                if(v_direction.x < 0){
+                    v_direction.x *= -1;
+                    v_direction.y *= -1;
                 }
             }
             else if(groundModes[i] == GROUND_MODE_CEILING){
-                if(highestIntersectingLineP2.x > highestIntersectingLineP1.x){
-                    swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
+                if(v_direction.x > 0){
+                    v_direction.x *= -1;
+                    v_direction.y *= -1;
                 }
             }
             else if(groundModes[i] == GROUND_MODE_LEFT_WALL){
-                if(highestIntersectingLineP2.y < highestIntersectingLineP1.y){
-                    swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
+                if(v_direction.y < 0){
+                    v_direction.x *= -1;
+                    v_direction.y *= -1;
                 }
             }
             else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
-                if(highestIntersectingLineP2.y > highestIntersectingLineP1.y){
-                    swapValues(highestIntersectingLineP2, highestIntersectingLineP1, Position);
+                if(v_direction.y > 0){
+                    v_direction.x *= -1;
+                    v_direction.y *= -1;
                 }
             }
-            
-            v2d intersectingLineVector = 
-                highestIntersectingLineP2 - highestIntersectingLineP1;
 
-            angles[i].rads = atan2(-intersectingLineVector.y, intersectingLineVector.x);
+            angles[i].rads = atan2(-v_direction.y, v_direction.x);
             if(angles[i].rads < 0){
                 const float maxRads = 3.14 * 2;
                 angles[i].rads = maxRads +angles[i].rads;
             }
-            
+
         }
-        else {
+        else{
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             groundModes[i] = GROUND_MODE_FLOOR;
             angles[i].rads = 0.0f;
         }
-
         groundModes[i] = util_rads_to_ground_mode(angles[i].rads);
     }
 }
@@ -275,15 +411,29 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
         
         State state = STATE_IN_AIR;
 
-        v2d highestIntersectingPoint(
+        v2d point_closest_intersection_left_floor_sensor(
             FLT_MAX,
             FLT_MAX
         );
 
+        v2d point_closest_intersection_right_floor_sensor(
+            FLT_MAX,
+            FLT_MAX
+        );
+
+        v2d point_closest_intersection_point(
+            FLT_MAX,
+            FLT_MAX
+        );
+
+        v2d p1_closest_intersecting_line_left_floor_sensor;
+        v2d p2_closest_intersecting_line_left_floor_sensor;
+
+        v2d p1_closest_intersecting_line_right_floor_sensor;
+        v2d p2_closest_intersecting_line_right_floor_sensor;
+
         v2d p1_closest_intersecting_line;
         v2d p2_closest_intersecting_line;
-
-
 
         // is in air
         if(states[i].currentState == STATE_IN_AIR){
@@ -293,67 +443,93 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
 
         }
 
-        Ray2d lfSesnorRayLocal = sensorCollections[i].rays[SENSOR_LEFT_FLOOR];
-        Ray2d lfRayGlobal;
-        lfRayGlobal.startingPosition.x = positions[i].x + lfSesnorRayLocal.startingPosition.x;
-        lfRayGlobal.startingPosition.y = positions[i].y + lfSesnorRayLocal.startingPosition.y;
-        lfRayGlobal.distance = lfSesnorRayLocal.distance;
+        Ray2d left_floor_sensor_ray_local = sensorCollections[i].rays[SENSOR_LEFT_FLOOR];
+        Ray2d left_floor_sensor_ray_world;
+        left_floor_sensor_ray_world.position_start.x = positions[i].x + left_floor_sensor_ray_local.position_start.x;
+        left_floor_sensor_ray_world.position_start.y = positions[i].y + left_floor_sensor_ray_local.position_start.y;
+        left_floor_sensor_ray_world.distance = left_floor_sensor_ray_local.distance;
 
-        Ray2d rfRayLocal = sensorCollections[i].rays[SENSOR_RIGHT_FLOOR];
-        Ray2d rfRayGlobal;
-        rfRayGlobal.startingPosition.x = positions[i].x + rfRayLocal.startingPosition.x;
-        rfRayGlobal.startingPosition.y = positions[i].y + rfRayLocal.startingPosition.y;
-        rfRayGlobal.distance = rfRayLocal.distance;
+        Ray2d right_floor_sensor_ray_local = sensorCollections[i].rays[SENSOR_RIGHT_FLOOR];
+        Ray2d right_floor_sensor_ray_world;
+        right_floor_sensor_ray_world.position_start.x = positions[i].x + right_floor_sensor_ray_local.position_start.x;
+        right_floor_sensor_ray_world.position_start.y = positions[i].y + right_floor_sensor_ray_local.position_start.y;
+        right_floor_sensor_ray_world.distance = right_floor_sensor_ray_local.distance;
 
-        float closest_distance_from_point;
+        float closest_distance_from_point = FLT_MAX;
 
         auto f = it.world().filter<Position, PlatformPath>();
 
         f.each([&](flecs::entity e, Position &position, PlatformPath &platformPath){
             size_t len = platformPath.nodes.size();
             for(int v = 0; v < len - 1; v++){                
-                Position p1 = platformPath.nodes.at(v);
-                Position p2 = platformPath.nodes.at(v+1);
-                v2d v1(p1.x + position.x, p1.y + position.y);
-                v2d v2(p2.x + position.x, p2.y + position.y);
+                v2d p1 = platformPath.nodes.at(v);
+                v2d p2 = platformPath.nodes.at(v+1);
+
+                v2d v1 = v2d_add(p1, position);
+                v2d v2 = v2d_add(p2, position);
+
                 v2d r1 = v2d_rotate(v1, positions[i], angles[i].rads);
                 v2d r2 = v2d_rotate(v2, positions[i], angles[i].rads);
-               
-                float distance_from_point;
+                
+                float distance_from_left_floor_sensor_origin;
+                v2d 
 
-                if(collisions_Ray2d_intersects_line_segment(lfRayGlobal, r1, r2, distance_from_point, SENSOR_LEFT_FLOOR)){
+                if(collisions_Ray2d_intersects_line_segment(left_floor_sensor_ray_world, r1, r2, distance_from_left_floor_sensor_origin, SENSOR_LEFT_FLOOR)){
+
                     state = STATE_ON_GROUND;
+
                     v2d intersectionPoint(
-                            lfRayGlobal.startingPosition.x,
-                            lfRayGlobal.startingPosition.y + distance_from_point
+                            left_floor_sensor_ray_world.position_start.x,
+                            left_floor_sensor_ray_world.position_start.y + distance_from_left_floor_sensor_origin
                     );
-                    if(intersectionPoint.y < highestIntersectingPoint.y){
-                        highestIntersectingPoint = intersectionPoint;
-                        p1_closest_intersecting_line = r1;
-                        p2_closest_intersecting_line = r2;
-                        closest_distance_from_point = distance_from_point;
+
+                    if(intersectionPoint.y < point_closest_intersection_left_floor_sensor.y){
+                        point_closest_intersection_left_floor_sensor = intersectionPoint;
+                        p1_closest_intersecting_line_left_floor_sensor = r1;
+                        p2_closest_intersecting_line_left_floor_sensor = r2;
+                        closest_distance_from_point = distance_from_left_floor_sensor_origin;
+                    }
+                
+                }
+
+                float distance_from_right_floor_sensor_origin;
+
+                if(collisions_Ray2d_intersects_line_segment(right_floor_sensor_ray_world, r1, r2, distance_from_right_floor_sensor_origin, SENSOR_RIGHT_FLOOR)){
+
+                    state = STATE_ON_GROUND;
+
+                    v2d intersectionPoint(
+                            right_floor_sensor_ray_world.position_start.x,
+                            right_floor_sensor_ray_world.position_start.y + distance_from_right_floor_sensor_origin
+                    );
+
+                    if(intersectionPoint.y < point_closest_intersection_right_floor_sensor.y){
+                        point_closest_intersection_right_floor_sensor = intersectionPoint;
+                        p1_closest_intersecting_line_right_floor_sensor = r1;
+                        p2_closest_intersecting_line_right_floor_sensor = r2;
+                        closest_distance_from_point = distance_from_right_floor_sensor_origin;
+
                     }
                 }
 
-                if(collisions_Ray2d_intersects_line_segment(rfRayGlobal, r1, r2, distance_from_point, SENSOR_RIGHT_FLOOR)){
-                    state = STATE_ON_GROUND;
-                    v2d intersectionPoint(
-                            rfRayGlobal.startingPosition.x,
-                            rfRayGlobal.startingPosition.y + distance_from_point
-                    );
-                    if(intersectionPoint.y < highestIntersectingPoint.y){
-                        highestIntersectingPoint = intersectionPoint;
-                        p1_closest_intersecting_line = r1;
-                        p2_closest_intersecting_line = r2;
-                        closest_distance_from_point = distance_from_point;
-
-                    }
-                }
-            } 
+                
+                
+            }  
         });
 
+        if(point_closest_intersection_left_floor_sensor.y < point_closest_intersection_right_floor_sensor.y){
+            point_closest_intersection_point = point_closest_intersection_left_floor_sensor;
+            p1_closest_intersecting_line = p1_closest_intersecting_line_left_floor_sensor;
+            p2_closest_intersecting_line = p2_closest_intersecting_line_left_floor_sensor;
+        }
+        else{
+            point_closest_intersection_point = point_closest_intersection_right_floor_sensor;
+            p1_closest_intersecting_line = p1_closest_intersecting_line_right_floor_sensor;
+            p2_closest_intersecting_line = p2_closest_intersecting_line_right_floor_sensor;
+        }
+
         // rotate highest points back to their normal state
-        highestIntersectingPoint = v2d_rotate(highestIntersectingPoint, positions[i], -angles[i].rads);
+        point_closest_intersection_point = v2d_rotate(point_closest_intersection_point, positions[i], -angles[i].rads);
         p1_closest_intersecting_line = v2d_rotate(p1_closest_intersecting_line, positions[i], -angles[i].rads);
         p2_closest_intersecting_line = v2d_rotate(p2_closest_intersecting_line, positions[i], -angles[i].rads);
         

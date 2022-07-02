@@ -6,6 +6,8 @@
 #include "ints.h"
 
 typedef v2d Position;
+typedef Position WorldPosition;
+typedef Position LocalPosition;
 
 
 struct Angle {
