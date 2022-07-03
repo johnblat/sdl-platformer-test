@@ -129,20 +129,26 @@ CollisionResultRay2dIntersectLine collisions_Ray2d_intersects_line_segment_resul
 }
 
 
+
 CollisionResultRay2dIntersectLine collisions_Ray2d_rotated_intersects_line_segment_result(Ray2d ray_sensor_world, SensorType sensor_type, float sensor_rotation_in_rads, v2d p_origin_of_rotation, Position p1_line, Position p2_line){
     CollisionResultRay2dIntersectLine collision_result;
+    
+    // The rays themselves do not rotate.
+    // This is to make math easier.
+    // Instead, the line being checked is rotated in the opposite direction around the rotation origin point.
+    // This way, intersection calculation is easier because its just a straight line ray against an already rotated line.
 
     v2d p1_line_rotated = v2d_rotate(p1_line, p_origin_of_rotation, sensor_rotation_in_rads);
     v2d p2_line_rotated = v2d_rotate(p2_line, p_origin_of_rotation, sensor_rotation_in_rads);
 
     if(sensor_type == SENSOR_LEFT_FLOOR || sensor_type == SENSOR_RIGHT_FLOOR){
 
-        if(!util_is_in_range(p1_line.x, p2_line.x, ray_sensor_world.position_start.x)){
+        if(!util_is_in_range(p1_line_rotated.x, p2_line_rotated.x, ray_sensor_world.position_start.x)){
             collision_result.did_intersect = false;
             return collision_result;
         }
 
-        float y = util_get_y_for_x_on_line(p1_line, p2_line, ray_sensor_world.position_start.x);
+        float y = util_get_y_for_x_on_line(p1_line_rotated, p2_line_rotated, ray_sensor_world.position_start.x);
 
         collision_result.distance_from_ray_origin = y - ray_sensor_world.position_start.y;
 

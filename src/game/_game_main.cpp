@@ -147,12 +147,12 @@ void registerSystems(flecs::world &ecs){
         .kind(custom_phase_collision_floor)
         .iter(collisions_Sensors_PlatformPaths_update_Position_System);
 
-    ecs.system<GroundSpeed, Angle, StateCurrPrev>("slip and add controllocktimer when too steep and too slow")
-        .kind(custom_phase_control_lock_activate_slip)
-        .term<ControlLockTimer>().oper(flecs::Not)
-        .iter(
-            movement_GroundSpeed_zero_ControlLockTimer_add_based_on_too_steep_angle_System
-        );
+    // ecs.system<GroundSpeed, Angle, StateCurrPrev>("slip and add controllocktimer when too steep and too slow")
+    //     .kind(custom_phase_control_lock_activate_slip)
+    //     .term<ControlLockTimer>().oper(flecs::Not)
+    //     .iter(
+    //         movement_GroundSpeed_zero_ControlLockTimer_add_based_on_too_steep_angle_System
+    //     );
 
     ecs.system<AnimatedSprite>("AnimatedSpritePlay")
         .kind(custom_phase_animation)

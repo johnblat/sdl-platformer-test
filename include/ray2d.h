@@ -23,7 +23,7 @@ enum SensorType {
 
 const float SENSOR_FLOOR_AIR_DISTANCE = 16.0f;
 const float SENSOR_FLOOR_GROUND_DISTANCE = 32.0f;
-const float HALF_PLAYER_HEIGHT = 19.0f;
+const float HALF_PLAYER_HEIGHT = 16.0f;
 
 
 typedef struct Sensors Sensors;
