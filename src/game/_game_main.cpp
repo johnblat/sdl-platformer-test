@@ -454,13 +454,16 @@ int main(){
 
     pinkGuySensors.rays[SENSOR_LEFT_FLOOR].position_start = (Position){-9.0f, 0.0f};
     pinkGuySensors.rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+
     pinkGuySensors.rays[SENSOR_CENTER_FLOOR].position_start = (Position){0.0f, 0.0f};
     pinkGuySensors.rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+
     pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].position_start = (Position){9.0f, 0.0f};
     pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
     pinkGuySensors.rays[SENSOR_LEFT_WALL].position_start = (Position){0.0f, 8.0f};
     pinkGuySensors.rays[SENSOR_LEFT_WALL].distance = 8.0f;
+
     pinkGuySensors.rays[SENSOR_RIGHT_WALL].position_start = (Position){0.0f, 8.0f};
     pinkGuySensors.rays[SENSOR_RIGHT_WALL].distance = 8.0f;
 
@@ -479,6 +482,9 @@ int main(){
     pinkGuyEntity.set<Sensors>(pinkGuySensors);
     pinkGuyEntity.set<GroundSpeed>((GroundSpeed){0.0f});
     pinkGuyEntity.set<GroundMode>(GROUND_MODE_FLOOR);
+
+    gCameraPosition.x = pinkGuyEntity.get<Position>()->x;
+    gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
     
     registerSystems(world);
 
@@ -501,8 +507,8 @@ int main(){
         gKeyStates = (u8 *)SDL_GetKeyboardState(nullptr);
    
 
-        gCameraPosition.x = pinkGuyEntity.get<Position>()->x;
-        gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
+        // gCameraPosition.x = pinkGuyEntity.get<Position>()->x;
+        // gCameraPosition.y = pinkGuyEntity.get<Position>()->y;
 
 
         world.progress();

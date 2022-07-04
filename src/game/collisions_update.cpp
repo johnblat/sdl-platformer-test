@@ -231,220 +231,171 @@ void internal_collisions_ray2d_find_closest_floor_intersection_on_platform_paths
 
 }
 
+
+void internal_collisions_ray2d_find_closest_center_floor_intersection_on_platform_paths(
+    flecs::world &world, 
+    Ray2d center_floor_sensor_ray_world, 
+    float rotation_in_rads, 
+    v2d p_rotation_origin, 
+    CollisionResultRay2dIntersectLine &closest_collision_result_center_floor
+){
+    closest_collision_result_center_floor.did_intersect = false;
+
+    auto f = world.filter<Position, PlatformPath>();
+
+    f.each([&](flecs::entity e, Position &world_position, PlatformPath &platformPath){
+
+        for(int j = 0; j < platformPath.nodes.size() - 1; j++){                
+            v2d p1_local_platform_line = platformPath.nodes.at(j);
+            v2d p2_local_platform_line = platformPath.nodes.at(j+1);
+
+            v2d p1_world_platform_line = util_v2d_local_to_world(
+                p1_local_platform_line, 
+                world_position 
+            );
+            v2d p2_world_platform_line = util_v2d_local_to_world(
+                p2_local_platform_line, 
+                world_position 
+            );
+
+        
+            CollisionResultRay2dIntersectLine current_collision_result_center_floor = collisions_Ray2d_rotated_intersects_line_segment_result(
+                center_floor_sensor_ray_world,
+                SENSOR_CENTER_FLOOR,
+                rotation_in_rads,
+                p_rotation_origin,
+                p1_world_platform_line,
+                p2_world_platform_line
+            );
+            
+
+            if(current_collision_result_center_floor.did_intersect){
+
+                if(!closest_collision_result_center_floor.did_intersect){ // no closest one yet
+                    closest_collision_result_center_floor = current_collision_result_center_floor;
+                }
+                else if(current_collision_result_center_floor.distance_from_ray_origin < closest_collision_result_center_floor.distance_from_ray_origin){
+                    closest_collision_result_center_floor = current_collision_result_center_floor;
+                }
+            }
+        } 
+    });
+
+}
+
 void collisions_Sensors_PlatformPaths_update_Angle_System(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles ){
     
     for(u64 i : it){
         
-        CollisionResultRay2dIntersectLine closest_collision_result_left_floor_sensor;
-        
-        CollisionResultRay2dIntersectLine closest_collision_result_right_floor_sensor;
+
+        CollisionResultRay2dIntersectLine closest_collision_result_center_floor_sensor;
 
         // ensure height is correct for in air collision check
         if(states[i].currentState == STATE_IN_AIR){
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+            sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
         }
 
-        Ray2d left_floor_sensor_ray_world = ray2d_local_to_world(
-            positions[i], 
-            sensorCollections[i].rays[SENSOR_LEFT_FLOOR]
-        );
 
-
-        Ray2d right_floor_sensor_ray_world = ray2d_local_to_world(
+        Ray2d center_floor_sensor_ray_world = ray2d_local_to_world(
             positions[i], 
-            sensorCollections[i].rays[SENSOR_RIGHT_FLOOR]
+            sensorCollections[i].rays[SENSOR_CENTER_FLOOR]
         );
 
         flecs::world world = it.world();
 
-        internal_collisions_ray2d_find_closest_floor_intersection_on_platform_paths(
+
+        internal_collisions_ray2d_find_closest_center_floor_intersection_on_platform_paths(
             world,
-            left_floor_sensor_ray_world,
-            right_floor_sensor_ray_world,
+            center_floor_sensor_ray_world,
             angles[i].rads,
             positions[i],
-            closest_collision_result_left_floor_sensor,
-            closest_collision_result_right_floor_sensor
+            closest_collision_result_center_floor_sensor
         );
 
-        // ALIGN LINES TO FACE CORRECT WAY
-        {
-        if(groundModes[i] == GROUND_MODE_FLOOR){
-            if(closest_collision_result_left_floor_sensor.p2_intersecting_line.x < closest_collision_result_left_floor_sensor.p1_intersecting_line.x){
-                swapValues(
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-            if(closest_collision_result_right_floor_sensor.p2_intersecting_line.x < closest_collision_result_right_floor_sensor.p1_intersecting_line.x){
-                swapValues(
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-        }
-        else if(groundModes[i] == GROUND_MODE_CEILING){
-            if(closest_collision_result_left_floor_sensor.p2_intersecting_line.x > closest_collision_result_left_floor_sensor.p1_intersecting_line.x){
-                swapValues(
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-            if(closest_collision_result_right_floor_sensor.p2_intersecting_line.x > closest_collision_result_right_floor_sensor.p1_intersecting_line.x){
-                swapValues(
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-        }
-        else if(groundModes[i] == GROUND_MODE_LEFT_WALL){
-            if(closest_collision_result_left_floor_sensor.p2_intersecting_line.y < closest_collision_result_left_floor_sensor.p1_intersecting_line.y){
-                swapValues(
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-            if(closest_collision_result_right_floor_sensor.p2_intersecting_line.y < closest_collision_result_right_floor_sensor.p1_intersecting_line.y){
-                swapValues(
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-        }
-        else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
-            if(closest_collision_result_left_floor_sensor.p2_intersecting_line.y > closest_collision_result_left_floor_sensor.p1_intersecting_line.y){
-                swapValues(
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-            if(closest_collision_result_right_floor_sensor.p2_intersecting_line.y > closest_collision_result_right_floor_sensor.p1_intersecting_line.y){
-                swapValues(
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-        }
-        }
+
+        
 
         // the direction of vector the player will be standing on
         // used to determine angle
         v2d v_direction;
 
-        if(closest_collision_result_left_floor_sensor.did_intersect || closest_collision_result_right_floor_sensor.did_intersect){
-
-            // State_util_set(states[i], STATE_ON_GROUND);
-
-            if(closest_collision_result_left_floor_sensor.did_intersect && !closest_collision_result_right_floor_sensor.did_intersect){
-
-                v_direction = v2d_sub(
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line,
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line
-                );
-
-            }
-
-            else if(!closest_collision_result_left_floor_sensor.did_intersect && closest_collision_result_right_floor_sensor.did_intersect){
-
-                v_direction = v2d_sub(
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line,
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line
-                );
-
-            }
-
-            else if(closest_collision_result_left_floor_sensor.did_intersect && closest_collision_result_right_floor_sensor.did_intersect){
-                bool closest_intersections_intersecting_same_line = lines_equal(
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line,
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line,
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line,
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line
-                );
-                
-                if(closest_intersections_intersecting_same_line){
-                    v_direction = v2d_sub(
-                        closest_collision_result_left_floor_sensor.p2_intersecting_line,
-                        closest_collision_result_left_floor_sensor.p1_intersecting_line
+        if(closest_collision_result_center_floor_sensor.did_intersect){
+            // ALIGN LINES TO FACE CORRECT WAY
+            {
+            if(groundModes[i] == GROUND_MODE_FLOOR){
+                if(closest_collision_result_center_floor_sensor.p2_intersecting_line.x < closest_collision_result_center_floor_sensor.p1_intersecting_line.x){
+                    swapValues(
+                        closest_collision_result_center_floor_sensor.p2_intersecting_line, 
+                        closest_collision_result_center_floor_sensor.p1_intersecting_line, 
+                        Position
                     );
                 }
-                else{ // since they are different lines, try to find the "difference" between them to get an angle "between" the two  angles
-                    
-                    v2d v_direction_closest_intersecting_line_left_floor_sensor = v2d_sub(
-                        closest_collision_result_left_floor_sensor.p1_intersecting_line,
-                        closest_collision_result_left_floor_sensor.p2_intersecting_line
+            }
+            else if(groundModes[i] == GROUND_MODE_CEILING){
+                if(closest_collision_result_center_floor_sensor.p2_intersecting_line.x > closest_collision_result_center_floor_sensor.p1_intersecting_line.x){
+                    swapValues(
+                        closest_collision_result_center_floor_sensor.p2_intersecting_line, 
+                        closest_collision_result_center_floor_sensor.p1_intersecting_line, 
+                        Position
                     );
-
-                    v2d v_direction_closest_intersecting_line_right_floor_sensor = v2d_sub(
-                        closest_collision_result_right_floor_sensor.p2_intersecting_line,
-                        closest_collision_result_right_floor_sensor.p1_intersecting_line
-                    );
-
-                    v2d v_unit_direction_closest_intersecting_line_left_floor_sensor = v2d_unit(
-                        v_direction_closest_intersecting_line_left_floor_sensor
-                    );
-
-                    v2d v_unit_direction_closest_intersecting_line_right_floor_sensor = v2d_unit(
-                        v_direction_closest_intersecting_line_right_floor_sensor
-                    );
-
-                    v2d v_direction_closest_intersecting_line_right_to_left = v2d_sub(
-                        v_unit_direction_closest_intersecting_line_right_floor_sensor,
-                        v_unit_direction_closest_intersecting_line_left_floor_sensor
-                    );
-
-                    v2d v_direction_closest_intersecting_line_right_to_left_unit = v2d_unit(
-                        v_direction_closest_intersecting_line_right_to_left
-                    );
-
-                    v_direction = v_direction_closest_intersecting_line_right_to_left_unit;
                 }
             }
+            else if(groundModes[i] == GROUND_MODE_LEFT_WALL){
+                if(closest_collision_result_center_floor_sensor.p2_intersecting_line.y < closest_collision_result_center_floor_sensor.p1_intersecting_line.y){
+                    swapValues(
+                        closest_collision_result_center_floor_sensor.p2_intersecting_line, 
+                        closest_collision_result_center_floor_sensor.p1_intersecting_line, 
+                        Position
+                    );
+                }
+            }
+            else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
+                if(closest_collision_result_center_floor_sensor.p2_intersecting_line.y > closest_collision_result_center_floor_sensor.p1_intersecting_line.y){
+                    swapValues(
+                        closest_collision_result_center_floor_sensor.p2_intersecting_line, 
+                        closest_collision_result_center_floor_sensor.p1_intersecting_line, 
+                        Position
+                    );
+                }
+            }
+            }
+
+            v_direction = v2d_sub(
+                closest_collision_result_center_floor_sensor.p2_intersecting_line,
+                closest_collision_result_center_floor_sensor.p1_intersecting_line
+            );
 
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
 
-            // if(groundModes[i] == GROUND_MODE_FLOOR){
-            //     if(v_direction.x < 0){
-            //         v_direction.x *= -1;
-            //         v_direction.y *= -1;
-            //     }
-            // }
-            // else if(groundModes[i] == GROUND_MODE_CEILING){
-            //     if(v_direction.x > 0){
-            //         v_direction.x *= -1;
-            //         v_direction.y *= -1;
-            //     }
-            // }
-            // else if(groundModes[i] == GROUND_MODE_LEFT_WALL){
-            //     if(v_direction.y < 0){
-            //         v_direction.x *= -1;
-            //         v_direction.y *= -1;
-            //     }
-            // }
-            // else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
-            //     if(v_direction.y > 0){
-            //         v_direction.x *= -1;
-            //         v_direction.y *= -1;
-            //     }
-            // }
+            float angle_in_rads_of_line_direction = atan2(-v_direction.y, v_direction.x);
 
-            angles[i].rads = atan2(-v_direction.y, v_direction.x);
+            if(angle_in_rads_of_line_direction < 0){
+                const float maxRads = 3.14 * 2;
+                angle_in_rads_of_line_direction = maxRads + angle_in_rads_of_line_direction;
+            }
+            // rotate player around intersection point
+            float rotation_in_rads_needed_to_align_player = angles[i].rads - angle_in_rads_of_line_direction;
+
+            if(rotation_in_rads_needed_to_align_player < 0){
+                const float maxRads = 3.14 * 2;
+                rotation_in_rads_needed_to_align_player = maxRads + rotation_in_rads_needed_to_align_player;
+            }
+
+            positions[i] = v2d_rotate(positions[i], closest_collision_result_center_floor_sensor.p_world_intersection, rotation_in_rads_needed_to_align_player);
+
+            angles[i].rads = angle_in_rads_of_line_direction;
 
             if(angles[i].rads < 0){
                 const float maxRads = 3.14 * 2;
                 angles[i].rads = maxRads +angles[i].rads;
             }
+
+            
 
         }
         else{ // did not intersect either sensor
@@ -467,107 +418,40 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
     
     for(u64 i : it){
         
-        CollisionResultRay2dIntersectLine closest_collision_result_left_floor_sensor;
-        
-        CollisionResultRay2dIntersectLine closest_collision_result_right_floor_sensor;
 
         // ensure height is correct for in air collision check
         if(states[i].currentState == STATE_IN_AIR){
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+            sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
         }
 
-        Ray2d left_floor_sensor_ray_world = ray2d_local_to_world(
-            positions[i], 
-            sensorCollections[i].rays[SENSOR_LEFT_FLOOR]
-        );
+        CollisionResultRay2dIntersectLine closest_collision_result_center_floor_sensor;
+
+        // ensure height is correct for in air collision check
+        if(states[i].currentState == STATE_IN_AIR){
+            sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+            sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+            sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+
+        }
 
 
-        Ray2d right_floor_sensor_ray_world = ray2d_local_to_world(
+        Ray2d center_floor_sensor_ray_world = ray2d_local_to_world(
             positions[i], 
-            sensorCollections[i].rays[SENSOR_RIGHT_FLOOR]
+            sensorCollections[i].rays[SENSOR_CENTER_FLOOR]
         );
 
         flecs::world world = it.world();
 
-        internal_collisions_ray2d_find_closest_floor_intersection_on_platform_paths(
+        internal_collisions_ray2d_find_closest_center_floor_intersection_on_platform_paths(
             world,
-            left_floor_sensor_ray_world,
-            right_floor_sensor_ray_world,
+            center_floor_sensor_ray_world,
             angles[i].rads,
             positions[i],
-            closest_collision_result_left_floor_sensor,
-            closest_collision_result_right_floor_sensor
+            closest_collision_result_center_floor_sensor
         );
-
-        // ALIGN INTERSECTING LINES WITH GROUND MODE
-        {
-        if(groundModes[i] == GROUND_MODE_FLOOR){
-            if(closest_collision_result_left_floor_sensor.p2_intersecting_line.x < closest_collision_result_left_floor_sensor.p1_intersecting_line.x){
-                swapValues(
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-            if(closest_collision_result_right_floor_sensor.p2_intersecting_line.x < closest_collision_result_right_floor_sensor.p1_intersecting_line.x){
-                swapValues(
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-        }
-        else if(groundModes[i] == GROUND_MODE_CEILING){
-            if(closest_collision_result_left_floor_sensor.p2_intersecting_line.x > closest_collision_result_left_floor_sensor.p1_intersecting_line.x){
-                swapValues(
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-            if(closest_collision_result_right_floor_sensor.p2_intersecting_line.x > closest_collision_result_right_floor_sensor.p1_intersecting_line.x){
-                swapValues(
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-        }
-        else if(groundModes[i] == GROUND_MODE_LEFT_WALL){
-            if(closest_collision_result_left_floor_sensor.p2_intersecting_line.y < closest_collision_result_left_floor_sensor.p1_intersecting_line.y){
-                swapValues(
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-            if(closest_collision_result_right_floor_sensor.p2_intersecting_line.y < closest_collision_result_right_floor_sensor.p1_intersecting_line.y){
-                swapValues(
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-        }
-        else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
-            if(closest_collision_result_left_floor_sensor.p2_intersecting_line.y > closest_collision_result_left_floor_sensor.p1_intersecting_line.y){
-                swapValues(
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-            if(closest_collision_result_right_floor_sensor.p2_intersecting_line.y > closest_collision_result_right_floor_sensor.p1_intersecting_line.y){
-                swapValues(
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line, 
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line, 
-                    Position
-                );
-            }
-        }
-        }
 
         // HANDLE COLLISIONS IF ANY
 
@@ -577,164 +461,69 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
         v2d v_direction_unit;
         v2d v_move_player(0.0f, 0.0f);
 
-        if(closest_collision_result_left_floor_sensor.did_intersect || closest_collision_result_right_floor_sensor.did_intersect){
+        if(closest_collision_result_center_floor_sensor.did_intersect){
 
             State_util_set(states[i], STATE_ON_GROUND);
 
-            if(closest_collision_result_left_floor_sensor.did_intersect && !closest_collision_result_right_floor_sensor.did_intersect){
-
-                v_direction = v2d_sub(
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line,
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line
-                );
-
-                v_direction_unit = v2d_unit(v_direction);
-
-                v2d v_perp_direction_unit = v2d_perp(
-                    v_direction_unit
-                );
-
-                v_move_player = v2d_scale(
-                    HALF_PLAYER_HEIGHT - closest_collision_result_left_floor_sensor.distance_from_ray_origin,
-                    v_perp_direction_unit
-                );                
-
-            }
-
-            else if(!closest_collision_result_left_floor_sensor.did_intersect && closest_collision_result_right_floor_sensor.did_intersect){
-
-                v_direction = v2d_sub(
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line,
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line
-                );
-
-                v_direction_unit = v2d_unit(v_direction);
-
-                v2d v_perp_direction_unit = v2d_perp(
-                    v_direction_unit
-                );
-
-                v_move_player = v2d_scale(
-                    HALF_PLAYER_HEIGHT - closest_collision_result_right_floor_sensor.distance_from_ray_origin,
-                    v_perp_direction_unit
-                );
-
-            }
-
-            else if(closest_collision_result_left_floor_sensor.did_intersect && closest_collision_result_right_floor_sensor.did_intersect){
-                bool closest_intersections_intersecting_same_line = lines_equal(
-                    closest_collision_result_left_floor_sensor.p1_intersecting_line,
-                    closest_collision_result_left_floor_sensor.p2_intersecting_line,
-                    closest_collision_result_right_floor_sensor.p1_intersecting_line,
-                    closest_collision_result_right_floor_sensor.p2_intersecting_line
-                );
-                
-                if(closest_intersections_intersecting_same_line){
-                    v_direction = v2d_sub(
-                        closest_collision_result_left_floor_sensor.p2_intersecting_line,
-                        closest_collision_result_left_floor_sensor.p1_intersecting_line
-                    );
-
-                    v_direction_unit = v2d_unit(v_direction);
-
-                    v2d v_perp_direction_unit = v2d_perp(
-                        v_direction_unit
-                    );
-
-                    float closest_distance = MIN(
-                        closest_collision_result_left_floor_sensor.distance_from_ray_origin,
-                        closest_collision_result_right_floor_sensor.distance_from_ray_origin
-                    );
-
-                    v_move_player = v2d_scale(
-                        HALF_PLAYER_HEIGHT - closest_distance,
-                        v_perp_direction_unit
+            // ALIGN INTERSECTING LINES WITH GROUND MODE
+            {
+            if(groundModes[i] == GROUND_MODE_FLOOR){
+                if(closest_collision_result_center_floor_sensor.p2_intersecting_line.x < closest_collision_result_center_floor_sensor.p1_intersecting_line.x){
+                    swapValues(
+                        closest_collision_result_center_floor_sensor.p2_intersecting_line, 
+                        closest_collision_result_center_floor_sensor.p1_intersecting_line, 
+                        Position
                     );
                 }
-                else{ // since they are different lines, try to find the "difference" between them to get an angle "between" the two  angles
-                    
-                    v2d v_direction_closest_intersecting_line_left_floor_sensor = v2d_sub(
-                        closest_collision_result_left_floor_sensor.p1_intersecting_line,
-                        closest_collision_result_left_floor_sensor.p2_intersecting_line
+            }
+            else if(groundModes[i] == GROUND_MODE_CEILING){
+                if(closest_collision_result_center_floor_sensor.p2_intersecting_line.x > closest_collision_result_center_floor_sensor.p1_intersecting_line.x){
+                    swapValues(
+                        closest_collision_result_center_floor_sensor.p2_intersecting_line, 
+                        closest_collision_result_center_floor_sensor.p1_intersecting_line, 
+                        Position
                     );
-
-                    v2d v_direction_closest_intersecting_line_right_floor_sensor = v2d_sub(
-                        closest_collision_result_right_floor_sensor.p2_intersecting_line,
-                        closest_collision_result_right_floor_sensor.p1_intersecting_line
-                    );
-
-                    v2d v_unit_direction_closest_intersecting_line_left_floor_sensor = v2d_unit(
-                        v_direction_closest_intersecting_line_left_floor_sensor
-                    );
-
-                    v2d v_unit_direction_closest_intersecting_line_right_floor_sensor = v2d_unit(
-                        v_direction_closest_intersecting_line_right_floor_sensor
-                    );
-
-                    v2d v_direction_closest_intersecting_line_right_to_left = v2d_sub(
-                        v_unit_direction_closest_intersecting_line_right_floor_sensor,
-                        v_unit_direction_closest_intersecting_line_left_floor_sensor
-                    );
-
-                    v2d v_direction_closest_intersecting_line_right_to_left_unit = v2d_unit(
-                        v_direction_closest_intersecting_line_right_to_left
-                    );
-
-                    v_direction = v_direction_closest_intersecting_line_right_to_left_unit;
-
-                    v_direction_unit = v2d_unit(v_direction);
-
-                    v2d v_perp_direction_unit = v2d_perp(
-                        v_direction_unit
-                    );
-
-                    float closest_distance = MIN(
-                        closest_collision_result_left_floor_sensor.distance_from_ray_origin, 
-                        closest_collision_result_right_floor_sensor.distance_from_ray_origin
-                    );
-
-                    v_move_player = v2d_scale(
-                        HALF_PLAYER_HEIGHT - closest_distance,
-                        v_perp_direction_unit
-                    );
-                    if(v_move_player.y != 0.0f){
-                        int x = 0;
-                    }
                 }
             }
-
-            angles[i].rads = atan2(-v_direction.y, v_direction.x);
-
-            if(angles[i].rads < 0){
-                const float maxRads = 3.14 * 2;
-                angles[i].rads = maxRads +angles[i].rads;
+            else if(groundModes[i] == GROUND_MODE_LEFT_WALL){
+                if(closest_collision_result_center_floor_sensor.p2_intersecting_line.y < closest_collision_result_center_floor_sensor.p1_intersecting_line.y){
+                    swapValues(
+                        closest_collision_result_center_floor_sensor.p2_intersecting_line, 
+                        closest_collision_result_center_floor_sensor.p1_intersecting_line, 
+                        Position
+                    );
+                }
+            }
+            else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
+                if(closest_collision_result_center_floor_sensor.p2_intersecting_line.y > closest_collision_result_center_floor_sensor.p1_intersecting_line.y){
+                    swapValues(
+                        closest_collision_result_center_floor_sensor.p2_intersecting_line, 
+                        closest_collision_result_center_floor_sensor.p1_intersecting_line, 
+                        Position
+                    );
+                }
+            }
             }
 
-            // if(groundModes[i] == GROUND_MODE_FLOOR){
-            //     if(v_move_player.y > 0){
-            //         v_move_player.y *= -1;
-            //     }
-            // }
-            // else if(groundModes[i] == GROUND_MODE_CEILING){
-            //     if(v_move_player.y < 0){
-            //         v_move_player.y *= -1;
-            //     }
-            // }
-            // else if(groundModes[i] == GROUND_MODE_LEFT_WALL){
-            //     if(v_move_player.x < 0){
-            //         v_move_player.x *= -1;
-            //     }
-            // }
-            // else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
-            //     if(v_move_player.x > 0){
-            //         v_move_player.x *= -1;
-            //     }
-            // }
+            v_direction = v2d_sub(
+                closest_collision_result_center_floor_sensor.p2_intersecting_line,
+                closest_collision_result_center_floor_sensor.p1_intersecting_line
+            );
+
+            v_direction_unit = v2d_unit(v_direction);
+
+            v2d v_perp_direction_unit = v2d_perp(
+                v_direction_unit
+            );
+
+            v_move_player = v2d_scale(
+                HALF_PLAYER_HEIGHT - closest_collision_result_center_floor_sensor.distance_from_ray_origin,
+                v_perp_direction_unit
+            );
 
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
-
         }
         else{ // did not intersect either sensor
 
@@ -747,6 +536,167 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
             angles[i].rads = 0.0f;
 
         }
+
+
+
+        
+
+
+
+        // if(closest_collision_result_left_floor_sensor.did_intersect || closest_collision_result_right_floor_sensor.did_intersect){
+
+        //     State_util_set(states[i], STATE_ON_GROUND);
+
+        //     if(closest_collision_result_left_floor_sensor.did_intersect && !closest_collision_result_right_floor_sensor.did_intersect){
+
+        //         v_direction = v2d_sub(
+        //             closest_collision_result_left_floor_sensor.p2_intersecting_line,
+        //             closest_collision_result_left_floor_sensor.p1_intersecting_line
+        //         );
+
+        //         v_direction_unit = v2d_unit(v_direction);
+
+        //         v2d v_perp_direction_unit = v2d_perp(
+        //             v_direction_unit
+        //         );
+
+        //         v_move_player = v2d_scale(
+        //             HALF_PLAYER_HEIGHT - closest_collision_result_left_floor_sensor.distance_from_ray_origin,
+        //             v_perp_direction_unit
+        //         );                
+
+        //     }
+
+        //     else if(!closest_collision_result_left_floor_sensor.did_intersect && closest_collision_result_right_floor_sensor.did_intersect){
+
+        //         v_direction = v2d_sub(
+        //             closest_collision_result_right_floor_sensor.p2_intersecting_line,
+        //             closest_collision_result_right_floor_sensor.p1_intersecting_line
+        //         );
+
+        //         v_direction_unit = v2d_unit(v_direction);
+
+        //         v2d v_perp_direction_unit = v2d_perp(
+        //             v_direction_unit
+        //         );
+
+        //         v_move_player = v2d_scale(
+        //             HALF_PLAYER_HEIGHT - closest_collision_result_right_floor_sensor.distance_from_ray_origin,
+        //             v_perp_direction_unit
+        //         );
+
+        //     }
+
+        //     else if(closest_collision_result_left_floor_sensor.did_intersect && closest_collision_result_right_floor_sensor.did_intersect){
+        //         bool closest_intersections_intersecting_same_line = lines_equal(
+        //             closest_collision_result_left_floor_sensor.p1_intersecting_line,
+        //             closest_collision_result_left_floor_sensor.p2_intersecting_line,
+        //             closest_collision_result_right_floor_sensor.p1_intersecting_line,
+        //             closest_collision_result_right_floor_sensor.p2_intersecting_line
+        //         );
+                
+        //         if(closest_intersections_intersecting_same_line){
+        //             v_direction = v2d_sub(
+        //                 closest_collision_result_left_floor_sensor.p2_intersecting_line,
+        //                 closest_collision_result_left_floor_sensor.p1_intersecting_line
+        //             );
+
+        //             v_direction_unit = v2d_unit(v_direction);
+
+        //             v2d v_perp_direction_unit = v2d_perp(
+        //                 v_direction_unit
+        //             );
+
+        //             float closest_distance = MIN(
+        //                 closest_collision_result_left_floor_sensor.distance_from_ray_origin,
+        //                 closest_collision_result_right_floor_sensor.distance_from_ray_origin
+        //             );
+
+        //             v_move_player = v2d_scale(
+        //                 HALF_PLAYER_HEIGHT - closest_distance,
+        //                 v_perp_direction_unit
+        //             );
+        //         }
+        //         else{ // need to rotate player around intersection point
+                    
+        //             CollisionResultRay2dIntersectLine closest_collision_result;
+        //             if(closest_collision_result_left_floor_sensor.distance_from_ray_origin < closest_collision_result_right_floor_sensor.distance_from_ray_origin){
+        //                 closest_collision_result = closest_collision_result_left_floor_sensor;
+        //             }
+        //             else {
+        //                 closest_collision_result = closest_collision_result_right_floor_sensor;
+        //             }
+
+        //             v_direction = v2d_sub(
+        //                 closest_collision_result.p2_intersecting_line,
+        //                 closest_collision_result.p1_intersecting_line
+        //             );
+
+        //             v_direction_unit = v2d_unit(v_direction);
+
+        //             float closest_distance = MIN(
+        //                 closest_collision_result_left_floor_sensor.distance_from_ray_origin, 
+        //                 closest_collision_result_right_floor_sensor.distance_from_ray_origin
+        //             );
+
+        //             v2d v_perp_direction_unit = v2d_perp(
+        //                 v_direction_unit
+        //             );
+
+        //             v_move_player = v2d_scale(
+        //                 HALF_PLAYER_HEIGHT - closest_distance,
+        //                 v_perp_direction_unit
+        //             );
+        //             if(v_move_player.y != 0.0f){
+        //                 int x = 0;
+        //             }
+        //         }
+        //     }
+
+        //     // angles[i].rads = atan2(-v_direction.y, v_direction.x);
+
+        //     // if(angles[i].rads < 0){
+        //     //     const float maxRads = 3.14 * 2;
+        //     //     angles[i].rads = maxRads +angles[i].rads;
+        //     // }
+
+        //     // if(groundModes[i] == GROUND_MODE_FLOOR){
+        //     //     if(v_move_player.y > 0){
+        //     //         v_move_player.y *= -1;
+        //     //     }
+        //     // }
+        //     // else if(groundModes[i] == GROUND_MODE_CEILING){
+        //     //     if(v_move_player.y < 0){
+        //     //         v_move_player.y *= -1;
+        //     //     }
+        //     // }
+        //     // else if(groundModes[i] == GROUND_MODE_LEFT_WALL){
+        //     //     if(v_move_player.x < 0){
+        //     //         v_move_player.x *= -1;
+        //     //     }
+        //     // }
+        //     // else if(groundModes[i] == GROUND_MODE_RIGHT_WALL){
+        //     //     if(v_move_player.x > 0){
+        //     //         v_move_player.x *= -1;
+        //     //     }
+        //     // }
+
+        //     sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
+        //     sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
+        //     sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
+
+        // }
+        // else{ // did not intersect either sensor
+
+        //     State_util_set(states[i], STATE_IN_AIR);
+
+        //     sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+        //     sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+        //     sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+        //     groundModes[i] = GROUND_MODE_FLOOR;
+        //     angles[i].rads = 0.0f;
+
+        // }
 
         groundModes[i] = util_rads_to_ground_mode(angles[i].rads);
 

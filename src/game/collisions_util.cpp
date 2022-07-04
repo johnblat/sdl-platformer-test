@@ -6,7 +6,7 @@
 
 
 bool collisions_Ray2d_intersects_line_segment(Ray2d ray, Position p1, Position p2, float &distanceFromRayOrigin, SensorType sensorType){
-    if(sensorType == SENSOR_LEFT_FLOOR || sensorType == SENSOR_RIGHT_FLOOR){
+    if(sensorType == SENSOR_LEFT_FLOOR || sensorType == SENSOR_RIGHT_FLOOR || sensorType == SENSOR_CENTER_FLOOR){
         if(!util_is_in_range(p1.x, p2.x, ray.position_start.x)){
             return false;
         }
@@ -47,7 +47,7 @@ bool collisions_Ray2d_intersects_line_segment(Ray2d ray, Position p1, Position p
 CollisionResultRay2dIntersectLine collisions_Ray2d_intersects_line_segment_result(Ray2d ray_sensor, SensorType sensor_type, Position p1_line, Position p2_line){
     CollisionResultRay2dIntersectLine collision_result;
 
-    if(sensor_type == SENSOR_LEFT_FLOOR || sensor_type == SENSOR_RIGHT_FLOOR){
+    if(sensor_type == SENSOR_LEFT_FLOOR || sensor_type == SENSOR_RIGHT_FLOOR || sensor_type == SENSOR_CENTER_FLOOR){
 
         if(!util_is_in_range(p1_line.x, p2_line.x, ray_sensor.position_start.x)){
             collision_result.did_intersect = false;
@@ -141,7 +141,7 @@ CollisionResultRay2dIntersectLine collisions_Ray2d_rotated_intersects_line_segme
     v2d p1_line_rotated = v2d_rotate(p1_line, p_origin_of_rotation, sensor_rotation_in_rads);
     v2d p2_line_rotated = v2d_rotate(p2_line, p_origin_of_rotation, sensor_rotation_in_rads);
 
-    if(sensor_type == SENSOR_LEFT_FLOOR || sensor_type == SENSOR_RIGHT_FLOOR){
+    if(sensor_type == SENSOR_LEFT_FLOOR || sensor_type == SENSOR_RIGHT_FLOOR || sensor_type == SENSOR_CENTER_FLOOR){
 
         if(!util_is_in_range(p1_line_rotated.x, p2_line_rotated.x, ray_sensor_world.position_start.x)){
             collision_result.did_intersect = false;

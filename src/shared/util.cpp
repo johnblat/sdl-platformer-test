@@ -24,7 +24,7 @@ bool util_is_in_range(float begin, float end, float x){
     if(begin > end){
         swapValues(begin, end, float);
     }
-    if(x < begin || x > end){
+    if(x <= begin || x >= end){
         return false;
     }
     return true;
