@@ -297,6 +297,10 @@ void collisions_Sensors_PlatformPaths_update_Angle_System(flecs::iter &it, Posit
             sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
+            if(velocities[i].y < 0){ // going up
+                continue; // don't check
+            }
+
         }
 
 
@@ -425,6 +429,14 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+
+            if(velocities[i].y < 0){ // going up
+                gCameraPosition = positions[i];
+                gCameraPosition.y += HALF_PLAYER_HEIGHT;
+                angles[i].rads = 0.0f;
+                continue; // don't check
+                
+            } // eventually, need to check ceiling sensors in this case
 
         }
 
