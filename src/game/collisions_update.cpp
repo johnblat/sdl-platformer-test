@@ -11,6 +11,7 @@
 #include "util.h"
 #include <cassert>
 #include "state_util.h"
+#include "camera.h"
 
 
 
@@ -524,6 +525,10 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
             sensorCollections[i].rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             sensorCollections[i].rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_GROUND_DISTANCE;
+
+            // set camera positoin as the intersection point for camera "stability"
+            // setting camera to player position would be jittery around corners since his position is being rotated around intersection point
+            gCameraPosition = closest_collision_result_center_floor_sensor.p_world_intersection;
         }
         else{ // did not intersect either sensor
 
@@ -534,6 +539,10 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
             sensorCollections[i].rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
             groundModes[i] = GROUND_MODE_FLOOR;
             angles[i].rads = 0.0f;
+
+            // camera set here as player position - half height in y to be closer to where an intersection point would bea
+            gCameraPosition = positions[i];
+            gCameraPosition.y += HALF_PLAYER_HEIGHT;
 
         }
 
