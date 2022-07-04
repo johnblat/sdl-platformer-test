@@ -14,13 +14,34 @@
 #include "camera.h"
 
 
+bool v2d_equal(v2d v1, v2d v2){
+    if(v1.x == v2.x && v1.y == v2.y){
+        return true;
+    }
+    return false;
+}
+
+bool lines_equal(v2d line_start_1, v2d line_end_1, v2d line_start_2, v2d line_end_2){
+    if(v2d_equal(line_start_1, line_start_2) && v2d_equal(line_end_1, line_end_2)){
+        return true;
+    }
+    return false;
+}
+
+
+Ray2d ray2d_local_to_world(Position world_position, Ray2d ray2d_local){
+    Ray2d ray2d_world;
+    ray2d_world.distance = ray2d_local.distance;
+    ray2d_world.position_start = v2d_add(world_position, ray2d_local.position_start);
+
+    return ray2d_world;
+}
 
 void collisions_Sensors_wall_sensors_set_distance_from_velocity_System(flecs::iter &it, Sensors *sensorCollections, Velocity *velocities, GroundMode *groundModes){
-    const float SENSORS_DEFAULT_WALL_DISTANCE = 8.0f;
 
     for(u64 i : it){
-        sensorCollections[i].rays[SENSOR_LEFT_WALL].distance = 8.0f;
-        sensorCollections[i].rays[SENSOR_RIGHT_WALL].distance = 8.0f;
+        sensorCollections[i].rays[SENSOR_LEFT_WALL].distance = SENSORS_DEFAULT_WALL_DISTANCE;
+        sensorCollections[i].rays[SENSOR_RIGHT_WALL].distance = SENSORS_DEFAULT_WALL_DISTANCE;
 
         if(groundModes[i] == GROUND_MODE_FLOOR || groundModes[i] == GROUND_MODE_CEILING){
             sensorCollections[i].rays[SENSOR_LEFT_WALL].distance += fabs(velocities[i].x);
@@ -35,73 +56,96 @@ void collisions_Sensors_wall_sensors_set_distance_from_velocity_System(flecs::it
 
 
 void collisions_Sensors_wall_update_Position_System(flecs::iter &it, Position *positions, Sensors *sensorCollections, Velocity *velocities, GroundSpeed *groundSpeeds, GroundMode *groundModes, StateCurrPrev *states, Angle *angles){
-    const float SENSORS_DEFAULT_WALL_DISTANCE = 8.0f;
+    
 
     for(u64 i : it){
-        Ray2d ray2d_left_wall_local, ray2d_left_wall_world; 
-        ray2d_left_wall_local = sensorCollections[i].rays[SENSOR_LEFT_WALL];
-        ray2d_left_wall_world.position_start = util_v2d_local_to_world(ray2d_left_wall_local.position_start, positions[i]);
-        ray2d_left_wall_world.distance = ray2d_left_wall_local.distance;
 
-        Ray2d ray2d_right_wall_local, ray2d_right_wall_world; 
-        ray2d_right_wall_local = sensorCollections[i].rays[SENSOR_RIGHT_WALL];
-        ray2d_right_wall_world.position_start = util_v2d_local_to_world(ray2d_right_wall_local.position_start, positions[i]);
-        ray2d_right_wall_world.distance = ray2d_right_wall_local.distance;
+        Ray2d left_wall_sensor_ray_world = ray2d_local_to_world(
+            positions[i], 
+            sensorCollections[i].rays[SENSOR_LEFT_WALL]
+        );
+        
+        Ray2d right_wall_sensor_ray_world = ray2d_local_to_world(
+            positions[i], 
+            sensorCollections[i].rays[SENSOR_RIGHT_WALL]
+        );
+
+        CollisionResultRay2dIntersectLine closest_collision_result_left_wall;
+        closest_collision_result_left_wall.did_intersect = false;
+
+        CollisionResultRay2dIntersectLine closest_collision_result_right_wall;
+        closest_collision_result_right_wall.did_intersect = false;
+
 
         auto f = it.world().filter<Position, PlatformPath>();
 
-        f.each([&](flecs::entity e, Position &platformPath_position, PlatformPath &platformPath){
+        f.each([&](flecs::entity e, Position &platform_path_world_position, PlatformPath &platformPath){
                 //walls
             for(int j = 0; j < platformPath.nodes.size() - 1; j++){
-                Position local_position_node_current = platformPath.nodes.at(j);
-                Position local_position_node_next = platformPath.nodes.at(j+1);
+                v2d p1_local_platform_line = platformPath.nodes.at(j);
+                v2d p2_local_platform_line = platformPath.nodes.at(j+1);
 
-                v2d world_position_node_current = util_v2d_local_to_world(local_position_node_current, platformPath_position);
-                v2d world_position_node_next = util_v2d_local_to_world(local_position_node_next, platformPath_position);
+                v2d p1_world_platform_line = util_v2d_local_to_world(
+                    p1_local_platform_line, 
+                    platform_path_world_position 
+                );
+                v2d p2_world_platform_line = util_v2d_local_to_world(
+                    p2_local_platform_line, 
+                    platform_path_world_position 
+                );
 
-                v2d world_position_node_current_rotated = world_position_node_current;
-                v2d world_position_node_next_rotated = world_position_node_next;
+                if(velocities[i].x < 0){
+                    CollisionResultRay2dIntersectLine current_collision_result_left_wall = collisions_Ray2d_rotated_intersects_line_segment_result(
+                        left_wall_sensor_ray_world,
+                        SENSOR_LEFT_WALL,
+                        angles[i].rads,
+                        positions[i],
+                        p1_world_platform_line,
+                        p2_world_platform_line
+                    );
 
-                if(groundModes[i] == GROUND_MODE_RIGHT_WALL && states[i].currentState == STATE_ON_GROUND){
-                    world_position_node_current_rotated = v2d_rotate_90_degrees_clockwise(world_position_node_current, positions[i]);
-                    world_position_node_next_rotated = v2d_rotate_90_degrees_clockwise(world_position_node_next, positions[i]);
+                    if(current_collision_result_left_wall.did_intersect){
+                        if(!closest_collision_result_left_wall.did_intersect){
+                            closest_collision_result_left_wall = current_collision_result_left_wall;
+                        }
+                        else if(current_collision_result_left_wall.distance_from_ray_origin < closest_collision_result_left_wall.distance_from_ray_origin){
+                            closest_collision_result_left_wall = current_collision_result_left_wall;
+                        }
+                    }
+                    
                 }
-                else if(groundModes[i] == GROUND_MODE_LEFT_WALL && states[i].currentState == STATE_ON_GROUND){
-                    world_position_node_current_rotated = v2d_rotate_90_degrees_counter_clockwise(world_position_node_current, positions[i]);
-                    world_position_node_next_rotated = v2d_rotate_90_degrees_counter_clockwise(world_position_node_next, positions[i]);
-                }
-                else if(groundModes[i] == GROUND_MODE_CEILING && states[i].currentState == STATE_ON_GROUND){
-                    world_position_node_current_rotated = v2d_rotate_180_degrees(world_position_node_current, positions[i]);
-                    world_position_node_next_rotated = v2d_rotate_180_degrees(world_position_node_next, positions[i]);
-                }
+                else if(velocities[i].x > 0){
+                    CollisionResultRay2dIntersectLine current_collision_result_right_wall = collisions_Ray2d_rotated_intersects_line_segment_result(
+                        right_wall_sensor_ray_world,
+                        SENSOR_RIGHT_WALL,
+                        angles[i].rads,
+                        positions[i],
+                        p1_world_platform_line,
+                        p2_world_platform_line
+                    );
 
-                float intersection_distance_from_ray_origin;
-                v2d p_intersection;
-                
-                // is wall?
-                // if(true){
-                //     // moving right
-                //     if(velocities[i].x > 0){
-                //        if(collisions_Ray2d_intersects_line_segment(ray2d_right_wall_world, SENSOR_RIGHT_WALL, world_position_node_current_rotated, world_position_node_next_rotated, intersection_distance_from_ray_origin, p_intersection)){
-                //            positions[i].x = world_position_node_current.x - SENSORS_DEFAULT_WALL_DISTANCE;
-                //             velocities[i].x = 0;
-                //             groundSpeeds[i].val = 0.0f;
-                //             velocities[i].x = 0.0f;
-                //         }
-                //     }
-                //     // moving left
-                //     else if(velocities[i].x < 0) {
-                //         if(collisions_Ray2d_intersects_line_segment(ray2d_left_wall_world, SENSOR_LEFT_WALL,world_position_node_current_rotated, world_position_node_next_rotated, intersection_distance_from_ray_origin,p_intersection )){
-                //             positions[i].x = world_position_node_current.x + SENSORS_DEFAULT_WALL_DISTANCE;
-                //             velocities[i].x = 0;
-                //             groundSpeeds[i].val = 0.0f;
-                //             velocities[i].x = 0.0f;
-                //         }
-                //     }
-                // }
-                
+                    if(current_collision_result_right_wall.did_intersect){
+                        if(!closest_collision_result_left_wall.did_intersect){
+                            closest_collision_result_right_wall = current_collision_result_right_wall;
+                        }
+                        else if(current_collision_result_right_wall.distance_from_ray_origin < closest_collision_result_right_wall.distance_from_ray_origin){
+                            closest_collision_result_right_wall = current_collision_result_right_wall;
+                        }
+                    }
+                }
             }
         });
+
+        if(velocities[i].x < 0 && closest_collision_result_left_wall.did_intersect){
+            positions[i].x = closest_collision_result_left_wall.p_world_intersection.x + SENSORS_DEFAULT_WALL_DISTANCE;
+            velocities[i].x = 0.0f;
+            groundSpeeds[i].val = 0.0f;
+        }
+        else if(velocities[i].x > 0 && closest_collision_result_right_wall.did_intersect){
+            positions[i].x = closest_collision_result_right_wall.p_world_intersection.x - (SENSORS_DEFAULT_WALL_DISTANCE);
+            velocities[i].x = 0.0f;
+            groundSpeeds[i].val = 0.0f;
+        }
     }
 
 }
@@ -134,28 +178,6 @@ void collisions_GroundMode_update_from_Angle_System(flecs::iter &it, GroundMode 
 
 // void collisions_Angle_update_from_intersecting_sensors(flecs::iter &it, Angle)
 
-bool v2d_equal(v2d v1, v2d v2){
-    if(v1.x == v2.x && v1.y == v2.y){
-        return true;
-    }
-    return false;
-}
-
-bool lines_equal(v2d line_start_1, v2d line_end_1, v2d line_start_2, v2d line_end_2){
-    if(v2d_equal(line_start_1, line_start_2) && v2d_equal(line_end_1, line_end_2)){
-        return true;
-    }
-    return false;
-}
-
-
-Ray2d ray2d_local_to_world(Position world_position, Ray2d ray2d_local){
-    Ray2d ray2d_world;
-    ray2d_world.distance = ray2d_local.distance;
-    ray2d_world.position_start = v2d_add(world_position, ray2d_local.position_start);
-
-    return ray2d_world;
-}
 
 
 void internal_collisions_ray2d_find_closest_floor_intersection_on_platform_paths(
@@ -530,7 +552,7 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
             );
 
             v_move_player = v2d_scale(
-                HALF_PLAYER_HEIGHT - closest_collision_result_center_floor_sensor.distance_from_ray_origin,
+                HALF_PLAYER_HEIGHT - closest_collision_result_center_floor_sensor.distance_from_ray_origin ,
                 v_perp_direction_unit
             );
 

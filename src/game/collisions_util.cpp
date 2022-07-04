@@ -144,7 +144,9 @@ CollisionResultRay2dIntersectLine collisions_Ray2d_rotated_intersects_line_segme
     if(sensor_type == SENSOR_LEFT_FLOOR || sensor_type == SENSOR_RIGHT_FLOOR || sensor_type == SENSOR_CENTER_FLOOR){
 
         if(!util_is_in_range(p1_line_rotated.x, p2_line_rotated.x, ray_sensor_world.position_start.x)){
+
             collision_result.did_intersect = false;
+
             return collision_result;
         }
 
@@ -153,7 +155,9 @@ CollisionResultRay2dIntersectLine collisions_Ray2d_rotated_intersects_line_segme
         collision_result.distance_from_ray_origin = y - ray_sensor_world.position_start.y;
 
         if(collision_result.distance_from_ray_origin > ray_sensor_world.distance || collision_result.distance_from_ray_origin < 0){
+
             collision_result.did_intersect = false;
+
             return collision_result;
         }
 
@@ -162,9 +166,14 @@ CollisionResultRay2dIntersectLine collisions_Ray2d_rotated_intersects_line_segme
             ray_sensor_world.position_start.y + collision_result.distance_from_ray_origin
         );
 
-        collision_result.p_world_intersection = v2d_rotate(p_intersection_rotated, p_origin_of_rotation, -sensor_rotation_in_rads);
+        collision_result.p_world_intersection = v2d_rotate(
+            p_intersection_rotated, 
+            p_origin_of_rotation, 
+            -sensor_rotation_in_rads
+        );
         
         collision_result.p1_intersecting_line = p1_line;
+
         collision_result.p2_intersecting_line = p2_line;
 
         collision_result.did_intersect = true;
@@ -172,57 +181,89 @@ CollisionResultRay2dIntersectLine collisions_Ray2d_rotated_intersects_line_segme
         return collision_result;
     }
 
-    assert("collisions_Ray2d_rotated_intersects_line_segment_result() received non floor sensor. Has not been accounted for yet.");
-    // else if(sensor_type == SENSOR_RIGHT_WALL){
+    else if(sensor_type == SENSOR_RIGHT_WALL){
         
-    //     if(!util_is_in_range(p1_line.y, p2_line.y, ray_sensor_world.position_start.y)){
-    //         collision_result.did_intersect = false;
-    //         return collision_result;
-    //     }
+        if(!util_is_in_range(p1_line.y, p2_line.y, ray_sensor_world.position_start.y)){
+
+            collision_result.did_intersect = false;
+
+            return collision_result;
+        }
         
-    //     float x = util_get_x_for_y_on_line(p1_line, p2_line, ray_sensor_world.position_start.y);
+        float x = util_get_x_for_y_on_line(p1_line, p2_line, ray_sensor_world.position_start.y);
         
-    //     collision_result.distance_from_ray_origin = x - ray_sensor_world.position_start.x;
+        collision_result.distance_from_ray_origin = x - ray_sensor_world.position_start.x;
         
-    //     collision_result.p_world_intersection = v2d(
-    //         ray_sensor_world.position_start.x,
-    //         ray_sensor_world.position_start.y + collision_result.distance_from_ray_origin
-    //     );
 
-    //     if(collision_result.distance_from_ray_origin > ray_sensor_world.distance || collision_result.distance_from_ray_origin < 0){
-    //         collision_result.did_intersect = false;
-    //         return collision_result;
-    //     }
+        if(collision_result.distance_from_ray_origin > ray_sensor_world.distance || collision_result.distance_from_ray_origin < 0){
 
-    //     collision_result.did_intersect = true;
+            collision_result.did_intersect = false;
 
-    //     return collision_result;
-    // }
-    // else if(sensor_type == SENSOR_LEFT_WALL){
-    //     util_break_on_condition(p1_line.x == p2_line.x);
-    //     if(!util_is_in_range(p1_line.y, p2_line.y, ray_sensor_world.position_start.y)){
-    //         collision_result.did_intersect = false;
-    //         return collision_result;
-    //     }
+            return collision_result;
+        }
 
-    //     float x = util_get_x_for_y_on_line(p1_line, p2_line, ray_sensor_world.position_start.y);
+        v2d p_intersection_rotated = v2d(
+            ray_sensor_world.position_start.x + collision_result.distance_from_ray_origin,
+            ray_sensor_world.position_start.y 
+        );
 
-    //     collision_result.p_world_intersection = v2d(
-    //         ray_sensor_world.position_start.x,
-    //         ray_sensor_world.position_start.y + collision_result.distance_from_ray_origin
-    //     );
+        collision_result.p_world_intersection = v2d_rotate(
+            p_intersection_rotated, 
+            p_origin_of_rotation, 
+            -sensor_rotation_in_rads
+        );
+        
+        collision_result.p1_intersecting_line = p1_line;
 
-    //     collision_result.distance_from_ray_origin = ray_sensor_world.position_start.x - x;
+        collision_result.p2_intersecting_line = p2_line;
 
-    //     if(collision_result.distance_from_ray_origin > ray_sensor_world.distance || collision_result.distance_from_ray_origin < 0){
-    //         collision_result.did_intersect = false;
-    //         return collision_result;
-    //     }
+        collision_result.did_intersect = true;
 
-    //     collision_result.did_intersect = true;
+        return collision_result;
+    }
+    else if(sensor_type == SENSOR_LEFT_WALL){
+        if(!util_is_in_range(p1_line.y, p2_line.y, ray_sensor_world.position_start.y)){
 
-    //     return collision_result;
-    // }
+            collision_result.did_intersect = false;
+
+            return collision_result;
+        }
+
+        float x = util_get_x_for_y_on_line(p1_line, p2_line, ray_sensor_world.position_start.y);
+
+
+        collision_result.distance_from_ray_origin = ray_sensor_world.position_start.x - x;
+
+        if(collision_result.distance_from_ray_origin > ray_sensor_world.distance || collision_result.distance_from_ray_origin < 0){
+
+            collision_result.did_intersect = false;
+
+            return collision_result;
+        }
+
+        v2d p_intersection_rotated = v2d(
+            ray_sensor_world.position_start.x - collision_result.distance_from_ray_origin,
+            ray_sensor_world.position_start.y
+        );
+
+        collision_result.p_world_intersection = v2d_rotate(
+            p_intersection_rotated, 
+            p_origin_of_rotation, 
+            -sensor_rotation_in_rads
+        );
+        
+        collision_result.p1_intersecting_line = p1_line;
+
+        collision_result.p2_intersecting_line = p2_line;
+
+        collision_result.did_intersect = true;
+
+        collision_result.did_intersect = true;
+
+        return collision_result;
+    }
+
+    assert("unaccounted for sensor mode passed to collisions_Ray2d_rotated_intersects_line_segment_result\n" && 0);
 
     collision_result.did_intersect = false;
 

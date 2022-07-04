@@ -462,10 +462,10 @@ int main(){
     pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
     pinkGuySensors.rays[SENSOR_LEFT_WALL].position_start = (Position){0.0f, 8.0f};
-    pinkGuySensors.rays[SENSOR_LEFT_WALL].distance = 8.0f;
+    pinkGuySensors.rays[SENSOR_LEFT_WALL].distance = SENSORS_DEFAULT_WALL_DISTANCE;
 
     pinkGuySensors.rays[SENSOR_RIGHT_WALL].position_start = (Position){0.0f, 8.0f};
-    pinkGuySensors.rays[SENSOR_RIGHT_WALL].distance = 8.0f;
+    pinkGuySensors.rays[SENSOR_RIGHT_WALL].distance = SENSORS_DEFAULT_WALL_DISTANCE;
 
 
 
