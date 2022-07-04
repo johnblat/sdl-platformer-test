@@ -703,6 +703,13 @@ void collisions_Sensors_PlatformPaths_update_Position_System(flecs::iter &it, Po
                 }
             }
 
+            angles[i].rads = atan2(-v_direction.y, v_direction.x);
+
+            if(angles[i].rads < 0){
+                const float maxRads = 3.14 * 2;
+                angles[i].rads = maxRads +angles[i].rads;
+            }
+
             // if(groundModes[i] == GROUND_MODE_FLOOR){
             //     if(v_move_player.y > 0){
             //         v_move_player.y *= -1;
