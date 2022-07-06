@@ -74,7 +74,7 @@ void render_poly_line(Position offsetPosition, std::vector<Position> points, SDL
 }
 
 void render_diamond(Position centerPoint, SDL_Color color){
-    const int DIAMOND_RADIUS = 3;
+    const int DIAMOND_RADIUS = 2;
 
     Position centerScreen = {(float)gScreenWidth/2.0f, (float)gScreenHeight/2.0f};
 

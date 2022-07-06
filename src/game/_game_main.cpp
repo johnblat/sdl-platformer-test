@@ -123,10 +123,10 @@ void registerSystems(flecs::world &ecs){
             anim_update_set_jump_animation_on_jump_input_System
         );
 
-    ecs.system<AnimatedSprite, Velocity, StateCurrPrev>()
+    ecs.system<AnimatedSprite, GroundSpeed, StateCurrPrev>()
         .kind(custom_phase_animation)
         .iter(
-            anim_update_AnimatedSprite_set_animation_based_on_speed_on_ground_System
+            anim_update_AnimatedSprite_set_animation_based_on_ground_speed_System
         );
 
     
@@ -177,11 +177,11 @@ void registerSystems(flecs::world &ecs){
             anim_render_AnimatedSprites_System
     );
 
-    ecs.system<Position, Sensors, Angle>()
-        .kind(custom_phase_render)
-        .iter(
-            renderSensorsSystem
-        );
+    // ecs.system<Position, Sensors, Angle>()
+    //     .kind(custom_phase_render)
+    //     .iter(
+    //         renderSensorsSystem
+    //     );
 
     ecs.system<SelectedForEditing, Position, PlatformPath>()
         .kind(custom_phase_render)
@@ -370,7 +370,7 @@ int main(){
      */
      pinkGuyEntity.add<AnimatedSprite>();
 
-    std::string filename = "res/pink-monster-animation-transparent.png";
+    std::string filename = "res/pink-monster-animation-transparent-2.png";
     std::string animatedSpriteName =  "pink-monster-animation";
     u32 spriteSheetId = SpriteSheet_util_create(filename, 9, 15, animatedSpriteName);
     AnimatedSprite animatedSprite = anim_util_AnimatedSprite_create(spriteSheetId);

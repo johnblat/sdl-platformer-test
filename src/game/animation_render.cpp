@@ -24,6 +24,16 @@ void anim_render_AnimatedSprites_System(flecs::iter &it, AnimatedSprite *animate
         
         renderRect.w = cell_w;
         renderRect.h = cell_h;
+
+        float rotation_render_in_degrees;
+        float angle_in_degrees = util_rads_to_degrees(angles[i].rads);
+
+        if(util_is_in_range(0.0, 2.0, angle_in_degrees)){
+            rotation_render_in_degrees = 0.0;
+        }
+        else {
+            rotation_render_in_degrees = -angle_in_degrees;
+        }
         
 
         Animation currentAnimation = animatedSprites[i].animations[animatedSprites[i].currentAnimation];
@@ -37,7 +47,7 @@ void anim_render_AnimatedSprites_System(flecs::iter &it, AnimatedSprite *animate
         srcRect.w = cell_w;
         srcRect.h = cell_h;
         SDL_RendererFlip flip = animatedSprites[i].flip == SDL_FLIP_HORIZONTAL ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE; 
-        SDL_RenderCopyEx(gRenderer, spriteSheet.texture, &srcRect, &renderRect, -util_rads_to_degrees(angles[i].rads), NULL, flip);
+        SDL_RenderCopyEx(gRenderer, spriteSheet.texture, &srcRect, &renderRect, rotation_render_in_degrees, NULL, flip);
     }
     
 }

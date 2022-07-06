@@ -63,7 +63,7 @@ void anim_util_Animation_restart(Animation *animation){
 
 
 bool anim_util_Animation_has_reached_final_frame(Animation *animation){
-    return animation->currentFrame >= animation->frameIndeces.size() - 1;
+    return animation->currentFrame >= animation->frameIndeces.size();
 }
 
 

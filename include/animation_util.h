@@ -11,6 +11,7 @@
 #include "velocity.h"
 #include "states.h"
 
+
 extern Position gCameraPosition;
 /**
  * @brief runs all the animations provided. Will advance frames as per the fps specified
@@ -39,7 +40,7 @@ void anim_update_KeyboardState_AnimatedSprite_set_animation_System(flecs::iter &
  * @param animatedSprites 
  * @param velocities 
  */
-void anim_update_AnimatedSprite_set_animation_based_on_speed_on_ground_System(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities, StateCurrPrev *states);
+void anim_update_AnimatedSprite_set_animation_based_on_ground_speed_System(flecs::iter &it, AnimatedSprite *animatedSprites, GroundSpeed *groundSpeeds, StateCurrPrev *states);
 
 /**
  * @brief will flip the animated sprite based on the key that is pressed. intended to set the left and right facing directions

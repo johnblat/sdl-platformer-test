@@ -8,12 +8,6 @@ void anim_update_AnimatedSprite_accumulate_time_to_increment_frame_System(flecs:
     for(auto i : it){
         u32 currentAnimation = animatedSprites[i].currentAnimation;
 
-        // FIXME: ensure that the final frame gets played for the full amount of time rather than immediately jumping back to first frame
-        if(anim_util_Animation_has_reached_final_frame(&animatedSprites[i].animations[currentAnimation])){
-            if(animatedSprites[i].animations[currentAnimation].isLoop == false) continue;
-            animatedSprites[i].animations[currentAnimation].currentFrame = 0;
-        }
-
         animatedSprites[i].animations[currentAnimation].accumulator += it.delta_time();
 
         if(animatedSprites[i].animations[currentAnimation].accumulator > animatedSprites[i].animations[currentAnimation].msPerFrame){            
@@ -22,6 +16,14 @@ void anim_update_AnimatedSprite_accumulate_time_to_increment_frame_System(flecs:
 
             
         }
+        
+        // FIXME: ensure that the final frame gets played for the full amount of time rather than immediately jumping back to first frame
+        if(anim_util_Animation_has_reached_final_frame(&animatedSprites[i].animations[currentAnimation])){
+            if(animatedSprites[i].animations[currentAnimation].isLoop == false) continue;
+            animatedSprites[i].animations[currentAnimation].currentFrame = 0;
+        }
+
+        
     }
     
     
@@ -61,15 +63,15 @@ void anim_update_AnimatedSprite_flip_based_on_Input_System(flecs::iter &it, Anim
     }
 }
 
-void anim_update_AnimatedSprite_set_animation_based_on_speed_on_ground_System(flecs::iter &it, AnimatedSprite *animatedSprites, Velocity *velocities, StateCurrPrev *states){
+void anim_update_AnimatedSprite_set_animation_based_on_ground_speed_System(flecs::iter &it, AnimatedSprite *animatedSprites, GroundSpeed *groundSpeeds, StateCurrPrev *states){
     for(int i : it){
         // set animation
         
         if(states[i].currentState == STATE_ON_GROUND){
-            if(velocities[i].x == 0){
+            if(groundSpeeds[i].val== 0){
             anim_util_AnimatedSprite_play(&animatedSprites[i], "idle");
             }
-            else if(velocities[i].x < 5.0f && velocities[i].x > -5.0f){
+            else if(groundSpeeds[i].val < 4.0f && groundSpeeds[i].val > -4.0f){
                 anim_util_AnimatedSprite_play(&animatedSprites[i], "walk");
             }
             else {
