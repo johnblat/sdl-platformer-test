@@ -465,7 +465,11 @@ collisions_position_rotation_align_based_on_collision_result_System(
             rotation_in_rads_needed_to_align_player
         );
 
-        positions[i] = v2d_rotate(positions[i], closest_collision_result_center_floor_sensor.p_world_intersection, rotation_in_rads_needed_to_align_player);
+        positions[i] = v2d_rotate(
+            positions[i], 
+            closest_collision_result_center_floor_sensor.p_world_intersection, 
+            rotation_in_rads_needed_to_align_player
+        );
 
         angles[i].rads = angle_in_rads_of_line_direction;
 
