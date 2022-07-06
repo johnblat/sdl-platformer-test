@@ -160,3 +160,11 @@ float v2d_shortest_distance_from_point_to_line_segment(v2d p, v2d line_p1, v2d l
     return distance;
 
 }
+
+
+bool v2d_equal(v2d v1, v2d v2){
+    if(v1.x == v2.x && v1.y == v2.y){
+        return true;
+    }
+    return false;
+}

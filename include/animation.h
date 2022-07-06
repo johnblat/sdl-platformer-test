@@ -8,6 +8,8 @@
 #include <vector>
 
 
+
+
 struct Animation {
     std::string name; // animation name
     std::vector<u32> frameIndeces;
@@ -27,5 +29,6 @@ struct AnimatedSprite {
     u32 currentAnimation;
     SDL_RendererFlip flip;
 };
+
 
 #endif

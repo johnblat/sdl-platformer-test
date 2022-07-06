@@ -14,28 +14,7 @@
 #include "camera.h"
 
 
-bool v2d_equal(v2d v1, v2d v2){
-    if(v1.x == v2.x && v1.y == v2.y){
-        return true;
-    }
-    return false;
-}
 
-bool lines_equal(v2d line_start_1, v2d line_end_1, v2d line_start_2, v2d line_end_2){
-    if(v2d_equal(line_start_1, line_start_2) && v2d_equal(line_end_1, line_end_2)){
-        return true;
-    }
-    return false;
-}
-
-
-Ray2d ray2d_local_to_world(Position world_position, Ray2d ray2d_local){
-    Ray2d ray2d_world;
-    ray2d_world.distance = ray2d_local.distance;
-    ray2d_world.position_start = v2d_add(world_position, ray2d_local.position_start);
-
-    return ray2d_world;
-}
 
 void collisions_Sensors_wall_sensors_set_distance_from_velocity_System(flecs::iter &it, Sensors *sensorCollections, Velocity *velocities, GroundMode *groundModes){
 

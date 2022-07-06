@@ -2,7 +2,7 @@
 #include "velocity.h"
 #include "position.h"
 #include <assert.h>
-
+#include "ray2d.h"
 
 
 u32 util_index_2d_to_1d(u32 row, u32 col, u32 numRows){
@@ -107,4 +107,21 @@ void util_break_on_condition(bool condition){
     if(condition == true){
         int x = 0;
     }
+}
+
+
+bool util_lines_equal(v2d line_start_1, v2d line_end_1, v2d line_start_2, v2d line_end_2){
+    if(v2d_equal(line_start_1, line_start_2) && v2d_equal(line_end_1, line_end_2)){
+        return true;
+    }
+    return false;
+}
+
+
+Ray2d ray2d_local_to_world(Position world_position, Ray2d ray2d_local){
+    Ray2d ray2d_world;
+    ray2d_world.distance = ray2d_local.distance;
+    ray2d_world.position_start = v2d_add(world_position, ray2d_local.position_start);
+
+    return ray2d_world;
 }

@@ -4,6 +4,7 @@
 #include <vector>
 #include "animation.h"
 #include "animation_util.h"
+#include "animation_render.h"
 #include "ints.h"
 #include "spriteSheets.h"
 #include "spriteSheet_util.h"

@@ -85,14 +85,7 @@ void anim_util_AnimatedSprite_overwrite_Animation_at_index(AnimatedSprite *anima
  */
 void setFpsForAnimatedSprite(AnimatedSprite *animatedSprite, float fps);
 
-/**
- * @brief renders an animated sprite's current frame at the posisions specified
- * 
- * @param animatedSprites list of animated sprites
- * @param positions list of posisitions for all the animated sprites
- * @param numEntities number of iterations over the above arrays
- */
-void anim_render_AnimatedSprites_System(flecs::iter &it, AnimatedSprite *animatedSprites, Position *positions, Angle *angles);
+
 
 void anim_update_set_jump_animation_on_jump_input_System(flecs::iter &it, AnimatedSprite *animatedSprites, Input *inputs);
 

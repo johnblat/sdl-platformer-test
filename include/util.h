@@ -2,6 +2,7 @@
 #include "velocity.h"
 #include "position.h"
 #include "ints.h"
+#include "ray2d.h"
 
 #define swapValues(a, b, T){ \
     T temp = a; \
@@ -45,6 +46,9 @@ util_in_range(float val, float start, float end);
 void 
 util_break_on_condition(bool condition);
 
+bool util_lines_equal(v2d line_start_1, v2d line_end_1, v2d line_start_2, v2d line_end_2);
+
+
 template<typename T> void 
 util_dynamic_array_to_vector(T *arr, size_t size, std::vector<T> &vec){
     for(int i = 0; i < size; i++){
@@ -52,3 +56,5 @@ util_dynamic_array_to_vector(T *arr, size_t size, std::vector<T> &vec){
     }
 }
 
+
+Ray2d ray2d_local_to_world(Position world_position, Ray2d ray2d_local);
