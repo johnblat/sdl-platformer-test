@@ -45,16 +45,44 @@ flecs::entity gEditorEntity;
 
 void registerSystems(flecs::world &ecs){
 
-    auto custom_phase_input_gather = ecs.entity().add(flecs::Phase);
-    auto custom_phase_speeds_set = ecs.entity().add(flecs::Phase).depends_on(custom_phase_input_gather);
-    auto custom_phase_pre_movement = ecs.entity().add(flecs::Phase).depends_on(custom_phase_speeds_set);
-    auto custom_phase_collision_wall = ecs.entity().add(flecs::Phase).depends_on(custom_phase_speeds_set);
-    auto custom_phase_movement = ecs.entity().add(flecs::Phase).depends_on(custom_phase_collision_wall);
-    auto custom_phase_pre_collision_floor = ecs.entity().add(flecs::Phase).depends_on(custom_phase_movement);
-    auto custom_phase_collision_floor = ecs.entity().add(flecs::Phase).depends_on(custom_phase_pre_collision_floor);
-    auto custom_phase_control_lock_activate_slip = ecs.entity().add(flecs::Phase).depends_on(custom_phase_collision_floor);
-    auto custom_phase_animation = ecs.entity().add(flecs::Phase).depends_on(custom_phase_collision_floor);
-    auto custom_phase_render = ecs.entity().add(flecs::Phase).depends_on(custom_phase_animation);
+    auto custom_phase_input_gather = ecs.entity()
+        .add(flecs::Phase);
+
+    auto custom_phase_speeds_set = ecs.entity()
+        .add(flecs::Phase)
+        .depends_on(custom_phase_input_gather);
+
+    auto custom_phase_pre_movement = ecs.entity()
+        .add(flecs::Phase)
+        .depends_on(custom_phase_speeds_set);
+
+    auto custom_phase_collision_wall = ecs.entity()
+        .add(flecs::Phase)
+        .depends_on(custom_phase_speeds_set);
+
+    auto custom_phase_movement = ecs.entity()
+        .add(flecs::Phase)
+        .depends_on(custom_phase_collision_wall);
+
+    auto custom_phase_pre_collision_floor = ecs.entity()
+        .add(flecs::Phase)
+        .depends_on(custom_phase_movement);
+
+    auto custom_phase_collision_floor = ecs.entity()
+        .add(flecs::Phase)
+        .depends_on(custom_phase_pre_collision_floor);
+
+    auto custom_phase_control_lock_activate_slip = ecs.entity()
+        .add(flecs::Phase)
+        .depends_on(custom_phase_collision_floor);
+
+    auto custom_phase_animation = ecs.entity()
+        .add(flecs::Phase)
+        .depends_on(custom_phase_collision_floor);
+
+    auto custom_phase_render = ecs.entity()
+        .add(flecs::Phase)
+        .depends_on(custom_phase_animation);
 
 
     ecs.system<Input>()
@@ -81,23 +109,18 @@ void registerSystems(flecs::world &ecs){
             movement_velocity_apply_gravity_System
         );
 
-    ecs.system<Sensors, Velocity, GroundMode>("wall sensor distance set based on velocity")
+    ecs.system<SensorCollection, Velocity, GroundMode>("wall sensor distance set based on velocity")
         .kind(custom_phase_pre_movement)
         .iter(
             collisions_Sensors_wall_sensors_set_distance_from_velocity_System
         );
     
-    ecs.system<Sensors, Angle>("wall sensor height set based on angle")
+    ecs.system<SensorCollection, Angle>("wall sensor height set based on angle")
         .kind(custom_phase_pre_movement)
         .iter(
             collisions_Sensors_wall_set_height_from_Angle_System
         );
 
-    // ecs.system<GroundMode, Angle>("ground mode udpate based on angle")
-    //     .kind(custom_phase_pre_movement)
-    //     .iter(
-    //         collisions_GroundMode_update_from_Angle_System
-    //     );
 
     ecs.system<ControlLockTimer, StateCurrPrev>()
         .kind(custom_phase_pre_movement)
@@ -136,17 +159,25 @@ void registerSystems(flecs::world &ecs){
    
     
 
-    ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision wall update position")
+    ecs.system<Position, SensorCollection, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision wall update position")
         .kind(custom_phase_collision_wall)
         .iter(collisions_Sensors_wall_update_Position_System);
     
-    ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("pre collision floor")
+
+    ecs.system<Position, Velocity, SensorCollection, GroundMode, StateCurrPrev, Angle, CollisionResultPlatformPathFloorSensor>("collision get results")
         .kind(custom_phase_pre_collision_floor)
-        .iter(collisions_Sensors_PlatformPaths_update_Angle_System);
+        .iter(collisions_floor_sensors_intersect_platform_paths_set_result_System);
         
-    ecs.system<Position, Sensors, Velocity, GroundSpeed, GroundMode, StateCurrPrev, Angle>("collision")
+    ecs.system<
+        Position, 
+        Angle, 
+        SensorCollection, 
+        GroundMode, 
+        StateCurrPrev, 
+        CollisionResultPlatformPathFloorSensor
+    >("collision")
         .kind(custom_phase_collision_floor)
-        .iter(collisions_Sensors_PlatformPaths_update_Position_System);
+        .iter(collisions_position_rotation_align_based_on_collision_result_System);
 
     // ecs.system<GroundSpeed, Angle, StateCurrPrev>("slip and add controllocktimer when too steep and too slow")
     //     .kind(custom_phase_control_lock_activate_slip)
@@ -178,11 +209,11 @@ void registerSystems(flecs::world &ecs){
             anim_render_AnimatedSprites_System
     );
 
-    // ecs.system<Position, Sensors, Angle>()
-    //     .kind(custom_phase_render)
-    //     .iter(
-    //         renderSensorsSystem
-    //     );
+    ecs.system<Position, SensorCollection, Angle>()
+        .kind(custom_phase_render)
+        .iter(
+            renderSensorsSystem
+        );
 
     ecs.system<SelectedForEditing, Position, PlatformPath>()
         .kind(custom_phase_render)
@@ -451,22 +482,22 @@ int main(){
 
     pinkGuyEntity.set<Input>(pinkGuyInput);
 
-    Sensors pinkGuySensors;
+    SensorCollection pinkGuySensors;
 
-    pinkGuySensors.rays[SENSOR_LEFT_FLOOR].position_start = (Position){-9.0f, 0.0f};
-    pinkGuySensors.rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+    pinkGuySensors.sensor_rays[SENSOR_LEFT_FLOOR].position_start = (Position){-9.0f, 0.0f};
+    pinkGuySensors.sensor_rays[SENSOR_LEFT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
-    pinkGuySensors.rays[SENSOR_CENTER_FLOOR].position_start = (Position){0.0f, 0.0f};
-    pinkGuySensors.rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+    pinkGuySensors.sensor_rays[SENSOR_CENTER_FLOOR].position_start = (Position){0.0f, 0.0f};
+    pinkGuySensors.sensor_rays[SENSOR_CENTER_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
-    pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].position_start = (Position){9.0f, 0.0f};
-    pinkGuySensors.rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
+    pinkGuySensors.sensor_rays[SENSOR_RIGHT_FLOOR].position_start = (Position){9.0f, 0.0f};
+    pinkGuySensors.sensor_rays[SENSOR_RIGHT_FLOOR].distance = SENSOR_FLOOR_AIR_DISTANCE;
 
-    pinkGuySensors.rays[SENSOR_LEFT_WALL].position_start = (Position){0.0f, 8.0f};
-    pinkGuySensors.rays[SENSOR_LEFT_WALL].distance = SENSORS_DEFAULT_WALL_DISTANCE;
+    pinkGuySensors.sensor_rays[SENSOR_LEFT_WALL].position_start = (Position){0.0f, 8.0f};
+    pinkGuySensors.sensor_rays[SENSOR_LEFT_WALL].distance = SENSORS_DEFAULT_WALL_DISTANCE;
 
-    pinkGuySensors.rays[SENSOR_RIGHT_WALL].position_start = (Position){0.0f, 8.0f};
-    pinkGuySensors.rays[SENSOR_RIGHT_WALL].distance = SENSORS_DEFAULT_WALL_DISTANCE;
+    pinkGuySensors.sensor_rays[SENSOR_RIGHT_WALL].position_start = (Position){0.0f, 8.0f};
+    pinkGuySensors.sensor_rays[SENSOR_RIGHT_WALL].distance = SENSORS_DEFAULT_WALL_DISTANCE;
 
 
 
@@ -480,9 +511,14 @@ int main(){
     pinkGuyEntity.set<Velocity>((Velocity){0,0});
     pinkGuyEntity.set<Angle>((Angle){0.0f});
     pinkGuyEntity.set<StateCurrPrev>(state);
-    pinkGuyEntity.set<Sensors>(pinkGuySensors);
+    pinkGuyEntity.set<SensorCollection>(pinkGuySensors);
     pinkGuyEntity.set<GroundSpeed>((GroundSpeed){0.0f});
     pinkGuyEntity.set<GroundMode>(GROUND_MODE_FLOOR);
+
+    CollisionResultPlatformPathFloorSensor collision_result;
+    collision_result.result.did_intersect = false;
+
+    pinkGuyEntity.set<CollisionResultPlatformPathFloorSensor>(collision_result);
 
     gCameraPosition.x = pinkGuyEntity.get<Position>()->x;
     gCameraPosition.y = pinkGuyEntity.get<Position>()->y;

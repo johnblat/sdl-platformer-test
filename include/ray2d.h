@@ -26,9 +26,9 @@ const float SENSOR_FLOOR_GROUND_DISTANCE = 32.0f;
 const float HALF_PLAYER_HEIGHT = 16.0f;
 const float SENSORS_DEFAULT_WALL_DISTANCE = 9.0f;
 
-typedef struct Sensors Sensors;
-struct Sensors {
-    Ray2d rays[6];
+typedef struct SensorCollection SensorCollection;
+struct SensorCollection {
+    Ray2d sensor_rays[6];
 };
 
 #endif

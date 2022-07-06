@@ -13,7 +13,7 @@ void renderRectangularObjectsSystem(flecs::iter &it, Position *positions, SolidR
 
 void renderUnselectedPlatformNodeNodesSystem(flecs::iter &it, Position *positions, PlatformPath *platformPath);
 
-void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Angle *angles);
+void renderSensorsSystem(flecs::iter &it, Position *positions, SensorCollection *sensorCollections, Angle *angles);
 
 
 void renderUncommitedLinesToPlaceSystem(flecs::iter &it, Input *inputs, MouseState *mouseStates);

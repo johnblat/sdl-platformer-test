@@ -58,3 +58,4 @@ util_dynamic_array_to_vector(T *arr, size_t size, std::vector<T> &vec){
 
 
 Ray2d ray2d_local_to_world(Position world_position, Ray2d ray2d_local);
+float util_make_angle_between_0_and_2PI_rads(float angle_in_rads);

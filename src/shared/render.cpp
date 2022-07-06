@@ -97,22 +97,22 @@ void render_diamond(Position centerPoint, SDL_Color color){
 }
 
 
-void render_sensor_rotated_as_line(Position position, Sensors sensors, SensorType sensor_type, Angle angle, SDL_Color color){
-    v2d v_left_floor_start_local = sensors.rays[sensor_type].position_start;
+void render_sensor_rotated_as_line(Position position, SensorCollection sensors, SensorType sensor_type, Angle angle, SDL_Color color){
+    v2d v_left_floor_start_local = sensors.sensor_rays[sensor_type].position_start;
 
     v2d v_left_floor_end_local;
     if(sensor_type == SENSOR_LEFT_FLOOR || sensor_type == SENSOR_RIGHT_FLOOR || sensor_type == SENSOR_CENTER_FLOOR){
-        v_left_floor_end_local = v2d(v_left_floor_start_local.x, v_left_floor_start_local.y + sensors.rays[sensor_type].distance);
+        v_left_floor_end_local = v2d(v_left_floor_start_local.x, v_left_floor_start_local.y + sensors.sensor_rays[sensor_type].distance);
     } 
     else if(sensor_type == SENSOR_LEFT_WALL) {
-        v_left_floor_end_local = v2d(v_left_floor_start_local.x - sensors.rays[sensor_type].distance, v_left_floor_start_local.y);
+        v_left_floor_end_local = v2d(v_left_floor_start_local.x - sensors.sensor_rays[sensor_type].distance, v_left_floor_start_local.y);
     }
     else if(sensor_type == SENSOR_RIGHT_WALL) {
-        v_left_floor_end_local = v2d(v_left_floor_start_local.x + sensors.rays[sensor_type].distance, v_left_floor_start_local.y);
+        v_left_floor_end_local = v2d(v_left_floor_start_local.x + sensors.sensor_rays[sensor_type].distance, v_left_floor_start_local.y);
     }
 
     v2d v_left_floor_rotated_start_local = v2d_rotate(
-        sensors.rays[sensor_type].position_start, v2d(0.0f,0.0f), -angle.rads
+        sensors.sensor_rays[sensor_type].position_start, v2d(0.0f,0.0f), -angle.rads
     );
 
     v2d v_left_floor_rotated_end_local = v2d_rotate(

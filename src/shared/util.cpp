@@ -125,3 +125,15 @@ Ray2d ray2d_local_to_world(Position world_position, Ray2d ray2d_local){
 
     return ray2d_world;
 }
+
+
+float util_make_angle_between_0_and_2PI_rads(float angle_in_rads){
+    const float max_rads = 3.14 * 2;
+
+    if(angle_in_rads < 0 || angle_in_rads > max_rads){
+        
+        angle_in_rads = max_rads + angle_in_rads;
+    }
+
+    return angle_in_rads;
+}

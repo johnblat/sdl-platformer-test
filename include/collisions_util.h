@@ -18,6 +18,10 @@ struct CollisionResultRay2dIntersectLine{
     v2d   p2_intersecting_line;
 };
 
+struct CollisionResultPlatformPathFloorSensor{
+    CollisionResultRay2dIntersectLine result;
+};
+
 bool collisions_Ray2d_intersects_line_segment(Ray2d ray_sensor, SensorType sensorType, Position p1_line, Position p2_line, float &distance_from_ray_sensor_origin, v2d &p_intersection);
 
 CollisionResultRay2dIntersectLine collisions_Ray2d_intersects_line_segment_result(Ray2d ray_sensor, SensorType sensor_type, Position p1_line, Position p2_line);

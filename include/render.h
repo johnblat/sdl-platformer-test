@@ -11,7 +11,7 @@ extern SDL_Renderer *gRenderer;
 
 void render_diamond(Position centerPoint, SDL_Color color);
 
-void render_sensor_rotated_as_line(Position position, Sensors sensors, SensorType sensor_type, Angle angle, SDL_Color color);
+void render_sensor_rotated_as_line(Position position, SensorCollection sensors, SensorType sensor_type, Angle angle, SDL_Color color);
 
 void renderAnimatedSprite(float x, float y, AnimatedSprite animatedSprite);
 

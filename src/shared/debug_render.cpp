@@ -113,7 +113,7 @@ void renderBorderedVerticalLine(float startY, float endY, float x, SDL_Color fil
 
 
 
-void renderSensorsSystem(flecs::iter &it, Position *positions, Sensors *sensorCollections, Angle *angles){
+void renderSensorsSystem(flecs::iter &it, Position *positions, SensorCollection *sensorCollections, Angle *angles){
     for(u64 i : it){
         render_sensor_rotated_as_line(
             positions[i], 
