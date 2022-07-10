@@ -186,6 +186,17 @@ void registerSystems(flecs::world &ecs){
     //         movement_GroundSpeed_zero_ControlLockTimer_add_based_on_too_steep_angle_System
     //     );
 
+
+    ecs.system<Position, Velocity, CollisionResultPlatformPathFloorSensor>()
+        .kind(custom_phase_render)
+        .iter(
+            cam_set_position_based_on_velocity_System        
+        );
+
+    
+
+    
+
     ecs.system<AnimatedSprite>("AnimatedSpritePlay")
         .kind(custom_phase_animation)
         .iter(

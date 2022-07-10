@@ -429,10 +429,6 @@ collisions_position_rotation_align_based_on_collision_result_System(
 
             angles[i].rads = 0.0f;
 
-            // camera set here as player position - half height in y to be closer to where an intersection point would bea
-            gCameraPosition = positions[i];
-            gCameraPosition.y += HALF_PLAYER_HEIGHT;
-
             continue;
         }
 
@@ -483,8 +479,6 @@ collisions_position_rotation_align_based_on_collision_result_System(
             HALF_PLAYER_HEIGHT - closest_collision_result_center_floor_sensor.distance_from_ray_origin,
             v_perp_direction_unit
         );
-
-        gCameraPosition = closest_collision_result_center_floor_sensor.p_world_intersection;
         
         positions[i] = v2d_add(positions[i], v_move_player_align);
 

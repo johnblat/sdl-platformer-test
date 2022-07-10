@@ -4,7 +4,8 @@
 #include "ints.h"
 #include "input.h"
 #include "render.h"
-
+#include "velocity.h"
+#include "collisions.h"
 
 Position gCameraPosition;
 Position gCenterScreen;
@@ -49,5 +50,19 @@ cam_input_camera_move_System(flecs::iter &it, Input *inputs){
 void 
 cam_zoom_render_frame_start_System(flecs::iter &it){
     SDL_RenderSetScale(gRenderer, gZoomAmount, gZoomAmount);
+}
+
+void
+cam_set_position_based_on_velocity_System(flecs::iter &it, Position *positions, Velocity *velocities, CollisionResultPlatformPathFloorSensor *collision_results)
+{
+    for(u64 i : it)
+    {
+        gCameraPosition = collision_results[i].result.p_world_intersection;
+        if(!collision_results[i].result.did_intersect){
+            gCameraPosition = positions[i];
+            gCameraPosition.y += HALF_PLAYER_HEIGHT;
+        }
+        gCameraPosition.x += (velocities[i].x);
+    }
 }
 
